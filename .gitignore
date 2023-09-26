@@ -1,0 +1,10 @@
+/build
+*.dSYM
+*.out
+.DS_Store
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+/test/minheap_test
+/test/trellis_test
