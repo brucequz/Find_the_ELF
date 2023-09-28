@@ -36,11 +36,11 @@ int hammingDistance(const std::vector<int> x, const std::vector<int>& y) {
 
 }  // namespace
 
-ViterbiCodec::ViterbiCodec(int k, int n, int m, std::vector<int> poly)
-    : k_(k), n_(n), m_(m) {
+ViterbiCodec::ViterbiCodec(int k, int n, int v, std::vector<int> poly)
+    : k_(k), n_(n), v_(v) {
   code_rate_ = static_cast<double>(n_ / k_);
-  trellis_ptr_ = new FeedForwardTrellis(k, n, m, poly);
-  numStates_ = std::pow(2, m);
+  trellis_ptr_ = new FeedForwardTrellis(k, n, v, poly);
+  numStates_ = std::pow(2, v);
   list_size_ = 1;
 }
 
@@ -50,6 +50,16 @@ ViterbiCodec::~ViterbiCodec() {
 }
 
 std::vector<int> ViterbiCodec::encode(const std::vector<int>& message) {
+  // not necessarily zero terminated
+  
+  return trellis_ptr_->encode(message);
+}
+
+std::vector<int> ViterbiCodec::encodeZTCC(std::vector<int> message) {
+  // append m_ number of zeros to the message
+  for (int i = 0; i < v_; ++i) {
+    message.push_back(0);
+  }
   return trellis_ptr_->encode(message);
 }
 

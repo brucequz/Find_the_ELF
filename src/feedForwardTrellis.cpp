@@ -35,19 +35,19 @@ int decToOct(int decimal) {
 
 }  // private namespace
 
-FeedForwardTrellis::FeedForwardTrellis(int k, int n, int m,
+FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
                                        std::vector<int> poly)
     : k_(k),
       n_(n),
       numInputSymbols_(std::pow(2, k)),
       numOutputSymbols_(std::pow(2, n)),
-      numStates_(std::pow(2, m)) {
+      numStates_(std::pow(2, v)) {
   polynomials_ = poly;
   if (polynomials_.size() != n) {
     std::cerr << "INVALID POLYNOMIAL: mismatch between number of output symbols and polynomials" << std::endl;
   }
   int min_poly = 0;
-  int max_poly = decToOct(static_cast<int>(std::pow(2.0, m+1)));
+  int max_poly = decToOct(static_cast<int>(std::pow(2.0, v+1)));
   for (int poly_oct : poly) {
     if (poly_oct <= min_poly || poly_oct >= max_poly) {
       std::cerr << "INVALID POLYNOMIAL: too large or small" << std::endl;

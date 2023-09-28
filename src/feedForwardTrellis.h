@@ -7,7 +7,7 @@
 
 
 struct FeedForwardTrellis{
-  FeedForwardTrellis(int k, int n, int m, std::vector<int> poly);
+  FeedForwardTrellis(int k, int n, int v, std::vector<int> poly);
   // ~FeedForwardTrellis(); 
 
   std::vector<int> encode(const std::vector<int>& message);

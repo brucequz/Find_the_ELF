@@ -24,16 +24,17 @@ struct MessageInformation {
 
 class ViterbiCodec {
  public:
-  ViterbiCodec(int k, int n, int m, std::vector<int> poly);
+  ViterbiCodec(int k, int n, int v, std::vector<int> poly);
   ~ViterbiCodec();
   std::vector<int> encode(const std::vector<int>& message);
+  std::vector<int> encodeZTCC(std::vector<int> message);
   MessageInformation viterbiDecode(const std::vector<int>& coded);
   std::vector<MessageInformation> listViterbiDecoding(const std::vector<int>& coded);
 
  private:
   int k_;  // input message length
   int n_;  // output message length
-  int m_;  // number of memory elements
+  int v_;  // number of memory elements
   double code_rate_;
   int numStates_;
   int list_size_;

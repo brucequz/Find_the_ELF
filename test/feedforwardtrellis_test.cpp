@@ -107,6 +107,57 @@ TEST(CodecTest, RandomDecoding) {
   EXPECT_EQ(output2.message[4], 1);
 }
 
+TEST(CodecTest, LargeMemoryElements) {
+  std::vector<int> poly = {13, 17};
+  ViterbiCodec codec(1, 2, 3, poly);
+  // std::vector<int> poly = {56721, 61713};
+  // ViterbiCodec codec(1, 2, 14, poly);
+  std::vector<int> received_message = {1, 1, 0, 1, 0, 0, 1, 0, 0, 0};
+  MessageInformation output = codec.viterbiDecode(received_message);
+
+  // EXPECT_EQ(output.path.back(), 5);
+  // EXPECT_EQ(output.path[3], 3);
+  // EXPECT_EQ(output.path[2], 6);
+  // EXPECT_EQ(output.path[1], 4);
+  // EXPECT_EQ(output.path[0], 0);
+  EXPECT_EQ(output.message[0], 1);
+  EXPECT_EQ(output.message[1], 0);
+  EXPECT_EQ(output.message[2], 1);
+  EXPECT_EQ(output.message[3], 0);
+  EXPECT_EQ(output.message[4], 1);
+
+  std::vector<int> received_message2 = {1, 1, 1, 0, 0, 1, 1, 0, 1, 0};
+  MessageInformation output2 = codec.viterbiDecode(received_message2);
+  EXPECT_EQ(output2.message[0], 1);
+  EXPECT_EQ(output2.message[1], 1);
+  EXPECT_EQ(output2.message[2], 1);
+  EXPECT_EQ(output2.message[3], 1);
+  EXPECT_EQ(output2.message[4], 1);
+}
+
+TEST(CodecTest, ZTCCEncodeTest) {
+  std::vector<int> poly = {13, 17};
+  ViterbiCodec codec(1, 2, 3, poly);
+  std::vector<int> message = {1, 0, 1, 1};
+  std::vector<int> encoded = codec.encodeZTCC(message);
+
+  EXPECT_EQ(encoded.size(), 14);
+  EXPECT_EQ(encoded[0], 1);
+  EXPECT_EQ(encoded[1], 1);
+  EXPECT_EQ(encoded[2], 0);
+  EXPECT_EQ(encoded[3], 1);
+  EXPECT_EQ(encoded[4], 0);
+  EXPECT_EQ(encoded[5], 0);
+  EXPECT_EQ(encoded[6], 0);
+  EXPECT_EQ(encoded[7], 1);
+  EXPECT_EQ(encoded[8], 1);
+  EXPECT_EQ(encoded[9], 0);
+  EXPECT_EQ(encoded[10], 0);
+  EXPECT_EQ(encoded[11], 0);
+  EXPECT_EQ(encoded[12], 1);
+  EXPECT_EQ(encoded[13], 1);
+}
+
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
