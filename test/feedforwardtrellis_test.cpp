@@ -156,6 +156,16 @@ TEST(CodecTest, ZTCCEncodeTest) {
   EXPECT_EQ(encoded[11], 0);
   EXPECT_EQ(encoded[12], 1);
   EXPECT_EQ(encoded[13], 1);
+
+  MessageInformation output = codec.viterbiDecode(encoded);
+  EXPECT_EQ(output.message.size(), 7);
+  EXPECT_EQ(output.message[0], 1);
+  EXPECT_EQ(output.message[1], 0);
+  EXPECT_EQ(output.message[2], 1);
+  EXPECT_EQ(output.message[3], 1);
+  EXPECT_EQ(output.message[4], 0);
+  EXPECT_EQ(output.message[5], 0);
+  EXPECT_EQ(output.message[6], 0);
 }
 
 

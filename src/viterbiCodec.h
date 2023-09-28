@@ -6,6 +6,11 @@
 
 class FeedForwardTrellis;
 
+namespace Utils {
+std::vector<int> convertIntToBits(int integer, const int& length);
+int hammingDistance(const std::vector<int> x, const std::vector<int>& y);
+}  // namespace Utils
+
 struct Cell {
   int pathMetric = INT_MAX;
   int fatherState = -1;
@@ -29,7 +34,10 @@ class ViterbiCodec {
   std::vector<int> encode(const std::vector<int>& message);
   std::vector<int> encodeZTCC(std::vector<int> message);
   MessageInformation viterbiDecode(const std::vector<int>& coded);
-  std::vector<MessageInformation> listViterbiDecoding(const std::vector<int>& coded);
+
+  // Function definition in listDecoder.cpp
+  std::vector<MessageInformation> listViterbiDecoding(
+      const std::vector<int>& coded);
 
  private:
   int k_;  // input message length

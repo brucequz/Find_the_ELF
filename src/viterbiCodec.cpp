@@ -6,7 +6,7 @@
 #include "feedForwardTrellis.h"
 #include "minHeap.h"
 
-namespace {
+namespace Utils {
 
 std::vector<int> convertIntToBits(int integer, const int& length) {
   if (integer < 0) {
@@ -34,7 +34,7 @@ int hammingDistance(const std::vector<int> x, const std::vector<int>& y) {
   return distance;
 }
 
-}  // namespace
+}  // namespace Utils
 
 ViterbiCodec::ViterbiCodec(int k, int n, int v, std::vector<int> poly)
     : k_(k), n_(n), v_(v) {
@@ -51,7 +51,7 @@ ViterbiCodec::~ViterbiCodec() {
 
 std::vector<int> ViterbiCodec::encode(const std::vector<int>& message) {
   // not necessarily zero terminated
-  
+
   return trellis_ptr_->encode(message);
 }
 
@@ -69,7 +69,7 @@ MessageInformation ViterbiCodec::viterbiDecode(const std::vector<int>& coded) {
 
   int num_total_stages = trellis_states[0].size();
   MinHeap heap;  // Detour Tree
-  
+
   // add all final stage nodes to the heap
   for (int i = 0; i < numStates_; ++i) {
     DetourNode node;
@@ -77,14 +77,14 @@ MessageInformation ViterbiCodec::viterbiDecode(const std::vector<int>& coded) {
     node.path_metric = trellis_states[i][num_total_stages - 1].pathMetric;
     heap.insert(node);
   }
-  
+
   // pop the node with the smallest path metric - ML
   DetourNode min_node = heap.pop();
   std::vector<int> path(num_total_stages);
   std::vector<int> message(k_ * (num_total_stages - 1), 0);
 
   int cur_state = min_node.start_state;
-  
+
   for (int stage = num_total_stages - 1; stage >= 0; --stage) {
     int father_state = trellis_states[cur_state][stage].fatherState;
     path[stage] = cur_state;
@@ -100,24 +100,6 @@ MessageInformation ViterbiCodec::viterbiDecode(const std::vector<int>& coded) {
   }
   output.message = message;
   output.path = path;
-  return output;
-}
-
-std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(const std::vector<int>& coded) {
-  std::vector<std::vector<Cell>> trellis_states = constructTrellis(coded);
-  std::vector<MessageInformation> output;
-
-  int num_total_stages = trellis_states[0].size();
-  MinHeap heap;  // Detour Tree
-  
-  // add all final stage nodes to the heap
-  for (int i = 0; i < numStates_; ++i) {
-    DetourNode node;
-    node.start_state = i;
-    node.path_metric = trellis_states[i][num_total_stages - 1].pathMetric;
-    heap.insert(node);
-  }
-
   return output;
 }
 
@@ -158,9 +140,10 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
 
         int possible_output = trellis_ptr_->output_[cur_state][i];
         std::vector<int> expected_output =
-            convertIntToBits(possible_output, n_);
+            Utils::convertIntToBits(possible_output, n_);
 
-        int branch_metric = hammingDistance(expected_output, target_message);
+        int branch_metric =
+            Utils::hammingDistance(expected_output, target_message);
         int temp_path_metric = cur_path_metric + branch_metric;
 
         Cell* target_cell = &trellis_states[next_state][cur_stage + 1];
