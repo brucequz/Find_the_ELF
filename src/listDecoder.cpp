@@ -30,7 +30,7 @@ std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
 
     if (trellis_states[cur_state][stage].subFatherState != -1) {
       DetourNode node;
-      
+      // TODO: Complete list decoder
     }
 
     if (stage == 0) {
