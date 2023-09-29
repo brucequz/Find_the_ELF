@@ -2,11 +2,12 @@
 
 #include <cassert>
 #include <iostream>
+#include <cmath>
 
 #include "feedForwardTrellis.h"
 #include "minHeap.h"
 
-namespace Utils {
+namespace CodecUtils {
 
 std::vector<int> convertIntToBits(int integer, const int& length) {
   if (integer < 0) {
@@ -34,13 +35,43 @@ int hammingDistance(const std::vector<int> x, const std::vector<int>& y) {
   return distance;
 }
 
-}  // namespace Utils
+double euclideanDistance(const std::vector<double>& x, const std::vector<int>& y) {
+  assert(x.size() == y.size());
+  double distance = 0.0;
+  for (int i = 0; i < x.size(); ++i) {
+    distance += std::pow(x[i] -(double)y[i], 2);
+  }
+  return distance;
+}
+
+std::vector<int> xOR(const std::vector<int>& x, const std::vector<int>& y) {
+  std::vector<int> result;
+  if (x.size() != y.size()) {
+    std::cerr << "INVALID OPERATION SIZE: incompatible operands" << std::endl;
+  }
+  for (size_t i = 0; i < x.size(); ++i) {
+    result.push_back(x[i] ^ y[i]);
+  }
+  return result;
+}
+
+}  // namespace CodecUtils
 
 ViterbiCodec::ViterbiCodec(int k, int n, int v, std::vector<int> poly)
     : k_(k), n_(n), v_(v) {
   code_rate_ = static_cast<double>(n_ / k_);
   trellis_ptr_ = new FeedForwardTrellis(k, n, v, poly);
   numStates_ = std::pow(2, v);
+  list_size_ = 1;
+}
+
+ViterbiCodec::ViterbiCodec(CodeInformation code) {
+  k_ = code.k;
+  n_ = code.n;
+  v_ = code.v;
+  code_rate_ = static_cast<double>(n_ / k_);
+  trellis_ptr_ = new FeedForwardTrellis(k_, n_, v_, code.generator_poly);
+  numStates_ = std::pow(2, v_);
   list_size_ = 1;
 }
 
@@ -140,10 +171,10 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
 
         int possible_output = trellis_ptr_->output_[cur_state][i];
         std::vector<int> expected_output =
-            Utils::convertIntToBits(possible_output, n_);
+            CodecUtils::convertIntToBits(possible_output, n_);
 
         int branch_metric =
-            Utils::hammingDistance(expected_output, target_message);
+            CodecUtils::hammingDistance(expected_output, target_message);
         int temp_path_metric = cur_path_metric + branch_metric;
 
         Cell* target_cell = &trellis_states[next_state][cur_stage + 1];

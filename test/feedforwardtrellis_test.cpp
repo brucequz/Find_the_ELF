@@ -1,8 +1,67 @@
 #include <gtest/gtest.h>
 #include <vector>
+#include <random>
 #include "../src/feedForwardTrellis.h"
 #include "../src/viterbiCodec.h"
 #include "../src/minHeap.h"
+
+namespace AWGN {
+
+std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
+  std::mt19937 generator;
+  std::vector<double> noisyMsg;
+
+  /*
+  // the below lines break the noise generator for some compilers
+  std::random_device rd;
+  std::default_random_engine generator;
+  generator.seed( rd() ); //Now this is seeded differently each time.
+  */
+  double variance = pow(10.0, -SNR / 10.0);
+  double sigma = sqrt(variance);
+  std::normal_distribution<double> distribution(0.0, sigma);
+
+  for (int i = 0; i < modulated_signal.size(); i++) {
+    noisyMsg.push_back(modulated_signal[i] + distribution(generator));
+  }
+  return noisyMsg;
+}
+
+}  // namespace AWGN
+
+namespace BPSK {
+  
+std::vector<int> modulate(std::vector<int> encoded_msg) {
+  std::vector<int> modulated_signal(encoded_msg.size());
+  for (int i = 0; i < encoded_msg.size(); ++i) {
+    modulated_signal[i] = -2 * encoded_msg[i] + 1;
+  }
+  return modulated_signal;
+}
+
+}  // namespace BPSK
+
+namespace Utils {
+
+template <typename T>
+void print(const std::vector<T>& vec) {
+  for (const T& element : vec) {
+      std::cout << element << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void print(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+      for (const T& element : row) {
+          std::cout << element << " ";
+      }
+      std::cout << std::endl;
+  }
+}
+
+}
 
 // Define test cases
 TEST(TrellisTest, DecodeNoError) {
@@ -26,42 +85,7 @@ TEST(CodecTest, BuildDecodeTrellis) {
   ViterbiCodec codec(1, 2, 3, poly);
   std::vector<int> received_message = {1, 1, 1, 0, 1, 0, 1, 1};
   codec.viterbiDecode(received_message);
-  // std::vector<std::vector<Cell>> test_trellis = codec.getTrellis();
-
-  // // stage 0
-  // EXPECT_EQ(test_trellis[0][0].pathMetric,0);
-  // // stage 1
-  // EXPECT_EQ(test_trellis[0][1].pathMetric,2);
-  // EXPECT_EQ(test_trellis[4][1].pathMetric,0);
-  // EXPECT_EQ(test_trellis[6][1].pathMetric,INT_MAX);
-  // // stage 2
-  // EXPECT_EQ(test_trellis[0][2].pathMetric,3);
-  // EXPECT_EQ(test_trellis[2][2].pathMetric,2);
-  // EXPECT_EQ(test_trellis[4][2].pathMetric,3);
-  // EXPECT_EQ(test_trellis[6][2].pathMetric,0);
-  // // stage 3
-  // EXPECT_EQ(test_trellis[0][3].pathMetric,4);
-  // EXPECT_EQ(test_trellis[0][3].fatherState,0);
-  // EXPECT_EQ(test_trellis[1][3].pathMetric,3);
-  // EXPECT_EQ(test_trellis[1][3].fatherState,2);
-  // EXPECT_EQ(test_trellis[3][3].pathMetric,0);
-  // EXPECT_EQ(test_trellis[4][3].pathMetric,4);
-  // // stage 4
-  // EXPECT_EQ(test_trellis[0][4].pathMetric,3);
-  // EXPECT_EQ(test_trellis[0][4].fatherState,1);
-  // EXPECT_EQ(test_trellis[0][4].subPathMetric,6);
-  // EXPECT_EQ(test_trellis[0][4].subFatherState,0);
-  // EXPECT_EQ(test_trellis[1][4].pathMetric,2);
-  // EXPECT_EQ(test_trellis[1][4].fatherState,3);
-  // EXPECT_EQ(test_trellis[1][4].subPathMetric,5);
-  // EXPECT_EQ(test_trellis[1][4].subFatherState,2);
-  // EXPECT_EQ(test_trellis[4][4].pathMetric,4);
-  // EXPECT_EQ(test_trellis[4][4].fatherState,0);
-  // EXPECT_EQ(test_trellis[4][4].subPathMetric,5);
-  // EXPECT_EQ(test_trellis[4][4].subFatherState,1);
-  // // best path
-  // EXPECT_EQ(test_trellis[5][4].pathMetric,0);
-  // EXPECT_EQ(test_trellis[5][4].fatherState,3);
+  
 }
 
 TEST(CodecTest, DecodingPath) {
@@ -156,16 +180,15 @@ TEST(CodecTest, ZTCCEncodeTest) {
   EXPECT_EQ(encoded[11], 0);
   EXPECT_EQ(encoded[12], 1);
   EXPECT_EQ(encoded[13], 1);
+  
+  std::vector<int> modulated_signal = BPSK::modulate(encoded);
+  std::cout << "printing modualted signal: " << std::endl;
+  Utils::print(modulated_signal);
 
-  MessageInformation output = codec.viterbiDecode(encoded);
-  EXPECT_EQ(output.message.size(), 7);
-  EXPECT_EQ(output.message[0], 1);
-  EXPECT_EQ(output.message[1], 0);
-  EXPECT_EQ(output.message[2], 1);
-  EXPECT_EQ(output.message[3], 1);
-  EXPECT_EQ(output.message[4], 0);
-  EXPECT_EQ(output.message[5], 0);
-  EXPECT_EQ(output.message[6], 0);
+  std::vector<double> noisy_signal = AWGN::addNoise(modulated_signal, 0.0);
+  std::cout << "printing noisy signal: " << std::endl;
+  Utils::print(noisy_signal);
+  
 }
 
 

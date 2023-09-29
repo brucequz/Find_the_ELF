@@ -3,19 +3,58 @@
 
 #include <climits>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 class FeedForwardTrellis;
 
-namespace Utils {
+namespace CodecUtils {
 std::vector<int> convertIntToBits(int integer, const int& length);
 int hammingDistance(const std::vector<int> x, const std::vector<int>& y);
-}  // namespace Utils
+double euclideanDistance(const std::vector<double>& x, const std::vector<int>& y);
+std::vector<int> xOR(const std::vector<int>& x, const std::vector<int>& y);
+template <typename T>
+void print(const std::vector<T>& vec) {
+  for (const T& element : vec) {
+      std::cout << element << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void print(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+      for (const T& element : row) {
+          std::cout << element << " ";
+      }
+      std::cout << std::endl;
+  }
+}
+
+template <typename T>
+void output(const std::vector<T>& vec, std::ofstream& outputFile) {
+  for (const T& element : vec) {
+      outputFile << element << " ";
+  }
+  outputFile << std::endl;
+}
+
+template <typename T>
+void output(const std::vector<std::vector<T>>& matrix, std::ofstream& outputFile) {
+  for (const std::vector<T>& row : matrix) {
+      for (const T& element : row) {
+          outputFile << element << " ";
+      }
+      outputFile << std::endl;
+  }
+}
+}  // namespace CodecUtils
 
 struct Cell {
-  int pathMetric = INT_MAX;
-  int fatherState = -1;
   bool init = false;
-  int subPathMetric = INT_MAX;
+  double pathMetric = INT_MAX;
+  int fatherState = -1;
+  double subPathMetric = INT_MAX;
   int subFatherState = -1;
 };
 
@@ -27,9 +66,17 @@ struct MessageInformation {
   std::pair<int, int> begin_end_states;
 };
 
+struct CodeInformation {
+  int k;  // input length
+  int n;  // output length
+  int v;  // memory elements
+  std::vector<int> generator_poly;
+};
+
 class ViterbiCodec {
  public:
   ViterbiCodec(int k, int n, int v, std::vector<int> poly);
+  ViterbiCodec(CodeInformation code);
   ~ViterbiCodec();
   std::vector<int> encode(const std::vector<int>& message);
   std::vector<int> encodeZTCC(std::vector<int> message);
