@@ -8,7 +8,7 @@ namespace AWGN {
 
 std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
   std::random_device rd;
-  std::mt19937 noise_gen( rd() );
+  std::mt19937 noise_gen( 82 );
   std::vector<double> noisyMsg;
 
   /*
@@ -28,26 +28,6 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 }
 
 }  // namespace AWGN
-
-namespace BPSK {
-  
-std::vector<int> modulate(std::vector<int> encoded_msg) {
-  std::vector<int> modulated_signal(encoded_msg.size());
-  for (int i = 0; i < encoded_msg.size(); ++i) {
-    modulated_signal[i] = -2 * encoded_msg[i] + 1;
-  }
-  return modulated_signal;
-}
-
-std::vector<int> demodulate(std::vector<double> received_signal) {
-  std::vector<int> hard_decision_demodulated_signal(received_signal.size());
-  for (int i = 0; i < received_signal.size(); ++i) {
-    hard_decision_demodulated_signal[i] = (received_signal[i] < 0.0);
-  }
-  return hard_decision_demodulated_signal;
-}
-
-} // namespace BPSK
 
 namespace MatlabUtils {
 
@@ -129,7 +109,7 @@ int main() {
   std::mt19937 msg_gen(seed);
   int num_bits = 15; 
   for (int i = 0; i < mc_N; ++i) {
-    for (double snr_dB : {0.0, 2.0}) {
+    for (double snr_dB : {10.0}) {
       
       outputFile << "Now working on snr: " << snr_dB << "-------------------" << std::endl;
 
@@ -160,13 +140,18 @@ int main() {
       outputFile << "Printing demodulated signal: " << std::endl;
       CodecUtils::output(demodulated_signal, outputFile);
 
-      std::vector<int> decoded_msg = codec.viterbiDecode(demodulated_signal).message;
-      outputFile << "Printing decoded message: " << std::endl;
+      std::vector<int> decoded_msg = codec.softViterbiDecode(received_signal).message;
+      outputFile << "Printing soft decoded message: " << std::endl;
       CodecUtils::output(decoded_msg, outputFile);
+
+      std::vector<int> hard_decoded_msg = codec.viterbiDecode(demodulated_signal).message;
+      outputFile << "Printing hard decoded message: " << std::endl;
+      CodecUtils::output(hard_decoded_msg, outputFile);
       
       // truncate the flushing bits
       decoded_msg.resize(msg.size());
-      outputFile << "Measuring hamming distance: " << CodecUtils::hammingDistance(msg, decoded_msg) << std::endl;
+      hard_decoded_msg.resize(msg.size());
+      outputFile << "Measuring hamming distance: " << CodecUtils::hammingDistance(msg, hard_decoded_msg) << std::endl;
 
     }
   }

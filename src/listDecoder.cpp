@@ -3,45 +3,78 @@
 #include "viterbiCodec.h"
 
 std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
-    const std::vector<int>& coded) {
-  std::vector<std::vector<Cell>> trellis_states = constructTrellis(coded);
-  std::vector<MessageInformation> output;
+    const std::vector<double>& received_signal) {
+  std::vector<MessageInformation> output(list_size_);
+  std::vector<std::vector<Cell>> trellis_states = constructTrellis(received_signal);
 
   int num_total_stages = trellis_states[0].size();
+  std::vector<std::vector<int>> prev_paths(num_total_stages);
   MinHeap heap;  // Detour Tree
 
   // add all final stage nodes to the heap
+  // we don't have to insert all the paths that start from the last stage
+  // say there are too many stages, then maybe the top ${listSize} number of paths
+  // should be recorded
   for (int i = 0; i < numStates_; ++i) {
     DetourNode node;
     node.start_state = i;
     node.path_metric = trellis_states[i][num_total_stages - 1].pathMetric;
     heap.insert(node);
   }
+  
+  int num_path_searched = 0;
+  while (num_path_searched < list_size_) {
+    DetourNode detour = heap.pop();
+    std::vector<int> path(num_total_stages);
 
-  DetourNode min_node = heap.pop();
-  std::vector<int> path(num_total_stages);
-  std::vector<int> message(k_ * (num_total_stages - 1), 0);
+    int resume_stage = num_total_stages - 1;
+    double forward_partial_path_metric = 0.0;
+    int cur_state = detour.start_state;
 
-  int cur_state = min_node.start_state;
+    if (detour.original_path != -1) {
+      forward_partial_path_metric = detour.forward_path_metric;
+      resume_stage = detour.detour_stage;
+      
+      path = prev_paths[detour.original_path];
+      cur_state = path[resume_stage];
 
-  for (int stage = num_total_stages - 1; stage >= 0; --stage) {
-    int father_state = trellis_states[cur_state][stage].fatherState;
-    path[stage] = cur_state;
+      double cur_sub_path_metric = trellis_states[cur_state][resume_stage].subPathMetric;
 
-    if (trellis_states[cur_state][stage].subFatherState != -1) {
-      DetourNode node;
-      // TODO: Complete list decoder
+      cur_state = trellis_states[cur_state][resume_stage].subFatherState;
+
+      resume_stage--;
+      double prev_path_metric = trellis_states[cur_state][resume_stage].pathMetric;
+      forward_partial_path_metric += cur_sub_path_metric - prev_path_metric;
     }
 
-    if (stage == 0) {
-      break;
+    path[resume_stage] = cur_state;
+
+    std::cout << "resuming / starting at :" << resume_stage << std::endl;
+
+    for (int stage = resume_stage; stage > 0; stage--) {
+      double cur_sub_path_metric = trellis_states[cur_state][stage].subPathMetric;
+      double cur_path_metric = trellis_states[cur_state][stage].pathMetric;
+
+      if (trellis_states[cur_state][stage].subFatherState != -1) {
+        DetourNode localDetour;
+        localDetour.start_state = detour.start_state;
+        localDetour.path_metric = cur_sub_path_metric + forward_partial_path_metric;
+        localDetour.forward_path_metric = forward_partial_path_metric;
+        localDetour.original_path = num_path_searched;
+        localDetour.detour_stage = stage;
+        heap.insert(localDetour);
+      }
+
+      cur_state = trellis_states[cur_state][stage].fatherState;
+      double prev_path_metric = trellis_states[cur_state][stage - 1].pathMetric;
+      forward_partial_path_metric += cur_path_metric - prev_path_metric;
+      path[stage - 1] = cur_state;
     }
-    // assuming k_ == 1
-    assert(k_ == 1);
-    int input =
-        (cur_state == trellis_ptr_->nextStates_[father_state][0]) ? 0 : 1;
-    message[stage - 1] = input;
-    cur_state = father_state;
+    prev_paths[num_path_searched] = path;
+
+    output[num_path_searched].path = path;
+
+    num_path_searched++;
   }
 
   return output;

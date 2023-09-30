@@ -50,6 +50,13 @@ void output(const std::vector<std::vector<T>>& matrix, std::ofstream& outputFile
 }
 }  // namespace CodecUtils
 
+namespace BPSK {
+  
+std::vector<int> modulate(std::vector<int> encoded_msg);
+std::vector<int> demodulate(std::vector<double> received_signal);
+
+} // namespace BPSK
+
 struct Cell {
   bool init = false;
   double pathMetric = INT_MAX;
@@ -70,6 +77,7 @@ struct CodeInformation {
   int k;  // input length
   int n;  // output length
   int v;  // memory elements
+  int list_size = 1; // list decoder list size
   std::vector<int> generator_poly;
 };
 
@@ -81,10 +89,11 @@ class ViterbiCodec {
   std::vector<int> encode(const std::vector<int>& message);
   std::vector<int> encodeZTCC(std::vector<int> message);
   MessageInformation viterbiDecode(const std::vector<int>& coded);
+  MessageInformation softViterbiDecode(const std::vector<double>& coded);
 
   // Function definition in listDecoder.cpp
   std::vector<MessageInformation> listViterbiDecoding(
-      const std::vector<int>& coded);
+      const std::vector<double>& received_signal);
 
  private:
   int k_;  // input message length
@@ -97,6 +106,8 @@ class ViterbiCodec {
 
   std::vector<std::vector<Cell>> constructTrellis(
       const std::vector<int>& coded);
+  std::vector<std::vector<Cell>> constructTrellis(
+      const std::vector<double>& received_signal);
 };
 
 #endif

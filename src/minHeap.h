@@ -6,9 +6,12 @@
 
 struct DetourNode {
   DetourNode() : original_state(-1) {};
-  int path_metric;  // pathMetric
-  int original_state;
-  int start_state;
+  double path_metric;  // pathMetric
+  int original_state;  // 
+  int start_state;     // ending / traceback starting state
+  int original_path = -1;
+  double forward_path_metric;
+  int detour_stage;
   bool operator>(const DetourNode& other) const {
     return this->path_metric > other.path_metric;
   }
