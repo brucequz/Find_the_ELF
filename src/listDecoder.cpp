@@ -2,6 +2,18 @@
 #include "minHeap.h"
 #include "viterbiCodec.h"
 
+std::vector<int> ViterbiCodec::convertPathtoMessage(const std::vector<int> path) {
+  std::vector<int> message;
+  for (int path_id = 0; path_id < path.size() - 1; path_id++) {
+    for (int forward_path = 0; forward_path < trellis_ptr_->nextStates_[0].size(); forward_path++) {
+      if (trellis_ptr_->nextStates_[path[path_id]][forward_path] == path[path_id + 1]) {
+        message.push_back(forward_path);
+      }
+    }
+  }
+  return message;
+}
+
 std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
     const std::vector<double>& received_signal) {
   std::vector<MessageInformation> output(list_size_);
@@ -49,8 +61,6 @@ std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
 
     path[resume_stage] = cur_state;
 
-    std::cout << "resuming / starting at :" << resume_stage << std::endl;
-
     for (int stage = resume_stage; stage > 0; stage--) {
       double cur_sub_path_metric = trellis_states[cur_state][stage].subPathMetric;
       double cur_path_metric = trellis_states[cur_state][stage].pathMetric;
@@ -73,6 +83,8 @@ std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
     prev_paths[num_path_searched] = path;
 
     output[num_path_searched].path = path;
+    // convert path to message
+    output[num_path_searched].message = convertPathtoMessage(path);
 
     num_path_searched++;
   }

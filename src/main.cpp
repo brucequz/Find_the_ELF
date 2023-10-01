@@ -147,6 +147,8 @@ int main() {
       std::vector<int> hard_decoded_msg = codec.viterbiDecode(demodulated_signal).message;
       outputFile << "Printing hard decoded message: " << std::endl;
       CodecUtils::output(hard_decoded_msg, outputFile);
+
+      std::vector<int> 
       
       // truncate the flushing bits
       decoded_msg.resize(msg.size());

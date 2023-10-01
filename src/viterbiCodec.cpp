@@ -77,6 +77,53 @@ std::vector<int> demodulate(std::vector<double> received_signal) {
 
 } // namespace BPSK
 
+namespace CRC {
+
+int binSum(const int& x, const int& y) { return (x + y) % 2; }
+
+std::vector<int> decToBin(int input, int bit_number) {
+  std::vector<int> output(bit_number, 0);
+  for (int i = bit_number - 1; i >= 0; --i) {
+    output[bit_number - 1 - i] = ((input >> i) & 1);
+  }
+  return output;
+}
+
+std::vector<int> calculateCRC(const std::vector<int>& input, int crc_dec, int crc_length) {
+  // generating (crc_length - 1) number of redundancy bits (crc bits)
+  std::vector<int> crc_bin = decToBin(crc_dec, crc_length);
+
+  std::vector<int> output = input;
+  output.resize(input.size() + crc_length - 1, 0);
+   
+  // long division
+  for (int i = 0; i < input.size(); ++i) {
+    if (output[i] == 1) {
+      std::transform(output.begin() + i, output.begin() + i + crc_length, crc_bin.begin(), output.begin() + i, binSum);
+    }
+  }
+
+  std::copy(input.begin(), input.end(), output.begin());
+
+  return output;
+}
+
+bool checkCRC(std::vector<int> demodulated, int crc_dec, int crc_length) {
+  // check crc by dividing the demodulated signal with crc poly
+  std::vector<int> crc_bin = decToBin(crc_dec, crc_length);
+
+  for (int ii = 0; ii <= (int)demodulated.size() - crc_length; ii++) {
+		if (demodulated[ii] == 1) {
+			// Note: transform doesn't include .end
+			std::transform(demodulated.begin() + ii, demodulated.begin() + (ii + crc_length), crc_bin.begin(), demodulated.begin() + ii, binSum);
+		}
+	}
+	bool all_zero = std::all_of(demodulated.begin(), demodulated.end(), [](int i) { return i == 0; });
+	return all_zero;
+}
+
+}  // namespace CRC
+
 ViterbiCodec::ViterbiCodec(int k, int n, int v, std::vector<int> poly)
     : k_(k), n_(n), v_(v) {
   code_rate_ = static_cast<double>(n_ / k_);
@@ -232,7 +279,7 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
       // activate the next states
       for (int i = 0; i < trellis_ptr_->nextStates_[cur_state].size(); ++i) {
         int next_state = trellis_ptr_->nextStates_[cur_state][i];
-        trellis_states[next_state][cur_stage + 1].init = true;
+        // trellis_states[next_state][cur_stage + 1].init = true;
 
         int possible_output = trellis_ptr_->output_[cur_state][i];
         std::vector<int> expected_output =

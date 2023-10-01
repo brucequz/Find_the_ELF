@@ -57,6 +57,13 @@ std::vector<int> demodulate(std::vector<double> received_signal);
 
 } // namespace BPSK
 
+namespace CRC {
+  int binSum(const int& x, const int& y);
+  std::vector<int> decToBin(int input, int bit_number);
+  std::vector<int> calculateCRC(const std::vector<int>& input, int crc_dec, int crc_length);
+  bool checkCRC(std::vector<int> demodulated, int crc_dec, int crc_length);
+}  // namespace CRC
+
 struct Cell {
   bool init = false;
   double pathMetric = INT_MAX;
@@ -108,6 +115,7 @@ class ViterbiCodec {
       const std::vector<int>& coded);
   std::vector<std::vector<Cell>> constructTrellis(
       const std::vector<double>& received_signal);
+  std::vector<int> convertPathtoMessage(const std::vector<int> path);
 };
 
 #endif
