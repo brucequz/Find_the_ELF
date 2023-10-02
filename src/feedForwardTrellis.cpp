@@ -1,4 +1,4 @@
-#include "feedForwardTrellis.h"
+#include "../include/feedForwardTrellis.h"
 
 #include <algorithm>
 #include <cmath>

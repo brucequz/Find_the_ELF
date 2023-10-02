@@ -2,9 +2,9 @@
 #include <vector>
 #include <random>
 #include <iostream>
-#include "../src/feedForwardTrellis.h"
-#include "../src/viterbiCodec.h"
-#include "../src/minHeap.h"
+#include "../include/feedForwardTrellis.h"
+#include "../include/viterbiCodec.h"
+#include "../include/minHeap.h"
 
 namespace {
 std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {

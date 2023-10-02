@@ -36,7 +36,7 @@ void output(const std::vector<T>& vec, std::ofstream& outputFile) {
   for (const T& element : vec) {
       outputFile << element << " ";
   }
-  outputFile << std::endl;
+  // outputFile << std::endl;
 }
 
 template <typename T>

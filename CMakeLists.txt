@@ -15,6 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
 file(GLOB SOURCES "src/*.cpp")
 include_directories(/Applications/MATLAB_R2022b.app/extern/include)
+include_directories(${CMAKE_SOURCE_DIR}/include/*)
 
 add_executable(elf ${SOURCES})
 

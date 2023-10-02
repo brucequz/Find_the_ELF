@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <random>
-#include "../src/feedForwardTrellis.h"
-#include "../src/viterbiCodec.h"
-#include "../src/minHeap.h"
+#include "../include/feedForwardTrellis.h"
+#include "../include/viterbiCodec.h"
+#include "../include/minHeap.h"
 
 namespace AWGN {
 
@@ -28,18 +28,6 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 }
 
 }  // namespace AWGN
-
-namespace BPSK {
-  
-std::vector<int> modulate(std::vector<int> encoded_msg) {
-  std::vector<int> modulated_signal(encoded_msg.size());
-  for (int i = 0; i < encoded_msg.size(); ++i) {
-    modulated_signal[i] = -2 * encoded_msg[i] + 1;
-  }
-  return modulated_signal;
-}
-
-}  // namespace BPSK
 
 namespace Utils {
 

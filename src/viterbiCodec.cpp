@@ -1,11 +1,11 @@
-#include "viterbiCodec.h"
+#include "../include/viterbiCodec.h"
 
 #include <cassert>
 #include <cmath>
 #include <iostream>
 
-#include "feedForwardTrellis.h"
-#include "minHeap.h"
+#include "../include/feedForwardTrellis.h"
+#include "../include/minHeap.h"
 
 namespace CodecUtils {
 

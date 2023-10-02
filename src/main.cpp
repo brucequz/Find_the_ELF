@@ -2,7 +2,7 @@
 #include <iostream>
 #include <random>
 
-#include "viterbiCodec.h"
+#include "../include/viterbiCodec.h"
 #include "mat.h"
 namespace AWGN {
 
@@ -129,44 +129,53 @@ int main() {
       }
       outputFile << "Printing original message: " << std::endl;
       CodecUtils::output(msg, outputFile);
+      outputFile << std::endl;
 
       // add crc
       std::vector<int> crc_msg = codec.calculateCRC(msg);
       outputFile << crc_msg.size() << " Printing crc message: " << std::endl;
       CodecUtils::output(crc_msg, outputFile);
+      outputFile << std::endl;
 
       // coding
       std::vector<int> encoded_msg = codec.encodeZTCC(crc_msg);
       outputFile << encoded_msg.size() << " Printing coded message: " << std::endl;
       CodecUtils::output(encoded_msg, outputFile);
+      outputFile << std::endl;
 
       std::vector<int> modulated_signal = BPSK::modulate(encoded_msg);
       outputFile << "Printing modulated signal: " << std::endl;
       CodecUtils::output(modulated_signal, outputFile);
+      outputFile << std::endl;
 
       std::vector<double> received_signal = AWGN::addNoise(modulated_signal, snr_dB);
       outputFile << "Printing received signal: " << std::endl;
       CodecUtils::output(received_signal, outputFile);
+      outputFile << std::endl;
 
       outputFile << "measuring euclidean distance: " << CodecUtils::euclideanDistance(received_signal, modulated_signal)<< std::endl;
 
       std::vector<int> demodulated_signal = BPSK::demodulate(received_signal);
       outputFile << "Printing demodulated signal: " << std::endl;
       CodecUtils::output(demodulated_signal, outputFile);
+      outputFile << std::endl;
 
       std::vector<int> decoded_msg = codec.softViterbiDecode(received_signal).message;
       outputFile << "Printing soft decoded message: " << std::endl;
       CodecUtils::output(decoded_msg, outputFile);
+      outputFile << std::endl;
 
       std::vector<int> hard_decoded_msg = codec.viterbiDecode(demodulated_signal).message;
       outputFile << "Printing hard decoded message: " << std::endl;
       CodecUtils::output(hard_decoded_msg, outputFile);
+      outputFile << std::endl;
 
       std::vector<MessageInformation> output = codec.listViterbiDecoding(received_signal);
       outputFile << "Printing list decoder results: " << std::endl;
       for (int i = 0; i < output.size(); ++i) {
         outputFile << output[i].message.size() << " " << i << "th message:  ";
         CodecUtils::output(output[i].message, outputFile);
+        outputFile << std::endl;
       }
       
       // truncate the flushing bits

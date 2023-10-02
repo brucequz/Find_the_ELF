@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/minHeap.h"
+#include "../include/minHeap.h"
 
 TEST(MinHeapTest, HeapOperation) {
   MinHeap heap;

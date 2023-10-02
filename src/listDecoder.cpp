@@ -1,6 +1,6 @@
-#include "feedForwardTrellis.h"
-#include "minHeap.h"
-#include "viterbiCodec.h"
+#include "../include/feedForwardTrellis.h"
+#include "../include/minHeap.h"
+#include "../include/viterbiCodec.h"
 
 std::vector<int> ViterbiCodec::convertPathtoMessage(
     const std::vector<int> path) {

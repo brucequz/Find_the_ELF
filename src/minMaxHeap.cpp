@@ -1,4 +1,4 @@
-#include "minMaxHeap.h"
+#include "../include/minMaxHeap.h"
 
 // TODO: Implement a minmax heap
 // documentation: Min max heap wikipedia
