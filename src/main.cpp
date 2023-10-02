@@ -8,7 +8,7 @@ namespace AWGN {
 
 std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
   std::random_device rd;
-  std::mt19937 noise_gen( 82 );
+  std::mt19937 noise_gen( 47 );  // 82
   std::vector<double> noisyMsg;
 
   /*
@@ -101,7 +101,16 @@ int main() {
   code.k = 1;
   code.n = 2;
   code.v = 14;
+  code.list_size = 10;
+  code.crc_dec = 7;
+  code.crc_length = 3;
   code.generator_poly = {56721, 61713};
+
+  // CRC
+  // crc1_poly = x^2 + x + 1
+  // crc2_poly = x^3 + x^2 + 1
+  int crc_dec_1 = 7;
+  int crc_length_1 = 3;
 
   ViterbiCodec codec(code);
   
@@ -109,7 +118,7 @@ int main() {
   std::mt19937 msg_gen(seed);
   int num_bits = 15; 
   for (int i = 0; i < mc_N; ++i) {
-    for (double snr_dB : {10.0}) {
+    for (double snr_dB : {0.0}) {
       
       outputFile << "Now working on snr: " << snr_dB << "-------------------" << std::endl;
 
@@ -121,9 +130,14 @@ int main() {
       outputFile << "Printing original message: " << std::endl;
       CodecUtils::output(msg, outputFile);
 
+      // add crc
+      std::vector<int> crc_msg = codec.calculateCRC(msg);
+      outputFile << crc_msg.size() << " Printing crc message: " << std::endl;
+      CodecUtils::output(crc_msg, outputFile);
+
       // coding
-      std::vector<int> encoded_msg = codec.encodeZTCC(msg);
-      outputFile << "Printing coded message: " << std::endl;
+      std::vector<int> encoded_msg = codec.encodeZTCC(crc_msg);
+      outputFile << encoded_msg.size() << " Printing coded message: " << std::endl;
       CodecUtils::output(encoded_msg, outputFile);
 
       std::vector<int> modulated_signal = BPSK::modulate(encoded_msg);
@@ -148,7 +162,12 @@ int main() {
       outputFile << "Printing hard decoded message: " << std::endl;
       CodecUtils::output(hard_decoded_msg, outputFile);
 
-      std::vector<int> 
+      std::vector<MessageInformation> output = codec.listViterbiDecoding(received_signal);
+      outputFile << "Printing list decoder results: " << std::endl;
+      for (int i = 0; i < output.size(); ++i) {
+        outputFile << output[i].message.size() << " " << i << "th message:  ";
+        CodecUtils::output(output[i].message, outputFile);
+      }
       
       // truncate the flushing bits
       decoded_msg.resize(msg.size());

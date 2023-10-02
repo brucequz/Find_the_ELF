@@ -60,8 +60,6 @@ std::vector<int> demodulate(std::vector<double> received_signal);
 namespace CRC {
   int binSum(const int& x, const int& y);
   std::vector<int> decToBin(int input, int bit_number);
-  std::vector<int> calculateCRC(const std::vector<int>& input, int crc_dec, int crc_length);
-  bool checkCRC(std::vector<int> demodulated, int crc_dec, int crc_length);
 }  // namespace CRC
 
 struct Cell {
@@ -85,6 +83,8 @@ struct CodeInformation {
   int n;  // output length
   int v;  // memory elements
   int list_size = 1; // list decoder list size
+  int crc_dec;
+  int crc_length;
   std::vector<int> generator_poly;
 };
 
@@ -98,6 +98,8 @@ class ViterbiCodec {
   MessageInformation viterbiDecode(const std::vector<int>& coded);
   MessageInformation softViterbiDecode(const std::vector<double>& coded);
 
+  std::vector<int> calculateCRC(const std::vector<int>& input);
+
   // Function definition in listDecoder.cpp
   std::vector<MessageInformation> listViterbiDecoding(
       const std::vector<double>& received_signal);
@@ -106,6 +108,8 @@ class ViterbiCodec {
   int k_;  // input message length
   int n_;  // output message length
   int v_;  // number of memory elements
+  int crc_dec_; // crc poly in decimal representation
+  int crc_length_; // length of crc in binary representation
   double code_rate_;
   int numStates_;
   int list_size_;
@@ -116,6 +120,7 @@ class ViterbiCodec {
   std::vector<std::vector<Cell>> constructTrellis(
       const std::vector<double>& received_signal);
   std::vector<int> convertPathtoMessage(const std::vector<int> path);
+  bool checkCRC(std::vector<int> demodulated);
 };
 
 #endif

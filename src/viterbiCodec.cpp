@@ -1,8 +1,8 @@
 #include "viterbiCodec.h"
 
 #include <cassert>
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 #include "feedForwardTrellis.h"
 #include "minHeap.h"
@@ -35,11 +35,12 @@ int hammingDistance(const std::vector<int> x, const std::vector<int>& y) {
   return distance;
 }
 
-double euclideanDistance(const std::vector<double>& x, const std::vector<int>& y) {
+double euclideanDistance(const std::vector<double>& x,
+                         const std::vector<int>& y) {
   assert(x.size() == y.size());
   double distance = 0.0;
   for (int i = 0; i < x.size(); ++i) {
-    distance += std::pow(x[i] -(double)y[i], 2);
+    distance += std::pow(x[i] - (double)y[i], 2);
   }
   return distance;
 }
@@ -58,7 +59,7 @@ std::vector<int> xOR(const std::vector<int>& x, const std::vector<int>& y) {
 }  // namespace CodecUtils
 
 namespace BPSK {
-  
+
 std::vector<int> modulate(std::vector<int> encoded_msg) {
   std::vector<int> modulated_signal(encoded_msg.size());
   for (int i = 0; i < encoded_msg.size(); ++i) {
@@ -75,7 +76,7 @@ std::vector<int> demodulate(std::vector<double> received_signal) {
   return hard_decision_demodulated_signal;
 }
 
-} // namespace BPSK
+}  // namespace BPSK
 
 namespace CRC {
 
@@ -87,39 +88,6 @@ std::vector<int> decToBin(int input, int bit_number) {
     output[bit_number - 1 - i] = ((input >> i) & 1);
   }
   return output;
-}
-
-std::vector<int> calculateCRC(const std::vector<int>& input, int crc_dec, int crc_length) {
-  // generating (crc_length - 1) number of redundancy bits (crc bits)
-  std::vector<int> crc_bin = decToBin(crc_dec, crc_length);
-
-  std::vector<int> output = input;
-  output.resize(input.size() + crc_length - 1, 0);
-   
-  // long division
-  for (int i = 0; i < input.size(); ++i) {
-    if (output[i] == 1) {
-      std::transform(output.begin() + i, output.begin() + i + crc_length, crc_bin.begin(), output.begin() + i, binSum);
-    }
-  }
-
-  std::copy(input.begin(), input.end(), output.begin());
-
-  return output;
-}
-
-bool checkCRC(std::vector<int> demodulated, int crc_dec, int crc_length) {
-  // check crc by dividing the demodulated signal with crc poly
-  std::vector<int> crc_bin = decToBin(crc_dec, crc_length);
-
-  for (int ii = 0; ii <= (int)demodulated.size() - crc_length; ii++) {
-		if (demodulated[ii] == 1) {
-			// Note: transform doesn't include .end
-			std::transform(demodulated.begin() + ii, demodulated.begin() + (ii + crc_length), crc_bin.begin(), demodulated.begin() + ii, binSum);
-		}
-	}
-	bool all_zero = std::all_of(demodulated.begin(), demodulated.end(), [](int i) { return i == 0; });
-	return all_zero;
 }
 
 }  // namespace CRC
@@ -137,6 +105,8 @@ ViterbiCodec::ViterbiCodec(CodeInformation code) {
   n_ = code.n;
   v_ = code.v;
   list_size_ = code.list_size;
+  crc_dec_ = code.crc_dec;
+  crc_length_ = code.crc_length;
   code_rate_ = static_cast<double>(n_ / k_);
   trellis_ptr_ = new FeedForwardTrellis(k_, n_, v_, code.generator_poly);
   numStates_ = std::pow(2, v_);
@@ -201,9 +171,11 @@ MessageInformation ViterbiCodec::viterbiDecode(const std::vector<int>& coded) {
   return output;
 }
 
-MessageInformation ViterbiCodec::softViterbiDecode(const std::vector<double>& received_signal) {
+MessageInformation ViterbiCodec::softViterbiDecode(
+    const std::vector<double>& received_signal) {
   MessageInformation output;
-  std::vector<std::vector<Cell>> trellis_states = constructTrellis(received_signal);
+  std::vector<std::vector<Cell>> trellis_states =
+      constructTrellis(received_signal);
 
   int num_total_stages = trellis_states[0].size();
   MinHeap heap;  // Detour Tree
@@ -314,7 +286,8 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
   return trellis_states;
 }
 
-std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(const std::vector<double>& received_signal) {
+std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
+    const std::vector<double>& received_signal) {
   std::vector<std::vector<Cell>> trellis_states;
   int message_length = received_signal.size();
   int total_length = message_length / n_;
@@ -371,4 +344,41 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(const std::vector<
     }
   }
   return trellis_states;
+}
+
+std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
+  // generating (crc_length - 1) number of redundancy bits (crc bits)
+  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+
+  std::vector<int> output = input;
+  output.resize(input.size() + crc_length_ - 1, 0);
+
+  // long division
+  for (int i = 0; i < input.size(); ++i) {
+    if (output[i] == 1) {
+      std::transform(output.begin() + i, output.begin() + i + crc_length_,
+                     crc_bin.begin(), output.begin() + i, CRC::binSum);
+    }
+  }
+
+  std::copy(input.begin(), input.end(), output.begin());
+
+  return output;
+}
+
+bool ViterbiCodec::checkCRC(std::vector<int> demodulated) {
+  // check crc by dividing the demodulated signal with crc poly
+  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+
+  for (int ii = 0; ii <= (int)demodulated.size() - crc_length_; ii++) {
+    if (demodulated[ii] == 1) {
+      // Note: transform doesn't include .end
+      std::transform(demodulated.begin() + ii,
+                     demodulated.begin() + (ii + crc_length_), crc_bin.begin(),
+                     demodulated.begin() + ii, CRC::binSum);
+    }
+  }
+  bool all_zero = std::all_of(demodulated.begin(), demodulated.end(),
+                              [](int i) { return i == 0; });
+  return all_zero;
 }

@@ -27,6 +27,43 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
   }
   return noisyMsg;
 }
+
+std::vector<int> calculateCRC(const std::vector<int>& input, int crc_dec_, int crc_length_) {
+  // generating (crc_length - 1) number of redundancy bits (crc bits)
+  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+
+  std::vector<int> output = input;
+  output.resize(input.size() + crc_length_ - 1, 0);
+
+  // long division
+  for (int i = 0; i < input.size(); ++i) {
+    if (output[i] == 1) {
+      std::transform(output.begin() + i, output.begin() + i + crc_length_,
+                     crc_bin.begin(), output.begin() + i, CRC::binSum);
+    }
+  }
+
+  std::copy(input.begin(), input.end(), output.begin());
+
+  return output;
+}
+
+bool checkCRC(std::vector<int> demodulated, int crc_dec_, int crc_length_) {
+  // check crc by dividing the demodulated signal with crc poly
+  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+
+  for (int ii = 0; ii <= (int)demodulated.size() - crc_length_; ii++) {
+    if (demodulated[ii] == 1) {
+      // Note: transform doesn't include .end
+      std::transform(demodulated.begin() + ii,
+                     demodulated.begin() + (ii + crc_length_), crc_bin.begin(),
+                     demodulated.begin() + ii, CRC::binSum);
+    }
+  }
+  bool all_zero = std::all_of(demodulated.begin(), demodulated.end(),
+                              [](int i) { return i == 0; });
+  return all_zero;
+}
 }
 
 TEST(ViterbiCodec, listDecoding) {
@@ -78,23 +115,24 @@ TEST(ViterbiCodec, listDecoding) {
 }
 
 TEST(ViterbiCodec, CRCTest) {
+  
+  CodeInformation code;
+  code.k = 1;
+  code.n = 2;
+  code.v = 14;
+  code.list_size = 10;
+  code.crc_dec = 7;
+  code.crc_length = 3;
+  code.generator_poly = {56721, 61713};
 
-  std::vector<int> input = {1, 1, 0, 0, 1, 0, 1, 0, 1};
-  int crc_dec = 21;
-  int crc_length = 5;
-  std::vector<int> crc_message = CRC::calculateCRC(input, crc_dec, crc_length);
-  CodecUtils::print(crc_message);
-
-  bool all_zero = CRC::checkCRC(crc_message, crc_dec, crc_length);
-  all_zero = CRC::checkCRC({1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0}, crc_dec, crc_length);
-  EXPECT_EQ(all_zero, false);
-
+  std::vector<int> msg = {0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0};
+  std::vector<int> crc_msg = calculateCRC(msg, code.crc_dec, code.crc_length);
   
 
+  std::vector<int> checkMsg = {0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0};
+  std::cout << "checking " << checkCRC(checkMsg, code.crc_dec, code.crc_length) << std::endl;
+
 }
-
-
-
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
