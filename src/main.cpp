@@ -97,22 +97,32 @@ int main() {
   }
 
   int mc_N = 2;
-  CodeInformation code;
-  code.k = 1;
-  code.n = 2;
-  code.v = 14;
-  code.list_size = 10;
-  code.crc_dec = 7;
-  code.crc_length = 3;
-  code.generator_poly = {56721, 61713};
+  CodeInformation code_1;
+  // x^14+x^13+x^9+x^8+x^7+x^6+x^3+x+1 = 
+  //                        CRC: (x^3+x^2+1) 
+  //                        generator: (x^11+x^8+x^7+x^3+x^2+x+1)
+  code_1.k = 1;
+  code_1.n = 1;
+  code_1.v = 11;
+  code_1.list_size = 10;
+  code_1.crc_dec = 13;
+  code_1.crc_length = 4;
+  code_1.generator_poly = {4617};
 
-  // CRC
-  // crc1_poly = x^2 + x + 1
-  // crc2_poly = x^3 + x^2 + 1
-  int crc_dec_1 = 7;
-  int crc_length_1 = 3;
+  CodeInformation code_2;
+  // x^14+x^12+x^11+x^10+x^8+x^7+x^6+x^4+1 =
+  //                         CRC: (x^2+x+1) 
+  //                         generator: x^12+x^11+x^10+x^9+x^8+x^5+x^3+x+1 
+  code_2.k = 1;
+  code_2.n = 1;
+  code_2.v = 12;
+  code_2.list_size = 10;
+  code_2.crc_dec = 7;
+  code_2.crc_length = 3;
+  code_2.generator_poly = {17453};
 
-  ViterbiCodec codec(code);
+  ViterbiCodec codec_1(code_1);
+  ViterbiCodec codec_2(code_2);
   
   int seed = 47;
   std::mt19937 msg_gen(seed);

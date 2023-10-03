@@ -76,6 +76,8 @@ struct MessageInformation {
   std::vector<int> message;
   std::vector<int> path;
   std::pair<int, int> begin_end_states;
+  double path_metric;
+  int list_rank;
 };
 
 struct CodeInformation {
@@ -103,6 +105,8 @@ class ViterbiCodec {
   // Function definition in listDecoder.cpp
   std::vector<MessageInformation> listViterbiDecoding(
       const std::vector<double>& received_signal);
+  std::vector<MessageInformation> unconstraintListViterbiDecoding(
+    const std::vector<double>& received_signal);
 
  private:
   int k_;  // input message length
