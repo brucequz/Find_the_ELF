@@ -128,9 +128,19 @@ TEST(DuoCodecTest, EncodeTest) {
   outputMat(crc_msg_1, outputFile);
   outputFile << std::endl;
 
+  std::vector<int> crc_msg_11 = codec_1.convolveCRC(msg);
+  outputFile << "crc_msg_11: ";
+  outputMat(crc_msg_11, outputFile);
+  outputFile << std::endl;
+
   std::vector<int> encoded_crc_msg_1 = codec_1.encodeZTCC(crc_msg_1);
   outputFile << "encoded_crc_msg_1: ";
   outputMat(encoded_crc_msg_1, outputFile);
+  outputFile << std::endl;
+
+  std::vector<int> encoded_crc_msg_11 = codec_1.encodeZTCC(crc_msg_11);
+  outputFile << "encoded_crc_msg_11: ";
+  outputMat(encoded_crc_msg_11, outputFile);
   outputFile << std::endl;
 
   std::vector<int> modulated_signal = BPSK::modulate(encoded_crc_msg_1);
@@ -151,9 +161,19 @@ TEST(DuoCodecTest, EncodeTest) {
   outputMat(crc_msg_2, outputFile);
   outputFile << std::endl;
 
+  std::vector<int> crc_msg_22 = codec_2.convolveCRC(msg);
+  outputFile << "crc_msg_22: ";
+  outputMat(crc_msg_22, outputFile);
+  outputFile << std::endl;
+
   std::vector<int> encoded_crc_msg_2 = codec_2.encodeZTCC(crc_msg_2);
   outputFile << "encoded_crc_msg_2: ";
   outputMat(encoded_crc_msg_2, outputFile);
+  outputFile << std::endl;
+
+  std::vector<int> encoded_crc_msg_22 = codec_2.encodeZTCC(crc_msg_22);
+  outputFile << "encoded_crc_msg_22: ";
+  outputMat(encoded_crc_msg_22, outputFile);
   outputFile << std::endl;
 
   std::vector<int> modulated_signal_2 = BPSK::modulate(encoded_crc_msg_2);

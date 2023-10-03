@@ -101,6 +101,7 @@ class ViterbiCodec {
   MessageInformation softViterbiDecode(const std::vector<double>& coded);
 
   std::vector<int> calculateCRC(const std::vector<int>& input);
+  std::vector<int> convolveCRC(const std::vector<int>& input);
 
   // Function definition in listDecoder.cpp
   std::vector<MessageInformation> listViterbiDecoding(

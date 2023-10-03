@@ -366,6 +366,24 @@ std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
   return output;
 }
 
+std::vector<int> ViterbiCodec::convolveCRC(const std::vector<int>& input) {
+  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+  int input_size = input.size();
+  int crc_size = crc_bin.size();
+  int output_size = input_size + crc_size - 1;
+  std::vector<int> output(output_size, 0);
+
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < crc_size; ++j) {
+      output[i + j] += input[i] * crc_bin[j];
+    }
+  }
+
+  std::for_each(output.begin(), output.end(), [](int& element) { element %= 2; });
+  
+  return output;
+}
+
 bool ViterbiCodec::checkCRC(std::vector<int> demodulated) {
   // check crc by dividing the demodulated signal with crc poly
   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
