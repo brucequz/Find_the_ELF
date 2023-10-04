@@ -40,3 +40,13 @@ disp(interleavedVector);
 cpp_result_interleave = [1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1];
 
 areEqual_3 = isequal(interleavedVector, cpp_result_interleave);
+
+crc_poly = [1, 1, 0, 1];
+convolved = conv([1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1],[1, 1, 0, 1]);
+convolved = mod(convolved, 2);
+
+cpp_result_4 = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1];
+areEqual_4 = isequal(convolved, cpp_result_4);
+
+[Q, R] = deconv(cpp_result_4, crc_poly);
+Q = mod(Q, 2);

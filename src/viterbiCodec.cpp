@@ -221,13 +221,13 @@ MessageInformation ViterbiCodec::softViterbiDecode(
 std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
     const std::vector<int>& coded) {
   /*
-   *  Construct a reverse trellis states with cells containing relevant
+   *  Construct output reverse trellis states with cells containing relevant
    * information for viterbi decoding.
    *  Cell
    * {
    *    - branchMetric:
    *    - pathMetric:
-   *    - init: whether or not a cell is activated, aka. reachable in the
+   *    - init: whether or not output cell is activated, aka. reachable in the
    * decoding process.
    * }
    */
@@ -346,6 +346,72 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
   return trellis_states;
 }
 
+std::vector<std::vector<Cell>> ViterbiCodec::constructZTCCTrellis(
+    const std::vector<double>& received_signal) {
+  /*
+  Construct output trellis for traceback later with euclidean distances
+  as path metrics.
+  */
+  std::vector<std::vector<Cell>> trellis_states;
+  int signal_length = received_signal.size();
+  int number_of_stages = signal_length / n_;
+
+  trellis_states.resize(numStates_, std::vector<Cell>(number_of_stages + 1));
+  trellis_states[0][0].init = true;
+  trellis_states[0][0].pathMetric = 0.0;
+
+  for (int cur_stage = 0; cur_stage < number_of_stages; ++cur_stage) {
+    for (int cur_state = 0; cur_state < numStates_; ++cur_state) {
+      if (!trellis_states[cur_state][cur_stage].init) {
+        continue;
+      }
+      double cur_path_metric = trellis_states[cur_state][cur_stage].pathMetric;
+      auto begin = received_signal.begin() + cur_stage * n_;
+      auto end = begin + n_;
+      std::vector<double> target_message(begin, end);
+
+      // activate the next states
+      for (int i = 0; i < trellis_ptr_->nextStates_[cur_state].size(); ++i) {
+        int next_state = trellis_ptr_->nextStates_[cur_state][i];
+        // trellis_states[next_state][cur_stage + 1].init = true;
+
+        int possible_output = trellis_ptr_->output_[cur_state][i];
+        std::vector<int> expected_output =
+            CodecUtils::convertIntToBits(possible_output, n_);
+
+        // modualted expected output
+        std::vector<int> expected_signal = BPSK::modulate(expected_output);
+
+        double branch_metric =
+            CodecUtils::euclideanDistance(target_message, expected_signal);
+        double temp_path_metric = cur_path_metric + branch_metric;
+
+        Cell* target_cell = &trellis_states[next_state][cur_stage + 1];
+
+        if (!target_cell->init) {
+          // if the next state is not initialized, we temporarily store the path
+          // metric
+          target_cell->init = true;
+          target_cell->pathMetric = temp_path_metric;
+          target_cell->fatherState = cur_state;
+        } else if (target_cell->pathMetric > temp_path_metric) {
+          // the current path metric is better
+          target_cell->subPathMetric = target_cell->pathMetric;
+          target_cell->subFatherState = target_cell->fatherState;
+          target_cell->pathMetric = temp_path_metric;
+          target_cell->fatherState = cur_state;
+        } else {
+          // the current path metric is worse
+          target_cell->subPathMetric = temp_path_metric;
+          target_cell->subFatherState = cur_state;
+        }
+      }
+    }
+  }
+
+  return trellis_states;
+}
+
 std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
   // generating (crc_length - 1) number of redundancy bits (crc bits)
   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
@@ -379,9 +445,27 @@ std::vector<int> ViterbiCodec::convolveCRC(const std::vector<int>& input) {
     }
   }
 
-  std::for_each(output.begin(), output.end(), [](int& element) { element %= 2; });
-  
+  std::for_each(output.begin(), output.end(),
+                [](int& element) { element %= 2; });
+
   return output;
+}
+
+std::vector<int> ViterbiCodec::deconvolveCRC(const std::vector<int>& output) {
+  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+  std::vector<int> result(output.size() - crc_bin.size() + 1, 0);
+  for (uint64_t n = 0; n < result.size(); n++) {
+    result[n] = output[n];
+    uint64_t start = std::max((int)(n - crc_bin.size() + 1), 0);
+    for (uint64_t i = start; i < n; i++) {
+      result[n] -= result[i] * crc_bin[n - i];
+    }
+    result[n] = (result[n] >= 0) ? result[n] : -result[n];
+    result[n] /= crc_bin[0];
+  }
+  std::for_each(result.begin(), result.end(),
+                [](int& element) { element %= 2; });
+  return result;
 }
 
 bool ViterbiCodec::checkCRC(std::vector<int> demodulated) {

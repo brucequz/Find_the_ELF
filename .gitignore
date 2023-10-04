@@ -10,3 +10,4 @@ Makefile
 /test/minheap_test
 /test/trellis_test
 .vscode
+*.pptx

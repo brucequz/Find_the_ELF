@@ -48,6 +48,16 @@ void output(const std::vector<std::vector<T>>& matrix, std::ofstream& outputFile
       outputFile << std::endl;
   }
 }
+
+template<typename T>
+void outputMat(const std::vector<T>& vec, std::ofstream& outputFile) {
+  outputFile << "[";
+  for (const T& ele : vec) {
+    outputFile << ele << ", ";
+  }
+  outputFile << "] with size: " << vec.size();
+}
+
 }  // namespace CodecUtils
 
 namespace BPSK {
@@ -102,8 +112,11 @@ class ViterbiCodec {
 
   std::vector<int> calculateCRC(const std::vector<int>& input);
   std::vector<int> convolveCRC(const std::vector<int>& input);
+  std::vector<int> deconvolveCRC(const std::vector<int>& output);
 
   // Function definition in listDecoder.cpp
+  std::vector<MessageInformation> ZTCCListViterbiDecoding(
+    const std::vector<double>& received_signal);
   std::vector<MessageInformation> listViterbiDecoding(
       const std::vector<double>& received_signal);
   std::vector<MessageInformation> unconstraintListViterbiDecoding(
@@ -124,7 +137,10 @@ class ViterbiCodec {
       const std::vector<int>& coded);
   std::vector<std::vector<Cell>> constructTrellis(
       const std::vector<double>& received_signal);
+  std::vector<std::vector<Cell>> constructZTCCTrellis(
+      const std::vector<double>& received_signal);
   std::vector<int> convertPathtoMessage(const std::vector<int> path);
+  std::vector<int> convertPathtoTrimmedMessage(const std::vector<int> path);
   bool checkCRC(std::vector<int> demodulated);
 };
 

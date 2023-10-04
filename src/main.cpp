@@ -97,36 +97,23 @@ int main() {
   }
 
   int mc_N = 2;
-  CodeInformation code_1;
-  // x^14+x^13+x^9+x^8+x^7+x^6+x^3+x+1 = 
-  //                        CRC: (x^3+x^2+1) 
-  //                        generator: (x^11+x^8+x^7+x^3+x^2+x+1)
-  code_1.k = 1;
-  code_1.n = 1;
-  code_1.v = 11;
-  code_1.list_size = 10;
-  code_1.crc_dec = 13;
-  code_1.crc_length = 4;
-  code_1.generator_poly = {4617};
 
-  CodeInformation code_2;
-  // x^14+x^12+x^11+x^10+x^8+x^7+x^6+x^4+1 =
-  //                         CRC: (x^2+x+1) 
-  //                         generator: x^12+x^11+x^10+x^9+x^8+x^5+x^3+x+1 
-  code_2.k = 1;
-  code_2.n = 1;
-  code_2.v = 12;
-  code_2.list_size = 10;
-  code_2.crc_dec = 7;
-  code_2.crc_length = 3;
-  code_2.generator_poly = {17453};
 
-  ViterbiCodec codec_1(code_1);
-  ViterbiCodec codec_2(code_2);
+  CodeInformation code;
+  code.k = 1;
+  code.n = 2;
+  code.v = 14;
+  code.list_size = 10;
+  code.crc_dec = -1;
+  code.crc_length = -1;
+  code.generator_poly = {56721, 61713};
+  ViterbiCodec codec(code);
+
   
   int seed = 47;
   std::mt19937 msg_gen(seed);
-  int num_bits = 15; 
+  int num_bits = 15;
+
   for (int i = 0; i < mc_N; ++i) {
     for (double snr_dB : {0.0}) {
       
@@ -137,48 +124,43 @@ int main() {
         int random_bit = msg_gen() % 2;
         msg.push_back(random_bit);
       }
-      outputFile << "Printing original message: " << std::endl;
-      CodecUtils::output(msg, outputFile);
-      outputFile << std::endl;
 
-      // add crc
-      std::vector<int> crc_msg = codec.calculateCRC(msg);
-      outputFile << crc_msg.size() << " Printing crc message: " << std::endl;
-      CodecUtils::output(crc_msg, outputFile);
+      outputFile << "Printing original message: " << std::endl;
+      CodecUtils::outputMat(msg, outputFile) << " with size: " << msg.size() << std::endl;
       outputFile << std::endl;
 
       // coding
-      std::vector<int> encoded_msg = codec.encodeZTCC(crc_msg);
-      outputFile << encoded_msg.size() << " Printing coded message: " << std::endl;
-      CodecUtils::output(encoded_msg, outputFile);
+      std::vector<int> encoded_msg = codec.encodeZTCC(msg);
+      outputFile << " Printing coded message: " << std::endl;
+      CodecUtils::outputMat(encoded_msg, outputFile) << " with size: " << encoded_msg.size() << std::endl;
       outputFile << std::endl;
 
       std::vector<int> modulated_signal = BPSK::modulate(encoded_msg);
       outputFile << "Printing modulated signal: " << std::endl;
-      CodecUtils::output(modulated_signal, outputFile);
+      CodecUtils::outputMat(modulated_signal, outputFile) << " with size: " << modulated_signal.size() << std::endl;
       outputFile << std::endl;
 
       std::vector<double> received_signal = AWGN::addNoise(modulated_signal, snr_dB);
       outputFile << "Printing received signal: " << std::endl;
-      CodecUtils::output(received_signal, outputFile);
+      CodecUtils::outputMat(received_signal, outputFile)  << " with size: " << received_signal.size() << std::endl;
       outputFile << std::endl;
 
       outputFile << "measuring euclidean distance: " << CodecUtils::euclideanDistance(received_signal, modulated_signal)<< std::endl;
 
       std::vector<int> demodulated_signal = BPSK::demodulate(received_signal);
       outputFile << "Printing demodulated signal: " << std::endl;
-      CodecUtils::output(demodulated_signal, outputFile);
+      CodecUtils::outputMat(demodulated_signal, outputFile)  << " with size: " << demodulated_signal.size() << std::endl;
       outputFile << std::endl;
 
       std::vector<int> decoded_msg = codec.softViterbiDecode(received_signal).message;
       outputFile << "Printing soft decoded message: " << std::endl;
-      CodecUtils::output(decoded_msg, outputFile);
+      CodecUtils::outputMat(decoded_msg, outputFile)  << " with size: " << decoded_msg.size() << std::endl;
       outputFile << std::endl;
 
-      std::vector<int> hard_decoded_msg = codec.viterbiDecode(demodulated_signal).message;
-      outputFile << "Printing hard decoded message: " << std::endl;
-      CodecUtils::output(hard_decoded_msg, outputFile);
-      outputFile << std::endl;
+      // std::vector<int> hard_decoded_msg = codec.viterbiDecode(demodulated_signal).message;
+      // outputFile << "Printing hard decoded message: " << std::endl;
+      // CodecUtils::outputMat(hard_decoded_msg, outputFile);
+      // outputFile << std::endl;
 
       std::vector<MessageInformation> output = codec.listViterbiDecoding(received_signal);
       outputFile << "Printing list decoder results: " << std::endl;
