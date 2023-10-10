@@ -114,7 +114,7 @@ TEST(DuoCodecTest, EncodeTest) {
   ViterbiCodec codec_3(code_3);
 
 
-  double snr = 20.0;
+  double snr = 2.0;
 
   // ZTCC Encode Test
   outputFile << "Running simulation under snr = " << snr << std::endl;
@@ -307,6 +307,8 @@ TEST(DuoCodecTest, EncodeTest) {
 
 
 // }
+
+
 
 
 int main(int argc, char** argv) {

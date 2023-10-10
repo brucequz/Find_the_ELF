@@ -117,6 +117,8 @@ class ViterbiCodec {
   // Function definition in listDecoder.cpp
   std::vector<MessageInformation> ZTCCListViterbiDecoding(
     const std::vector<double>& received_signal);
+  std::vector<MessageInformation> unconstraintZTCCDecoding(
+    const std::vector<double>& received_signal);
   std::vector<MessageInformation> listViterbiDecoding(
       const std::vector<double>& received_signal);
   std::vector<MessageInformation> unconstraintListViterbiDecoding(
