@@ -58,6 +58,21 @@ void outputMat(const std::vector<T>& vec, std::ofstream& outputFile) {
   outputFile << "] with size: " << vec.size();
 }
 
+template <typename T>
+bool areVectorsEqual(const std::vector<T>& vector1, const std::vector<T>& vector2) {
+  if (vector1.size() != vector2.size()) {
+      return false; // Vectors have different sizes, so they cannot be equal.
+  }
+
+  for (size_t i = 0; i < vector1.size(); ++i) {
+      if (vector1[i] != vector2[i]) {
+          return false; // Elements at index i are different.
+      }
+  }
+
+  return true; // All elements are equal.
+}
+
 }  // namespace CodecUtils
 
 namespace BPSK {

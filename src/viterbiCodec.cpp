@@ -213,6 +213,7 @@ MessageInformation ViterbiCodec::softViterbiDecode(
     message[stage - 1] = input;
     cur_state = father_state;
   }
+  message.resize(message.size() - v_);
   output.message = message;
   output.path = path;
   return output;
