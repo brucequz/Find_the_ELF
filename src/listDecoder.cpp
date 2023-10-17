@@ -98,7 +98,7 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintListViterbiDecoding(
     }
     prev_paths.push_back(path);
     std::vector<int> message = convertPathtoMessage(path);
-    message.resize(message.size() - v_);
+    // message.resize(message.size() - v_);
 
     // if (checkCRC(message) && path.front() == path.back() && path.back() == 0) {
     //   MessageInformation mi;
@@ -310,7 +310,7 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
       mi.path = path;
       mi.path_metric = detour.path_metric;
       // convert path to message
-      mi.message = message;
+      mi.message = full_message;
       mi.list_rank = num_path_searched;
       output.push_back(mi);
     }

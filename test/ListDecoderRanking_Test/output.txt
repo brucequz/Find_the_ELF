@@ -1,0 +1,13 @@
+printing modulated signal: [-1, -1, -1, 1, -1, 1, -1, -1, ] with size: 8
+printing noisy signal: [-0.645694, -1.14015, -1.27223, 0.495543, -1.40309, 1.2011, -0.889602, -1.79127, ] with size: 8
+printing single 2^3 states list decoding results: 
+ 0th path  (list rank = 0): [0, 4, 6, 3, 5, ] with size: 5 with pathMetric = 1.31498
+ 1th path  (list rank = 1): [0, 4, 6, 3, 1, ] with size: 5 with pathMetric = 12.0385
+ 2th path  (list rank = 2): [0, 4, 2, 1, 0, ] with size: 5 with pathMetric = 13.1905
+ 3th path  (list rank = 3): [0, 0, 4, 6, 7, ] with size: 5 with pathMetric = 13.9989
+ 4th path  (list rank = 4): [0, 4, 6, 7, 3, ] with size: 5 with pathMetric = 15.2901
+ 5th path  (list rank = 5): [0, 4, 2, 5, 6, ] with size: 5 with pathMetric = 17.5569
+ 6th path  (list rank = 6): [0, 0, 4, 6, 3, ] with size: 5 with pathMetric = 17.6056
+ 7th path  (list rank = 7): [0, 4, 6, 7, 7, ] with size: 5 with pathMetric = 18.8968
+ 8th path  (list rank = 8): [0, 0, 0, 0, 4, ] with size: 5 with pathMetric = 19.1597
+ 9th path  (list rank = 9): [0, 0, 4, 2, 1, ] with size: 5 with pathMetric = 20.8573

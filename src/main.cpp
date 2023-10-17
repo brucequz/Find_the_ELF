@@ -150,7 +150,7 @@ int main() {
   // SNR
   double SNR_dB_start = 0.0;
   double SNR_dB_end = 20.0;
-  double SNR_dB_step = 2.0;
+  double SNR_dB_step = 1.0;
   std::vector<double> SNR_dB = {};
   std::vector<double> SNR = {};
   for (double i = SNR_dB_start; i <= SNR_dB_end; i += SNR_dB_step) {
@@ -158,8 +158,8 @@ int main() {
     SNR.push_back(pow(10.0, i / 10.0));
   }
 
-  int mc_N = 2;
-  int list_size = 500;
+  int mc_N = 5000;
+  int list_size = 1e4;
 
   CodeInformation code;
   code.k = 1;
@@ -216,7 +216,7 @@ int main() {
 
     for (int trial = 0; trial < mc_N; ++trial) {
 
-      outputFile << "Trial number: " << trial << std::endl;
+      // outputFile << "Trial number: " << trial << std::endl;
 
       std::vector<int> msg;
       for (int i = 0; i < num_bits; ++i) {

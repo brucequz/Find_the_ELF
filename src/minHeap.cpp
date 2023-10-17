@@ -16,7 +16,8 @@ void MinHeap::insert(DetourNode node) {
 
 DetourNode MinHeap::pop() {
   DetourNode min_node = heap_.front();
-  heap_.pop_front();
+  heap_[0] = heap_[heap_.size() - 1];
+  heap_.pop_back();
   heapify(0);
   return min_node;
 }
@@ -27,11 +28,11 @@ void MinHeap::heapify(int index) {
 
   int min_index = index;
   if (left_index < heap_.size() &&
-      heap_[leftChildIndex(index)] < heap_[index]) {
+      heap_[leftChildIndex(index)] < heap_[min_index]) {
     min_index = left_index;
   }
   if (right_index < heap_.size() &&
-      heap_[rightChildIndex(index)] < heap_[index]) {
+      heap_[rightChildIndex(index)] < heap_[min_index]) {
     min_index = right_index;
   }
   if (min_index != index) {

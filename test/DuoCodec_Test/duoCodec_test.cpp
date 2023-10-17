@@ -83,7 +83,7 @@ TEST(DuoCodecTest, EncodeTest) {
   code_1.k = 1;
   code_1.n = 1;
   code_1.v = 11;
-  code_1.list_size = 10;
+  code_1.list_size = 100;
   code_1.crc_dec = 13;
   code_1.crc_length = 4;
   code_1.generator_poly = {4617};
@@ -95,7 +95,7 @@ TEST(DuoCodecTest, EncodeTest) {
   code_2.k = 1;
   code_2.n = 1;
   code_2.v = 12;
-  code_2.list_size = 10;
+  code_2.list_size = 100;
   code_2.crc_dec = 7;
   code_2.crc_length = 3;
   code_2.generator_poly = {17453};
@@ -107,7 +107,7 @@ TEST(DuoCodecTest, EncodeTest) {
   code_3.k = 1;
   code_3.n = 2;
   code_3.v = 14;
-  code_3.list_size = 10;
+  code_3.list_size = 100;
   code_3.crc_dec = -1;
   code_3.crc_length = -1;
   code_3.generator_poly = {56721, 61713};
@@ -241,7 +241,7 @@ TEST(DuoCodecTest, EncodeTest) {
   std::vector<MessageInformation> output_1 = codec_1.ZTCCListViterbiDecoding(received_codec_1);
   std::vector<MessageInformation> output_2 = codec_2.ZTCCListViterbiDecoding(received_codec_2);
 
-  std::vector<MessageInformation> output_3 = codec_3.unconstraintListViterbiDecoding(received_signal_14);
+  std::vector<MessageInformation> output_3 = codec_3.unconstraintZTCCDecoding(received_signal_14);
 
   outputFile << std::endl;
 
