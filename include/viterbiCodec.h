@@ -89,33 +89,33 @@ namespace CRC {
   std::vector<int> decToBin(int input, int bit_number);
 }  // namespace CRC
 
-struct Cell {
-  bool init = false;
-  double pathMetric = INT_MAX;
-  int fatherState = -1;
-  double subPathMetric = INT_MAX;
-  int subFatherState = -1;
-};
+// struct Cell {
+//   bool init = false;
+//   double pathMetric = INT_MAX;
+//   int fatherState = -1;
+//   double subPathMetric = INT_MAX;
+//   int subFatherState = -1;
+// };
 
-struct MessageInformation {
-  MessageInformation(){};
+// struct MessageInformation {
+//   MessageInformation(){};
 
-  std::vector<int> message;
-  std::vector<int> path;
-  std::pair<int, int> begin_end_states;
-  double path_metric;
-  int list_rank;
-};
+//   std::vector<int> message;
+//   std::vector<int> path;
+//   std::pair<int, int> begin_end_states;
+//   double path_metric;
+//   int list_rank;
+// };
 
-struct CodeInformation {
-  int k;  // input length
-  int n;  // output length
-  int v;  // memory elements
-  int list_size = 1; // list decoder list size
-  int crc_dec;
-  int crc_length;
-  std::vector<int> generator_poly;
-};
+// struct CodeInformation {
+//   int k;  // input length
+//   int n;  // output length
+//   int v;  // memory elements
+//   int list_size = 1; // list decoder list size
+//   int crc_dec;
+//   int crc_length;
+//   std::vector<int> generator_poly;
+// };
 
 class ViterbiCodec {
  public:

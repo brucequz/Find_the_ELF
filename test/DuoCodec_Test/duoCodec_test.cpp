@@ -83,7 +83,7 @@ TEST(DuoCodecTest, EncodeTest) {
   code_1.k = 1;
   code_1.n = 1;
   code_1.v = 11;
-  code_1.list_size = 100;
+  code_1.list_size = 10;
   code_1.crc_dec = 13;
   code_1.crc_length = 4;
   code_1.generator_poly = {4617};
@@ -95,7 +95,7 @@ TEST(DuoCodecTest, EncodeTest) {
   code_2.k = 1;
   code_2.n = 1;
   code_2.v = 12;
-  code_2.list_size = 100;
+  code_2.list_size = 10;
   code_2.crc_dec = 7;
   code_2.crc_length = 3;
   code_2.generator_poly = {17453};

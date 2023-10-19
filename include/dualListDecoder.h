@@ -4,9 +4,41 @@
 #include <map>
 #include <queue>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 #include "minHeap.h"
 
+// struct Cell;
+// struct MessageInformation;
+// struct CodeInformation;
+struct Cell {
+  bool init = false;
+  double pathMetric = INT_MAX;
+  int fatherState = -1;
+  double subPathMetric = INT_MAX;
+  int subFatherState = -1;
+};
+
+struct MessageInformation {
+  MessageInformation(){};
+
+  std::vector<int> message;
+  std::vector<int> path;
+  std::pair<int, int> begin_end_states;
+  double path_metric;
+  int list_rank;
+};
+
+struct CodeInformation {
+  int k;              // input length
+  int n;              // output length
+  int v;              // memory elements
+  int list_size = 1;  // list decoder list size
+  int crc_dec;
+  int crc_length;
+  std::vector<int> generator_poly;
+};
 namespace dualdecoderutils {
 
 std::vector<int> convertIntToBits(int integer, const int& length);
@@ -94,116 +126,54 @@ struct CompareCombinedMetric {
 // queue of DLDInfo sorted in ascending order of combined_metric
 std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric>
 combine_maps(const std::vector<MessageInformation>& vec1,
-             const std::vector<MessageInformation>& vec2) {
-  std::map<std::vector<int>, MessageInformation> map1;
-  std::map<std::vector<int>, MessageInformation> map2;
-
-  // Populate map1 with elements from vec1
-  for (const MessageInformation& msg : vec1) {
-    map1[msg.message] = msg;
-  }
-
-  // Populate map2 with elements from vec2
-  for (const MessageInformation& msg : vec2) {
-    map2[msg.message] = msg;
-  }
-
-  std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric>
-      result_queue;
-
-  // Iterate through the keys in map1
-  for (const auto& kvp : map1) {
-    // Try to find the same key in map2
-    auto it = map2.find(kvp.first);
-    if (it != map2.end()) {
-      // If found, calculate the sum of path_metrics and record list ranks
-      double combined_metric = kvp.second.path_metric + it->second.path_metric;
-      DLDInfo dld_info;
-      dld_info.combined_metric = combined_metric;
-      dld_info.message = kvp.first;
-      dld_info.list_ranks = {kvp.second.list_rank, it->second.list_rank};
-      result_queue.push(dld_info);
-    }
-  }
-
-  return result_queue;
-}
-
+             const std::vector<MessageInformation>& vec2);
 }  // namespace dualdecoderutils
 
-namespace bpsk {
+// namespace bpsk {
 
-std::vector<int> modulate(std::vector<int> encoded_msg) {
-  std::vector<int> modulated_signal(encoded_msg.size());
-  for (int i = 0; i < encoded_msg.size(); ++i) {
-    modulated_signal[i] = -2 * encoded_msg[i] + 1;
-  }
-  return modulated_signal;
-}
+// std::vector<int> modulate(std::vector<int> encoded_msg) {
+//   std::vector<int> modulated_signal(encoded_msg.size());
+//   for (int i = 0; i < encoded_msg.size(); ++i) {
+//     modulated_signal[i] = -2 * encoded_msg[i] + 1;
+//   }
+//   return modulated_signal;
+// }
 
-std::vector<int> demodulate(std::vector<double> received_signal) {
-  std::vector<int> hard_decision_demodulated_signal(received_signal.size());
-  for (int i = 0; i < received_signal.size(); ++i) {
-    hard_decision_demodulated_signal[i] = (received_signal[i] < 0.0);
-  }
-  return hard_decision_demodulated_signal;
-}
+// std::vector<int> demodulate(std::vector<double> received_signal) {
+//   std::vector<int> hard_decision_demodulated_signal(received_signal.size());
+//   for (int i = 0; i < received_signal.size(); ++i) {
+//     hard_decision_demodulated_signal[i] = (received_signal[i] < 0.0);
+//   }
+//   return hard_decision_demodulated_signal;
+// }
 
-}  // namespace bpsk
+// }  // namespace bpsk
 
-namespace crc {
+// namespace crc {
 
-int binSum(const int& x, const int& y) { return (x + y) % 2; }
+// int binSum(const int& x, const int& y) { return (x + y) % 2; }
 
-std::vector<int> decToBin(int input, int bit_number) {
-  std::vector<int> output(bit_number, 0);
-  for (int i = bit_number - 1; i >= 0; --i) {
-    output[bit_number - 1 - i] = ((input >> i) & 1);
-  }
-  return output;
-}
+// std::vector<int> decToBin(int input, int bit_number) {
+//   std::vector<int> output(bit_number, 0);
+//   for (int i = bit_number - 1; i >= 0; --i) {
+//     output[bit_number - 1 - i] = ((input >> i) & 1);
+//   }
+//   return output;
+// }
 
-}  // namespace crc
-
-struct Cell {
-  bool init = false;
-  double pathMetric = INT_MAX;
-  int fatherState = -1;
-  double subPathMetric = INT_MAX;
-  int subFatherState = -1;
-};
-
-struct MessageInformation {
-  MessageInformation(){};
-
-  std::vector<int> message;
-  std::vector<int> path;
-  std::pair<int, int> begin_end_states;
-  double path_metric;
-  int list_rank;
-};
-
-struct CodeInformation {
-  int k;              // input length
-  int n;              // output length
-  int v;              // memory elements
-  int list_size = 1;  // list decoder list size
-  int crc_dec;
-  int crc_length;
-  std::vector<int> generator_poly;
-};
+// }  // namespace crc
 
 class FeedForwardTrellis;
 
 class DualListDecoder {
  public:
   DualListDecoder(std::vector<CodeInformation> code_info);
-  ~DualListDecoder(){};
+  ~DualListDecoder();
 
   std::vector<MessageInformation> adaptiveDecode(
       std::vector<double> received_signal);
-  MessageInformation traceBack(MinHeap* heap, CodeInformation code, FeedForwardTrellis* trellis_ptr,
-                             std::vector<std::vector<Cell>> trellis_states, std::vector<std::vector<int>>& prev_paths,
+  MessageInformation traceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
+                             const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
                              int& num_path_searched, int num_total_stages);
 
  private:
@@ -219,7 +189,7 @@ class DualListDecoder {
   std::vector<int> convertPathtoTrimmedMessage(
     const std::vector<int> path, CodeInformation code, FeedForwardTrellis* trellis_ptr);
   std::vector<int> deconvolveCRC(const std::vector<int>& output, CodeInformation code);
-  bool DualListDecoder::checkCRC(std::vector<int> demodulated, CodeInformation code);
+  bool checkCRC(std::vector<int> demodulated, CodeInformation code);
 };
 
 #endif

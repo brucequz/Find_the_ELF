@@ -310,7 +310,7 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
       mi.path = path;
       mi.path_metric = detour.path_metric;
       // convert path to message
-      mi.message = full_message;
+      mi.message = message;
       mi.list_rank = num_path_searched;
       output.push_back(mi);
     }
