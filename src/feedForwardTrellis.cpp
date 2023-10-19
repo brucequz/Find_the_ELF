@@ -60,6 +60,31 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
   computeOutput();
 }
 
+FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
+  k_ = code.k;
+  n_ = code.n;
+  numInputSymbols_ = std::pow(2, code.k);
+  numOutputSymbols_ = std::pow(2, code.n);
+  numStates_ = std::pow(2, code.v);
+
+  polynomials_ = code.generator_poly;
+  if (polynomials_.size() != n_) {
+    std::cerr << "INVALID POLYNOMIAL: mismatch between number of output symbols and polynomials" << std::endl;
+  }
+  int min_poly = 0;
+  int max_poly = decToOct(static_cast<int>(std::pow(2.0, code.v+1)));
+  for (int poly_oct : polynomials_) {
+    if (poly_oct <= min_poly || poly_oct >= max_poly) {
+      std::cerr << "INVALID POLYNOMIAL: too large or small" << std::endl;
+    }
+  }
+  nextStates_.resize(numStates_, std::vector<int>(numInputSymbols_));
+  output_.resize(numStates_, std::vector<int>(numInputSymbols_));
+
+  computeNextStates();
+  computeOutput();
+}
+
 std::vector<int> FeedForwardTrellis::encode(const std::vector<int>& message) {
   // encode assuming zero states
   std::vector<int> encoded(message.size() * (n_ / k_), 0);

@@ -6,6 +6,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "dualListDecoder.h"
+
 class FeedForwardTrellis;
 
 namespace CodecUtils {

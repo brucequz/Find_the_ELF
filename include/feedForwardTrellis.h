@@ -4,10 +4,12 @@
 
 #include <vector>
 #include "viterbiCodec.h"
+#include "dualListDecoder.h"
 
 
 struct FeedForwardTrellis{
   FeedForwardTrellis(int k, int n, int v, std::vector<int> poly);
+  FeedForwardTrellis(CodeInformation code);
   // ~FeedForwardTrellis(); 
 
   std::vector<int> encode(const std::vector<int>& message);
@@ -26,6 +28,7 @@ struct FeedForwardTrellis{
     void computeNextStates();
     void computeOutput();
     friend class ViterbiCodec;
+    friend class DualListDecoder;
 };
 
 #endif

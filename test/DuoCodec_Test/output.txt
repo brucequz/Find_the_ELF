@@ -24,18 +24,18 @@ Decoding begins -----------------
 
 Printing Duo list decoder results: 
  0th message  (list rank = 0): [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 18.6076     (list rank = 0): [1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 18.0162
- 1th message  (list rank = 12): [0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 29.5487     (list rank = 9): [1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 22.3222
- 2th message  (list rank = 17): [1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.2439     (list rank = 13): [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 23.5321
- 3th message  (list rank = 26): [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.5422     (list rank = 14): [0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 23.8941
- 4th message  (list rank = 28): [1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 29.9355     (list rank = 17): [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 25.4657
- 5th message  (list rank = 34): [1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.6541     (list rank = 20): [0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 24.4581
- 6th message  (list rank = 38): [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 32.0921     (list rank = 23): [1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 25.4867
- 7th message  (list rank = 48): [0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.8148     (list rank = 29): [1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 25.7061
- 8th message  (list rank = 56): [1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 33.3119     (list rank = 39): [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 26.8694
- 9th message  (list rank = 66): [0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 34.6713     (list rank = 51): [0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 24.8059
- 10th message  (list rank = 85): [0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 34.0966     (list rank = 56): [0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 27.0993
- 11th message  (list rank = 86): [1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 35.9724     (list rank = 62): [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 27.2094
- 12th message  (list rank = 94): [0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 34.7434     (list rank = 65): [0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 28.5157
+ 1th message  (list rank = 15): [0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 29.5487     (list rank = 9): [1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 22.3222
+ 2th message  (list rank = 19): [1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 29.9355     (list rank = 12): [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 23.5321
+ 3th message  (list rank = 25): [1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.2439     (list rank = 14): [0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 23.8941
+ 4th message  (list rank = 30): [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.5422     (list rank = 18): [0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 24.4581
+ 5th message  (list rank = 32): [1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.6541     (list rank = 23): [0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 24.8059
+ 6th message  (list rank = 35): [0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 31.8148     (list rank = 27): [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 25.4657
+ 7th message  (list rank = 40): [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 32.0921     (list rank = 28): [1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 25.4867
+ 8th message  (list rank = 65): [1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 33.3119     (list rank = 32): [1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 25.7061
+ 9th message  (list rank = 75): [1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 33.9658     (list rank = 60): [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 26.8694
+ 10th message  (list rank = 82): [0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 34.0966     (list rank = 65): [1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 27.0832
+ 11th message  (list rank = 96): [0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 34.6713     (list rank = 67): [0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 27.0993
+ 12th message  (list rank = 97): [0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 34.7434     (list rank = 70): [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ] with size: 29 with pathMetric = 27.2094
 
 printing single 2^14 states list decoding results: 
  0th message  (list rank = 0): [1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 36.6239
@@ -51,90 +51,90 @@ printing single 2^14 states list decoding results:
  10th message  (list rank = 10): [1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 82.2
  11th message  (list rank = 11): [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 82.358
  12th message  (list rank = 12): [1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 82.4777
- 13th message  (list rank = 13): [1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 85.5721
- 14th message  (list rank = 14): [0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 84.1257
- 15th message  (list rank = 15): [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 84.2379
- 16th message  (list rank = 16): [1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, ] with size: 15 with pathMetric = 84.5074
- 17th message  (list rank = 17): [0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, ] with size: 15 with pathMetric = 85.2377
- 18th message  (list rank = 18): [0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, ] with size: 15 with pathMetric = 85.5899
- 19th message  (list rank = 19): [1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 85.5673
- 20th message  (list rank = 20): [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 85.3278
- 21th message  (list rank = 21): [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 85.8783
- 22th message  (list rank = 22): [1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 86.7093
- 23th message  (list rank = 23): [1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 86.8036
- 24th message  (list rank = 24): [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 87.6252
- 25th message  (list rank = 25): [1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 88.018
- 26th message  (list rank = 26): [1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, ] with size: 15 with pathMetric = 88.1678
- 27th message  (list rank = 27): [0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.5459
- 28th message  (list rank = 28): [1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 89.9056
- 29th message  (list rank = 29): [1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 90.9483
- 30th message  (list rank = 30): [0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 85.5765
- 31th message  (list rank = 31): [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.0464
+ 13th message  (list rank = 13): [0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 84.1257
+ 14th message  (list rank = 14): [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 84.2379
+ 15th message  (list rank = 15): [1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, ] with size: 15 with pathMetric = 84.5074
+ 16th message  (list rank = 16): [0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, ] with size: 15 with pathMetric = 85.2377
+ 17th message  (list rank = 17): [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 85.3278
+ 18th message  (list rank = 18): [1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 85.5673
+ 19th message  (list rank = 19): [1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 85.5721
+ 20th message  (list rank = 20): [0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 85.5765
+ 21th message  (list rank = 21): [0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, ] with size: 15 with pathMetric = 85.5899
+ 22th message  (list rank = 22): [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 85.8783
+ 23th message  (list rank = 23): [1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 86.2581
+ 24th message  (list rank = 24): [1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 86.7093
+ 25th message  (list rank = 25): [1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 86.8036
+ 26th message  (list rank = 26): [1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 86.8547
+ 27th message  (list rank = 27): [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 87.6252
+ 28th message  (list rank = 28): [1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 88.018
+ 29th message  (list rank = 29): [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.0464
+ 30th message  (list rank = 30): [0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, ] with size: 15 with pathMetric = 88.1054
+ 31th message  (list rank = 31): [1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, ] with size: 15 with pathMetric = 88.1678
  32th message  (list rank = 32): [1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.1936
- 33th message  (list rank = 33): [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 88.625
- 34th message  (list rank = 34): [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 92.9692
- 35th message  (list rank = 35): [1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 88.3347
- 36th message  (list rank = 36): [0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, ] with size: 15 with pathMetric = 88.1054
- 37th message  (list rank = 37): [1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, ] with size: 15 with pathMetric = 88.3451
- 38th message  (list rank = 38): [1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 88.6941
- 39th message  (list rank = 39): [0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 89.4518
- 40th message  (list rank = 40): [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 89.6918
- 41th message  (list rank = 41): [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 89.4732
- 42th message  (list rank = 42): [1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 90.1112
- 43th message  (list rank = 43): [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.6635
- 44th message  (list rank = 44): [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, ] with size: 15 with pathMetric = 90.8856
- 45th message  (list rank = 45): [1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 90.9428
- 46th message  (list rank = 46): [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.2347
- 47th message  (list rank = 47): [1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, ] with size: 15 with pathMetric = 89.6667
- 48th message  (list rank = 48): [1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 91.193
- 49th message  (list rank = 49): [1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 91.9918
- 50th message  (list rank = 50): [1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 86.2581
- 51th message  (list rank = 51): [1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 86.8547
- 52th message  (list rank = 52): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 89.9767
- 53th message  (list rank = 53): [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, ] with size: 15 with pathMetric = 90.5142
+ 33th message  (list rank = 33): [1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 88.3347
+ 34th message  (list rank = 34): [1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, ] with size: 15 with pathMetric = 88.3451
+ 35th message  (list rank = 35): [0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 88.4674
+ 36th message  (list rank = 36): [0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.5459
+ 37th message  (list rank = 37): [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 88.625
+ 38th message  (list rank = 38): [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 88.6635
+ 39th message  (list rank = 39): [1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 88.6941
+ 40th message  (list rank = 40): [0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 89.3758
+ 41th message  (list rank = 41): [0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 89.4518
+ 42th message  (list rank = 42): [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 89.4732
+ 43th message  (list rank = 43): [1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, ] with size: 15 with pathMetric = 89.4761
+ 44th message  (list rank = 44): [1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, ] with size: 15 with pathMetric = 89.6667
+ 45th message  (list rank = 45): [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 89.6733
+ 46th message  (list rank = 46): [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 89.6918
+ 47th message  (list rank = 47): [1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 89.7166
+ 48th message  (list rank = 48): [1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 89.9056
+ 49th message  (list rank = 49): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 89.9767
+ 50th message  (list rank = 50): [1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, ] with size: 15 with pathMetric = 90.0016
+ 51th message  (list rank = 51): [1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 90.1112
+ 52th message  (list rank = 52): [1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.1639
+ 53th message  (list rank = 53): [1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 90.2074
  54th message  (list rank = 54): [1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.3027
- 55th message  (list rank = 55): [1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 93.0946
- 56th message  (list rank = 56): [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, ] with size: 15 with pathMetric = 90.4305
- 57th message  (list rank = 57): [1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, ] with size: 15 with pathMetric = 90.0016
- 58th message  (list rank = 58): [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 92.4934
- 59th message  (list rank = 59): [0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 90.6698
- 60th message  (list rank = 60): [1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 90.803
- 61th message  (list rank = 61): [0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.8251
- 62th message  (list rank = 62): [0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 88.4674
- 63th message  (list rank = 63): [1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.1639
- 64th message  (list rank = 64): [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 89.6733
- 65th message  (list rank = 65): [1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 89.7166
- 66th message  (list rank = 66): [1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 90.2074
- 67th message  (list rank = 67): [1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.7562
- 68th message  (list rank = 68): [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.8262
- 69th message  (list rank = 69): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, ] with size: 15 with pathMetric = 93.1762
- 70th message  (list rank = 70): [0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.7188
- 71th message  (list rank = 71): [0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 89.3758
- 72th message  (list rank = 72): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.6103
- 73th message  (list rank = 73): [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 91.3863
- 74th message  (list rank = 74): [0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.0881
- 75th message  (list rank = 75): [0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 92.6584
- 76th message  (list rank = 76): [1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 92.9637
- 77th message  (list rank = 77): [1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 92.4079
- 78th message  (list rank = 78): [1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 93.815
- 79th message  (list rank = 79): [1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 93.2149
- 80th message  (list rank = 80): [1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 93.9495
- 81th message  (list rank = 81): [1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 94.7803
- 82th message  (list rank = 82): [1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 94.2199
- 83th message  (list rank = 83): [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, ] with size: 15 with pathMetric = 94.9334
- 84th message  (list rank = 84): [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 93.1464
- 85th message  (list rank = 85): [1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, ] with size: 15 with pathMetric = 93.4147
- 86th message  (list rank = 86): [1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, ] with size: 15 with pathMetric = 94.0863
- 87th message  (list rank = 87): [0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 93.529
- 88th message  (list rank = 88): [1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 94.4257
- 89th message  (list rank = 89): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, ] with size: 15 with pathMetric = 94.4659
- 90th message  (list rank = 90): [1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 95.1233
- 91th message  (list rank = 91): [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 96.955
- 92th message  (list rank = 92): [1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 97.0487
- 93th message  (list rank = 93): [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 99.0028
- 94th message  (list rank = 94): [0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 97.8393
- 95th message  (list rank = 95): [0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 96.1508
- 96th message  (list rank = 96): [0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, ] with size: 15 with pathMetric = 93.8178
- 97th message  (list rank = 97): [1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, ] with size: 15 with pathMetric = 89.4761
- 98th message  (list rank = 98): [0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 93.8967
- 99th message  (list rank = 99): [0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, ] with size: 15 with pathMetric = 94.6071
+ 55th message  (list rank = 55): [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, ] with size: 15 with pathMetric = 90.4305
+ 56th message  (list rank = 56): [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, ] with size: 15 with pathMetric = 90.5142
+ 57th message  (list rank = 57): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.6103
+ 58th message  (list rank = 58): [0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 90.6698
+ 59th message  (list rank = 59): [0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.7188
+ 60th message  (list rank = 60): [1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.7396
+ 61th message  (list rank = 61): [1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.7562
+ 62th message  (list rank = 62): [1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 90.803
+ 63th message  (list rank = 63): [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.8262
+ 64th message  (list rank = 64): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 90.8583
+ 65th message  (list rank = 65): [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, ] with size: 15 with pathMetric = 90.8856
+ 66th message  (list rank = 66): [1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, ] with size: 15 with pathMetric = 90.9041
+ 67th message  (list rank = 67): [1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 90.9428
+ 68th message  (list rank = 68): [1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, ] with size: 15 with pathMetric = 90.9483
+ 69th message  (list rank = 69): [0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 91.1114
+ 70th message  (list rank = 70): [1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 91.193
+ 71th message  (list rank = 71): [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 91.3863
+ 72th message  (list rank = 72): [1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 91.9918
+ 73th message  (list rank = 73): [0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.0881
+ 74th message  (list rank = 74): [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.2347
+ 75th message  (list rank = 75): [1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 92.4079
+ 76th message  (list rank = 76): [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 92.4934
+ 77th message  (list rank = 77): [0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, ] with size: 15 with pathMetric = 92.6584
+ 78th message  (list rank = 78): [1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, ] with size: 15 with pathMetric = 92.7642
+ 79th message  (list rank = 79): [1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.7811
+ 80th message  (list rank = 80): [0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.8251
+ 81th message  (list rank = 81): [1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 92.8877
+ 82th message  (list rank = 82): [1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 92.9637
+ 83th message  (list rank = 83): [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 92.9692
+ 84th message  (list rank = 84): [1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 93.0946
+ 85th message  (list rank = 85): [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, ] with size: 15 with pathMetric = 93.1464
+ 86th message  (list rank = 86): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, ] with size: 15 with pathMetric = 93.1762
+ 87th message  (list rank = 87): [1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 93.2149
+ 88th message  (list rank = 88): [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, ] with size: 15 with pathMetric = 93.3921
+ 89th message  (list rank = 89): [1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, ] with size: 15 with pathMetric = 93.4147
+ 90th message  (list rank = 90): [0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 93.4388
+ 91th message  (list rank = 91): [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, ] with size: 15 with pathMetric = 93.4735
+ 92th message  (list rank = 92): [0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, ] with size: 15 with pathMetric = 93.529
+ 93th message  (list rank = 93): [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, ] with size: 15 with pathMetric = 93.6272
+ 94th message  (list rank = 94): [0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, ] with size: 15 with pathMetric = 93.7417
+ 95th message  (list rank = 95): [1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 93.7862
+ 96th message  (list rank = 96): [0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, ] with size: 15 with pathMetric = 93.7914
+ 97th message  (list rank = 97): [1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, ] with size: 15 with pathMetric = 93.815
+ 98th message  (list rank = 98): [0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, ] with size: 15 with pathMetric = 93.8178
+ 99th message  (list rank = 99): [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, ] with size: 15 with pathMetric = 93.8342
