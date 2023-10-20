@@ -88,13 +88,13 @@ TEST(DuallistDecoder, SingleDecodeTest) {
   code_3.k = 1;
   code_3.n = 2;
   code_3.v = 14;
-  code_3.list_size = 100;
+  code_3.list_size = 1;
   code_3.crc_dec = -1;
   code_3.crc_length = -1;
   code_3.generator_poly = {56721, 61713};
   ViterbiCodec codec_3(code_3);
 
-  double snr = 2.0;
+  double snr = -1.0;
 
   // ZTCC Encode Test
   outputFile << "Running simulation under snr = " << snr << std::endl;
@@ -164,12 +164,15 @@ TEST(DuallistDecoder, SingleDecodeTest) {
   outputFile << std::endl;
 
   DualListDecoder dld({code_1, code_2});
-  std::vector<MessageInformation> output_dld = dld.adaptiveDecode(received_signal_14);
+  std::vector<std::vector<MessageInformation>> output_dld = dld.adaptiveDecode(received_signal_14);
   outputFile << "printing DLD list decoding results: " << std::endl;
-  for (int i = 0; i < output_dld.size(); ++i) {
-    outputFile << " " << i << "th message  (" << "list rank = " << output_dld[i].list_rank << "): ";
-    outputMat(output_dld[i].message, outputFile); 
-    outputFile << " with pathMetric = " << output_dld[i].path_metric;
+  for (int i = 0; i < output_dld[0].size(); ++i) {
+    outputFile << " " << i << "th message  (" << "list rank = " << output_dld[0][i].list_rank << "): ";
+    outputMat(output_dld[0][i].message, outputFile); 
+    outputFile << " with pathMetric = " << output_dld[0][i].path_metric;
+    outputFile <<  "     " << "(list rank = " << output_dld[1][i].list_rank << "): ";
+    outputMat(output_dld[1][i].message, outputFile); 
+    outputFile << " with pathMetric = " << output_dld[1][i].path_metric;
     outputFile << std::endl;
   }
 
@@ -182,8 +185,6 @@ TEST(DuallistDecoder, SingleDecodeTest) {
     outputFile << " with pathMetric = " << output_3[i].path_metric;
     outputFile << std::endl;
   }
-
-
 
 
   outputFile.close();

@@ -1,11 +1,32 @@
 #include "../include/dualListDecoder.h"
 
 #include <cmath>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 #include "../include/feedForwardTrellis.h"
+#include "../include/dualListMap.h"
 
+namespace {
+
+template <typename T>
+void print(const std::vector<T>& vec) {
+  for (const T& element : vec) {
+      std::cout << element << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void print(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+      for (const T& element : row) {
+          std::cout << element << " ";
+      }
+      std::cout << std::endl;
+  }
+}
+}
 namespace dualdecoderutils {
 std::vector<int> convertIntToBits(int integer, const int& length) {
   if (integer < 0) {
@@ -98,7 +119,7 @@ DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info)
   CodeInformation code_list_1 = code_info[1];
 
   FeedForwardTrellis* trellis_ptr_0 = new FeedForwardTrellis(code_list_0);
-  FeedForwardTrellis* trellis_ptr_1 = new FeedForwardTrellis(code_list_0);
+  FeedForwardTrellis* trellis_ptr_1 = new FeedForwardTrellis(code_list_1);
   trellis_ptrs_.push_back(trellis_ptr_0);
   trellis_ptrs_.push_back(trellis_ptr_1);
 
@@ -115,7 +136,7 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
-std::vector<MessageInformation> DualListDecoder::adaptiveDecode(
+std::vector<std::vector<MessageInformation>> DualListDecoder::adaptiveDecode(
     std::vector<double> received_signal) {
   /*
   This function adaptively expand the list size until the smallest future match
@@ -160,8 +181,14 @@ std::vector<MessageInformation> DualListDecoder::adaptiveDecode(
         end if
       end if
   */
+  std::vector<std::vector<MessageInformation>> output;
+  std::vector<MessageInformation> output_0;
+  std::vector<MessageInformation> output_1;
+  DualListMap mp;
+  double best_current_match = INT_MAX;
+  double decoder_threshold_0 = INT_MAX;
+  double decoder_threshold_1 = INT_MAX;
 
-  std::vector<MessageInformation> output;
 
   // divide the received signal
   std::vector<double> received_codec_2;
@@ -193,6 +220,7 @@ std::vector<MessageInformation> DualListDecoder::adaptiveDecode(
   node_0.path_metric = trellis_0[0][num_total_stages_0 - 1].pathMetric;
   heap_list_0->insert(node_0);
   int num_path_searched_0 = 0;
+  bool decoder_0_stop = false;
 
   // list decoder 1
   std::vector<std::vector<Cell>> trellis_1 =
@@ -206,15 +234,42 @@ std::vector<MessageInformation> DualListDecoder::adaptiveDecode(
   node_1.path_metric = trellis_1[0][num_total_stages_1 - 1].pathMetric;
   heap_list_1->insert(node_1);
   int num_path_searched_1 = 0;
+  bool decoder_1_stop = false;
 
   while (!best_combined_found) {
     // list decoder 0 traceback
-    MessageInformation mi = traceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0, prev_paths_list_0, num_path_searched_0, num_total_stages_0);
-    output.push_back(mi);
-    if (output.size() == 10) {
+    if (!decoder_0_stop) {
+      MessageInformation mi_0 = traceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0, prev_paths_list_0, num_path_searched_0, num_total_stages_0);
+      mi_0.decoder_index = 0;
+      if (mi_0.path_metric >= decoder_threshold_0) {
+        decoder_0_stop = true;
+      }
+      mp.insert(mi_0);
+      output_0.push_back(mi_0);
+    }
+    // list decoder 1 traceback
+    if (!decoder_1_stop) {
+      MessageInformation mi_1 = traceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1, prev_paths_list_1, num_path_searched_1, num_total_stages_1);
+      mi_1.decoder_index = 1;
+      if (mi_1.path_metric >= decoder_threshold_1) {
+        decoder_1_stop = true;
+      }
+      mp.insert(mi_1);
+      output_1.push_back(mi_1);
+    }
+
+    if (mp.queue_size() != 0) {
+      DLDInfo agreed_message = mp.pop_queue();
+      best_current_match = agreed_message.combined_metric;
+      decoder_threshold_0 = best_current_match - node_1.path_metric;
+      decoder_threshold_1 = best_current_match - node_0.path_metric;
       best_combined_found = true;
     }
   }
+
+  output.push_back(output_0);
+  output.push_back(output_1);
+
   return output;
 }
 

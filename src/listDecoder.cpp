@@ -2,6 +2,28 @@
 #include "../include/minHeap.h"
 #include "../include/viterbiCodec.h"
 
+
+namespace {
+
+template <typename T>
+void print(const std::vector<T>& vec) {
+  for (const T& element : vec) {
+      std::cout << element << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void print(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+      for (const T& element : row) {
+          std::cout << element << " ";
+      }
+      std::cout << std::endl;
+  }
+}
+}
+
 std::vector<int> ViterbiCodec::convertPathtoMessage(
     const std::vector<int> path) {
   std::vector<int> message;
@@ -231,7 +253,7 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
   Decoding paths that only end in the zero-th state. 
   
   */
-  
+
   std::vector<MessageInformation> output;
   std::vector<std::vector<Cell>> trellis_states =
       constructZTCCTrellis(received_signal);

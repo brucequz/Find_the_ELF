@@ -22,7 +22,7 @@ struct Cell {
 
 struct MessageInformation {
   MessageInformation(){};
-
+  int decoder_index = -1;
   std::vector<int> message;
   std::vector<int> path;
   std::pair<int, int> begin_end_states;
@@ -170,7 +170,7 @@ class DualListDecoder {
   DualListDecoder(std::vector<CodeInformation> code_info);
   ~DualListDecoder();
 
-  std::vector<MessageInformation> adaptiveDecode(
+  std::vector<std::vector<MessageInformation>> adaptiveDecode(
       std::vector<double> received_signal);
   MessageInformation traceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,

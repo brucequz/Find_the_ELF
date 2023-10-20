@@ -7,6 +7,26 @@
 #include "../include/feedForwardTrellis.h"
 #include "../include/minHeap.h"
 
+namespace {
+
+template <typename T>
+void print(const std::vector<T>& vec) {
+  for (const T& element : vec) {
+      std::cout << element << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void print(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+      for (const T& element : row) {
+          std::cout << element << " ";
+      }
+      std::cout << std::endl;
+  }
+}
+}
 namespace CodecUtils {
 
 std::vector<int> convertIntToBits(int integer, const int& length) {
@@ -357,7 +377,14 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructZTCCTrellis(
   int signal_length = received_signal.size();
   int number_of_stages = signal_length / n_;
 
+  // std::cout << "For standard list decoders: ";
+  // std::cout << k_ << ", " << n_ << ", " << v_ << ", " 
+  // << crc_dec_ << ", " << crc_length_ << ", " << list_size_ << ". ";
+  // std::cout << std::endl;
+
   trellis_states.resize(numStates_, std::vector<Cell>(number_of_stages + 1));
+  // std::cout << "standard list decoder size: " << trellis_states.size()
+  // << ", " << trellis_states[0].size() << std::endl;
   trellis_states[0][0].init = true;
   trellis_states[0][0].pathMetric = 0.0;
 
