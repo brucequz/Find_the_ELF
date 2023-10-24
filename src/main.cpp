@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -6,13 +7,13 @@
 #include <random>
 
 #include "../include/viterbiCodec.h"
-#include "mat.h"
+#include "../include/dualListDecoder.h"
 
 namespace AWGN {
 
 std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
   std::random_device rd;
-  std::mt19937 noise_gen(47);  // 82
+  std::mt19937 noise_gen(rd());  // 82
   std::vector<double> noisyMsg;
 
   /*
@@ -33,124 +34,67 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 
 }  // namespace AWGN
 
-namespace MatlabUtils {
+// namespace MatlabUtils {
 
-template <typename T>
-void writeToMat(const std::vector<std::vector<T>>& data, const char* filePath,
-                const char* varName) {
-  // Open MAT file for writing
-  MATFile* pmat = matOpen(filePath, "w");
-  if (pmat == NULL) {
-    std::cerr << "Error creating MAT file." << std::endl;
-    return;
-  }
+// template <typename T>
+// void writeToMat(const std::vector<std::vector<T>>& data, const char* filePath,
+//                 const char* varName) {
+//   // Open MAT file for writing
+//   MATFile* pmat = matOpen(filePath, "w");
+//   if (pmat == NULL) {
+//     std::cerr << "Error creating MAT file." << std::endl;
+//     return;
+//   }
 
-  // Get the number of rows and columns in the data
-  mwSize rows = static_cast<mwSize>(data.size());
-  mwSize cols = (rows > 0) ? static_cast<mwSize>(data[0].size()) : 0;
+//   // Get the number of rows and columns in the data
+//   mwSize rows = static_cast<mwSize>(data.size());
+//   mwSize cols = (rows > 0) ? static_cast<mwSize>(data[0].size()) : 0;
 
-  // Create a mxArray and populate it with data
-  mxArray* pmxArray = mxCreateDoubleMatrix(rows, cols, mxREAL);
-  if (pmxArray == NULL) {
-    std::cerr << "Error creating mxArray." << std::endl;
-    matClose(pmat);
-    return;
-  }
+//   // Create a mxArray and populate it with data
+//   mxArray* pmxArray = mxCreateDoubleMatrix(rows, cols, mxREAL);
+//   if (pmxArray == NULL) {
+//     std::cerr << "Error creating mxArray." << std::endl;
+//     matClose(pmat);
+//     return;
+//   }
 
-  // Populate the mxArray with data
-  double* pr = mxGetPr(pmxArray);
-  for (mwIndex i = 0; i < rows; ++i) {
-    for (mwIndex j = 0; j < cols; ++j) {
-      pr[i + j * rows] = data[i][j];
-    }
-  }
+//   // Populate the mxArray with data
+//   double* pr = mxGetPr(pmxArray);
+//   for (mwIndex i = 0; i < rows; ++i) {
+//     for (mwIndex j = 0; j < cols; ++j) {
+//       pr[i + j * rows] = data[i][j];
+//     }
+//   }
 
-  // Write the mxArray to the MAT file with the specified variable name
-  int status = matPutVariable(pmat, varName, pmxArray);
-  if (status != 0) {
-    std::cerr << "Error writing mxArray to MAT file." << std::endl;
-    mxDestroyArray(pmxArray);
-    matClose(pmat);
-    return;
-  }
+//   // Write the mxArray to the MAT file with the specified variable name
+//   int status = matPutVariable(pmat, varName, pmxArray);
+//   if (status != 0) {
+//     std::cerr << "Error writing mxArray to MAT file." << std::endl;
+//     mxDestroyArray(pmxArray);
+//     matClose(pmat);
+//     return;
+//   }
 
-  // Close MAT file and clean up resources
-  mxDestroyArray(pmxArray);
-  matClose(pmat);
-}
+//   // Close MAT file and clean up resources
+//   mxDestroyArray(pmxArray);
+//   matClose(pmat);
+// }
 
-}  // namespace MatlabUtils
-
-namespace DualListDecoder {
-
-struct DLDInfo {
-  double combined_metric;
-  std::vector<int> message;
-  std::vector<int> list_ranks;
-};
-
-// Define a custom comparison function for the priority queue
-struct CompareCombinedMetric {
-  bool operator()(const DLDInfo& a, const DLDInfo& b) const {
-    return a.combined_metric >
-           b.combined_metric;  // Lower combined_metric at the top
-  }
-};
-
-// Function to combine two vectors of MessageInformation and create a priority
-// queue of DLDInfo sorted in ascending order of combined_metric
-std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric>
-combine_maps(const std::vector<MessageInformation>& vec1,
-             const std::vector<MessageInformation>& vec2) {
-  std::map<std::vector<int>, MessageInformation> map1;
-  std::map<std::vector<int>, MessageInformation> map2;
-
-  // Populate map1 with elements from vec1
-  for (const MessageInformation& msg : vec1) {
-    map1[msg.message] = msg;
-  }
-
-  // Populate map2 with elements from vec2
-  for (const MessageInformation& msg : vec2) {
-    map2[msg.message] = msg;
-  }
-
-  std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric>
-      result_queue;
-
-  // Iterate through the keys in map1
-  for (const auto& kvp : map1) {
-    // Try to find the same key in map2
-    auto it = map2.find(kvp.first);
-    if (it != map2.end()) {
-      // If found, calculate the sum of path_metrics and record list ranks
-      double combined_metric = kvp.second.path_metric + it->second.path_metric;
-      DLDInfo dld_info;
-      dld_info.combined_metric = combined_metric;
-      dld_info.message = kvp.first;
-      dld_info.list_ranks = {kvp.second.list_rank, it->second.list_rank};
-      result_queue.push(dld_info);
-    }
-  }
-
-  return result_queue;
-}
-
-}  // namespace DualListDecoder
+// }  // namespace MatlabUtils
 
 int main() {
   // output path
-  std::string outputFilePath = "../output/";
-  std::ofstream outputFile(outputFilePath + "output.txt");
+  std::string outputFilePath = "../output/snr/";
+  std::ofstream outputFile(outputFilePath + "snr45-100.txt");
   if (!outputFile.is_open()) {
     std::cerr << "Failed to open the file for writing." << std::endl;
     return 1;
   }
 
   // SNR
-  double SNR_dB_start = 0.0;
-  double SNR_dB_end = 20.0;
-  double SNR_dB_step = 1.0;
+  double SNR_dB_start = 4.5;
+  double SNR_dB_end = 10;
+  double SNR_dB_step = 0.5;
   std::vector<double> SNR_dB = {};
   std::vector<double> SNR = {};
   for (double i = SNR_dB_start; i <= SNR_dB_end; i += SNR_dB_step) {
@@ -158,8 +102,8 @@ int main() {
     SNR.push_back(pow(10.0, i / 10.0));
   }
 
-  int mc_N = 5000;
-  int list_size = 1e4;
+  int mc_N = 1e4;
+  int list_size = 1;
 
   CodeInformation code;
   code.k = 1;
@@ -198,21 +142,37 @@ int main() {
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);
 
+  std::vector<CodeInformation> dld_codes = {code_1, code_2};
+  DualListDecoder DLD(dld_codes);
+
+
   int seed = 47;
   std::mt19937 msg_gen(seed);
   int num_bits = 64;
-  
-  std::vector<int> expected_list_rank_1;
-  std::vector<int> expected_list_rank_2;
+
+  std::vector<double> correct_decoding_snr;
+  std::vector<double> ML_decoding_error_snr;
+  correct_decoding_snr.resize(SNR_dB.size());
+  ML_decoding_error_snr.resize(SNR_dB.size());
+
+  std::vector<double> DLD_correct_vec;
+  std::vector<double> DLD_error_vec;
+  DLD_correct_vec.resize(SNR_dB.size());
+  DLD_error_vec.resize(SNR_dB.size());
 
   for (double snr_dB : SNR_dB) {
     outputFile << "Now working on snr: " << snr_dB << "-------------------"
           << std::endl;
-    std::vector<int> cumulative_list_ranks = {0, 0};
-    std::vector<double> avg_list_ranks = {0.0, 0.0};
-    int NACK_Errors = 0;
+
+    std::vector<int> expected_list_ranks = {0, 0};
+
+    // standard viterbi
+    int ML_decoding_error = 0;
     int Correct_decoding = 0;
-    int Undetected_Errors = 0;
+
+    // DLD decoding
+    int DLD_correct = 0;
+    int DLD_error = 0;
 
     for (int trial = 0; trial < mc_N; ++trial) {
 
@@ -223,10 +183,6 @@ int main() {
         int random_bit = msg_gen() % 2;
         msg.push_back(random_bit);
       }
-
-      // outputFile << "Printing original message: " << std::endl;
-      // CodecUtils::outputMat(msg, outputFile);
-      // outputFile << std::endl;
 
       // coding
       std::vector<int> encoded_msg = codec.encodeZTCC(msg);
@@ -247,185 +203,55 @@ int main() {
       // CodecUtils::outputMat(received_signal, outputFile);
       // outputFile << std::endl;
 
-      std::vector<double> received_codec_2;
-      std::vector<double> received_codec_1;
+      MessageInformation output_ML =
+          codec.softViterbiDecode(received_signal);
 
-      // unleaver to unleave the bits from received_signal
-      for (size_t i = 0; i < received_signal.size(); ++i) {
-        if (i % 2 == 0) {
-          received_codec_2.push_back(received_signal[i]);
-        } else {
-          received_codec_1.push_back(received_signal[i]);
-        }
+      assert(output_ML.message.size() == msg.size());
+      if (CodecUtils::areVectorsEqual(output_ML.message, msg)) {
+        Correct_decoding++;
+      } else {
+        ML_decoding_error++;
+      }
+      
+      DLDInfo output_DLD = DLD.adaptiveDecode(received_signal);
+      if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
+        DLD_correct++;
+      } else {
+        DLD_error++;
       }
 
-      // outputFile << "For codec 1: ";
-      // CodecUtils::outputMat(received_codec_1, outputFile);
-      // outputFile << std::endl;
-
-      // outputFile << "For codec 2: ";
-      // CodecUtils::outputMat(received_codec_2, outputFile);
-      // outputFile << std::endl;
-
-      // Decoding starts
-      // outputFile << "Decoding begins -----------------" << std::endl;
-
-      std::vector<MessageInformation> output_1 =
-          codec_1.ZTCCListViterbiDecoding(received_codec_1);
-      std::vector<MessageInformation> output_2 =
-          codec_2.ZTCCListViterbiDecoding(received_codec_2);
-
-      std::vector<MessageInformation> output_3 =
-          codec.unconstraintZTCCDecoding(received_signal);
-
-      MessageInformation output_soft = codec.softViterbiDecode(received_signal);
-
-      // outputFile << std::endl;
-
-      // outputFile << "Printing Duo list decoder results: " << std::endl;
-      // for (int i = 0; i < output_1.size(); ++i) {
-      //   outputFile << " " << i << "th message  ("
-      //              << "list rank = " << (output_1[i].list_rank)+1 << "): ";
-      //   CodecUtils::outputMat(output_1[i].message, outputFile);
-      //   outputFile << " with pathMetric = " << output_1[i].path_metric;
-      //   outputFile << "     "
-      //              << "(list rank = " << (output_2[i].list_rank)+1 << "): ";
-      //   CodecUtils::outputMat(output_2[i].message, outputFile);
-      //   outputFile << " with pathMetric = " << output_2[i].path_metric;
-      //   outputFile << std::endl;
-      // }
-
-      // outputFile << std::endl;
-
-      // outputFile << "printing single 2^14 states list decoding results: "
-      //            << std::endl;
-      // for (int i = 0; i < output_3.size(); ++i) {
-      //   outputFile << " " << i << "th message  ("
-      //              << "list rank = " << output_3[i].list_rank << "): ";
-      //   CodecUtils::outputMat(output_3[i].message, outputFile);
-      //   outputFile << " with pathMetric = " << output_3[i].path_metric;
-      //   outputFile << std::endl;
-      // }
-
-      // outputFile << "printing 2^14 soft viterbi decoding results: " << std::endl;
-      // CodecUtils::outputMat(output_soft.message, outputFile);
-
-      // outputFile << std::endl;
-      // outputFile << std::endl;
-
-      // Dual List Decoder
-      std::priority_queue<DualListDecoder::DLDInfo,
-                          std::vector<DualListDecoder::DLDInfo>,
-                          DualListDecoder::CompareCombinedMetric>
-          result_queue = DualListDecoder::combine_maps(output_1, output_2);
-
-      // Print the result
-      if (result_queue.empty()) {
-        // outputFile << "No agreed message" << std::endl;
-        NACK_Errors++;
+      // update list ranks
+      for (int i = 0; i < expected_list_ranks.size(); ++i) {
+        expected_list_ranks[i] += output_DLD.list_ranks[i];
       }
-      // outputFile << "number of agreed messages: " << result_queue.size() << std::endl;
-
-      while (!result_queue.empty()) {
-        DualListDecoder::DLDInfo dld = result_queue.top();
-        result_queue.pop();
-        double combined_path_metric = dld.combined_metric;
-        std::vector<int> list_ranks = dld.list_ranks;
-        std::vector<int> message = dld.message;
-        // outputFile << "Agreed message: ";
-        // CodecUtils::outputMat(message, outputFile);
-        // outputFile << "   ";
-        // outputFile << "Combined Path Metric: " << combined_path_metric << ",  ";
-        // outputFile << "List Ranks: ";
-        for (int r = 0; r < list_ranks.size(); ++r) {
-          outputFile << list_ranks[r]+1 << ", ";
-          cumulative_list_ranks[r] += list_ranks[r]+1;
-        }
-        // // check decoding result with soft viterbi decoding
-        // outputFile << std::endl;
-        // outputFile << "Printing first one to compare: ";
-        // CodecUtils::outputMat(message, outputFile);
-        // outputFile << std::endl;
-        // outputFile << "Printing second one to compare: ";
-        // CodecUtils::outputMat(output_soft.message, outputFile);
-        // outputFile << std::endl;
-        // outputFile << std::endl;
-
-        if (CodecUtils::areVectorsEqual(message, output_soft.message)) {
-          // outputFile << "Correct decoding!" << std::endl;
-          Correct_decoding++;
-        } else {
-          // outputFile << "Wrong decoding! Incompatible with soft viterbi decoding" << std::endl;
-          Undetected_Errors++;
-        }
-        
-        // outputFile << std::endl;
+      
+      if (trial % 500 == 0) {  
+      outputFile << "Trial: " << trial << std::endl;
       }
-
-      // outputFile << std::endl;
-
-
-
-
-      // outputFile << std::endl << std::endl;
-
-      // outputFile << "measuring euclidean distance: " <<
-      // CodecUtils::euclideanDistance(received_signal, modulated_signal)<<
-      // std::endl;
-
-      // std::vector<int> demodulated_signal =
-      // BPSK::demodulate(received_signal); outputFile << "Printing demodulated
-      // signal: " << std::endl; CodecUtils::outputMat(demodulated_signal,
-      // outputFile)  << " with size: " << demodulated_signal.size() <<
-      // std::endl; outputFile << std::endl;
-
-      // std::vector<int> decoded_msg =
-      // codec.softViterbiDecode(received_signal).message; outputFile <<
-      // "Printing soft decoded message: " << std::endl;
-      // CodecUtils::outputMat(decoded_msg, outputFile)  << " with size: " <<
-      // decoded_msg.size() << std::endl; outputFile << std::endl;
-
-      // std::vector<int> hard_decoded_msg =
-      // codec.viterbiDecode(demodulated_signal).message; outputFile <<
-      // "Printing hard decoded message: " << std::endl;
-      // CodecUtils::outputMat(hard_decoded_msg, outputFile);
-      // outputFile << std::endl;
-
-      // std::vector<MessageInformation> output =
-      // codec.listViterbiDecoding(received_signal); outputFile << "Printing
-      // list decoder results: " << std::endl; for (int i = 0; i <
-      // output.size(); ++i) {
-      //   outputFile << output[i].message.size() << " " << i << "th message: ";
-      //   CodecUtils::output(output[i].message, outputFile);
-      //   outputFile << std::endl;
-      // }
-
-      // // truncate the flushing bits
-      // decoded_msg.resize(msg.size());
-      // hard_decoded_msg.resize(msg.size());
-      // outputFile << "Measuring hamming distance: " <<
-      // CodecUtils::hammingDistance(msg, hard_decoded_msg) << std::endl;
     }
-    // outputFile << std::endl << std::endl;
-    // outputFile << "Average list ranks for list 1 and 2: ";
-    for (int i = 0; i < avg_list_ranks.size(); ++i) {
-      avg_list_ranks[i] = (double) cumulative_list_ranks[i] / mc_N;
+
+    for (int j = 0; j < expected_list_ranks.size(); ++j) {
+      expected_list_ranks[j] /= mc_N;
     }
-    // CodecUtils::outputMat(avg_list_ranks, outputFile);
 
-    // outputFile << " NACK Errors: " << NACK_Errors << std::endl;
+    outputFile << "std viterbi correct decoding: " << Correct_decoding << " , Percentage: " << (double)Correct_decoding/mc_N << std::endl;
+    outputFile << "std viterbi wrong decoding: " << ML_decoding_error << " , Percentage: " << (double)ML_decoding_error/mc_N << std::endl;
+    outputFile << "DLD correct decoding: " << DLD_correct << " , Percentage: " << (double)DLD_correct/mc_N << std::endl;
+    outputFile << "ML wrong decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/mc_N << std::endl;
 
-    expected_list_rank_1.push_back(avg_list_ranks[0]);
-    expected_list_rank_2.push_back(avg_list_ranks[1]);
+    outputFile << "expected list ranks: [ " << expected_list_ranks[0] << ", " << expected_list_ranks[1] << " ]" << std::endl;
+
+    correct_decoding_snr.push_back((double)Correct_decoding/mc_N);
+    ML_decoding_error_snr.push_back((double)ML_decoding_error/mc_N);
+    DLD_correct_vec.push_back((double)DLD_correct/mc_N);
+    DLD_error_vec.push_back((double)DLD_error/mc_N);
+
   }
-
-  outputFile << "Finishing up: ------" << std::endl;
-  CodecUtils::outputMat(expected_list_rank_1, outputFile);
-  outputFile << std::endl;
-  CodecUtils::outputMat(expected_list_rank_2, outputFile);
-  outputFile << std::endl;
-  outputFile << std::endl;
-
+  
+  outputFile << "Std viterbi CORRECT decoding percentage: "; CodecUtils::outputMat(correct_decoding_snr, outputFile); outputFile << std::endl;
+  outputFile << "Std viterbi WRONG decoding percentage: "; CodecUtils::outputMat(ML_decoding_error_snr, outputFile); outputFile << std::endl;
+  outputFile << "DLD Decoder CORRECT decoding percentage: "; CodecUtils::outputMat(DLD_correct_vec, outputFile); outputFile << std::endl;
+  outputFile << "DLD Decoder WRONG decoding percentage: "; CodecUtils::outputMat(DLD_error_vec, outputFile); outputFile << std::endl;
   outputFile.close();
   return 0;
 }

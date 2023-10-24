@@ -1,5 +1,6 @@
 #include "../include/viterbiCodec.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -215,8 +216,6 @@ MessageInformation ViterbiCodec::softViterbiDecode(
   }
   std::vector<int> path(num_total_stages);
   std::vector<int> message(k_ * (num_total_stages - 1), 0);
-
-  std::cout << "Min path metric: " << min_node.path_metric << std::endl;
 
   int cur_state = min_node.start_state;
 

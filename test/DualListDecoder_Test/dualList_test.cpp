@@ -187,6 +187,21 @@ TEST(DuallistDecoder, SingleDecodeTest) {
   }
 
 
+  // logic for counting errors
+  // 1. correct message (msg)
+  // 2. 2^14 states maximum likelihood decoding result
+  //     - correct (same as msg)
+  //     - undetected error (not the same as msg)
+  //     - NACK (list size exceeded)
+  // 3. DLD decoding result
+  //     - correct (same as msg)
+  //     - undeteced_error (not the same as msg)
+  //     - NACK (list size exceeded)
+
+  // algorithm logic
+  // 
+
+
   outputFile.close();
 
 }

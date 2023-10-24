@@ -6,8 +6,10 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <climits>
 
 #include "minHeap.h"
+#include "dualListMap.h"
 
 // struct Cell;
 // struct MessageInformation;
@@ -39,6 +41,13 @@ struct CodeInformation {
   int crc_length;
   std::vector<int> generator_poly;
 };
+
+// struct DLDInfo {
+//   double combined_metric;
+//   std::vector<int> message;
+//   std::vector<int> list_ranks;
+// };
+
 namespace dualdecoderutils {
 
 std::vector<int> convertIntToBits(int integer, const int& length);
@@ -108,11 +117,7 @@ bool areVectorsEqual(const std::vector<T>& vector1,
   return true;  // All elements are equal.
 }
 
-struct DLDInfo {
-  double combined_metric;
-  std::vector<int> message;
-  std::vector<int> list_ranks;
-};
+
 
 // Define a custom comparison function for the priority queue
 struct CompareCombinedMetric {
@@ -127,7 +132,25 @@ struct CompareCombinedMetric {
 std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric>
 combine_maps(const std::vector<MessageInformation>& vec1,
              const std::vector<MessageInformation>& vec2);
+
+// template <typename T>
+// bool areVectorsEqual(const std::vector<T>& vector1, const std::vector<T>& vector2) {
+//   if (vector1.size() != vector2.size()) {
+//       return false; // Vectors have different sizes, so they cannot be equal.
+//   }
+
+//   for (size_t i = 0; i < vector1.size(); ++i) {
+//       if (vector1[i] != vector2[i]) {
+//           return false; // Elements at index i are different.
+//       }
+//   }
+
+//   return true; // All elements are equal.
+// }
+
 }  // namespace dualdecoderutils
+
+
 
 // namespace bpsk {
 
@@ -170,7 +193,7 @@ class DualListDecoder {
   DualListDecoder(std::vector<CodeInformation> code_info);
   ~DualListDecoder();
 
-  std::vector<std::vector<MessageInformation>> adaptiveDecode(
+  DLDInfo adaptiveDecode(
       std::vector<double> received_signal);
   MessageInformation traceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
@@ -178,7 +201,6 @@ class DualListDecoder {
 
  private:
   std::vector<CodeInformation> code_info_;
-  std::vector<MinHeap> min_heaps_;
   std::vector<FeedForwardTrellis*> trellis_ptrs_;
 
   std::vector<std::vector<Cell>> constructZTCCTrellis(
