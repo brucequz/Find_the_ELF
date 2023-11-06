@@ -24,3 +24,13 @@ I am going to work with Message Information directly, or with a vector of messag
 
 
 
+Meeting notes for Oct.24
+
+1. two plots
+   1. FER vs. SNR (union bounds, FER of 2^14, FER of our system)
+   2. complexity vs. SNR
+2. investigate CRC (column explaining why / why not the two list sizes are growing at different rates) (list rank vs. num_path_searched)
+3. delvelop a theorum / corollary of complexity as a function of (14, 12, 11)
+4. given the desired accuracy rate (10^-6), we should be confident to say that our system is better.
+5. 
+

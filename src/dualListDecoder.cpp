@@ -115,8 +115,8 @@ combine_maps(const std::vector<MessageInformation>& vec1,
 }
 }  // namespace dualdecoderutils
 
-DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info)
-    : code_info_(code_info) {
+DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path)
+    : code_info_(code_info), max_path_to_search_(max_searched_path) {
   CodeInformation code_list_0 = code_info[0];
   CodeInformation code_list_1 = code_info[1];
 
@@ -205,8 +205,6 @@ DLDInfo DualListDecoder::adaptiveDecode(
   CodeInformation code_0 = code_info_[0];
   CodeInformation code_1 = code_info_[1];
 
-  int max_num_path_searched = 200000;
-
   // list decoder 0
   std::vector<std::vector<Cell>> trellis_0 =
       constructZTCCTrellis(received_codec_1, code_0, trellis_ptrs_[0]);
@@ -237,7 +235,7 @@ DLDInfo DualListDecoder::adaptiveDecode(
 
   while (!best_combined_found) {
     // list decoder 0 traceback
-    if (num_path_searched_0 > max_num_path_searched) {
+    if (num_path_searched_0 > max_path_to_search_) {
       decoder_0_stop = true;
     }
     if (!decoder_0_stop) {
@@ -251,7 +249,7 @@ DLDInfo DualListDecoder::adaptiveDecode(
       output_0.push_back(mi_0);
     }
     // list decoder 1 traceback
-    if (num_path_searched_1 > max_num_path_searched) {
+    if (num_path_searched_1 > max_path_to_search_) {
       decoder_1_stop = true;
     }
     if (!decoder_1_stop) {
@@ -290,7 +288,7 @@ DLDInfo DualListDecoder::adaptiveDecode(
   output.push_back(output_1);
   DLDInfo empty_message;
   empty_message.combined_metric = INT_MAX;
-  empty_message.list_ranks = {max_num_path_searched, max_num_path_searched};
+  empty_message.list_ranks = {max_path_to_search_, max_path_to_search_};
   empty_message.message = std::vector<int>(64, -1); 
 
   // free pointers

@@ -190,7 +190,7 @@ class FeedForwardTrellis;
 
 class DualListDecoder {
  public:
-  DualListDecoder(std::vector<CodeInformation> code_info);
+  DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path);
   ~DualListDecoder();
 
   DLDInfo adaptiveDecode(
@@ -202,6 +202,7 @@ class DualListDecoder {
  private:
   std::vector<CodeInformation> code_info_;
   std::vector<FeedForwardTrellis*> trellis_ptrs_;
+  int max_path_to_search_;
 
   std::vector<std::vector<Cell>> constructZTCCTrellis(
       const std::vector<double>& received_signal, CodeInformation code,

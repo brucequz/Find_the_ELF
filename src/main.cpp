@@ -1,5 +1,5 @@
-#include <algorithm>
 #include <cassert>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -8,6 +8,7 @@
 
 #include "../include/viterbiCodec.h"
 #include "../include/dualListDecoder.h"
+
 
 namespace AWGN {
 
@@ -84,16 +85,16 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 
 int main() {
   // output path
-  std::string outputFilePath = "../output/snr/";
-  std::ofstream outputFile(outputFilePath + "snr45-100.txt");
+  std::string outputFilePath = "../output/smaller_example/";
+  std::ofstream outputFile(outputFilePath + "snr30-60.txt");
   if (!outputFile.is_open()) {
     std::cerr << "Failed to open the file for writing." << std::endl;
     return 1;
   }
 
   // SNR
-  double SNR_dB_start = 4.5;
-  double SNR_dB_end = 10;
+  double SNR_dB_start = 3.0;
+  double SNR_dB_end = 6.0;
   double SNR_dB_step = 0.5;
   std::vector<double> SNR_dB = {};
   std::vector<double> SNR = {};
@@ -102,48 +103,61 @@ int main() {
     SNR.push_back(pow(10.0, i / 10.0));
   }
 
-  int mc_N = 1e4;
+  // int mc_N = 10000;
+  int max_errors = 200;
   int list_size = 1;
 
   CodeInformation code;
   code.k = 1;
   code.n = 2;
-  code.v = 14;
+  code.v = 10;
   code.list_size = 1;
   code.crc_dec = -1;
   code.crc_length = -1;
-  code.generator_poly = {56721, 61713};
+  code.generator_poly = {2473, 3217};  // octal
   ViterbiCodec codec(code);
 
   CodeInformation code_1;
+  // 61713
   // x^14+x^13+x^9+x^8+x^7+x^6+x^3+x+1 =
   //                        CRC: (x^3+x^2+1)
   //                        generator: (x^11+x^8+x^7+x^3+x^2+x+1)
+
+  // 3217
+  // x^10 + x^9 + x^7 + x^3 + x^2 + x + 1
+  //                        CRC: (x^4+x^2+1)
+  //                        generator: x^6+x^5+x^4+x+1
   code_1.k = 1;
   code_1.n = 1;
-  code_1.v = 11;
+  code_1.v = 6;
   code_1.list_size = list_size;
-  code_1.crc_dec = 13;
-  code_1.crc_length = 4;
-  code_1.generator_poly = {4617};
+  code_1.crc_dec = 21;
+  code_1.crc_length = 5;
+  code_1.generator_poly = {163};  // octal
 
   CodeInformation code_2;
+  // 56721
   // x^14+x^12+x^11+x^10+x^8+x^7+x^6+x^4+1 =
   //                         CRC: (x^2+x+1)
   //                         generator: x^12+x^11+x^10+x^9+x^8+x^5+x^3+x+1
+
+  // 2473
+  // x^10 + x^8 + x^5 + x^4 + x^3 + x + 1
+  //                         CRC: (x^3+x+1)
+  //                         generator: x^7+x^4+1 
   code_2.k = 1;
   code_2.n = 1;
-  code_2.v = 12;
+  code_2.v = 7;
   code_2.list_size = list_size;
-  code_2.crc_dec = 7;
-  code_2.crc_length = 3;
-  code_2.generator_poly = {17453};
+  code_2.crc_dec = 11;
+  code_2.crc_length = 4;
+  code_2.generator_poly = {221};
 
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);
 
   std::vector<CodeInformation> dld_codes = {code_1, code_2};
-  DualListDecoder DLD(dld_codes);
+  DualListDecoder DLD(dld_codes, 1000000);
 
 
   int seed = 47;
@@ -152,16 +166,14 @@ int main() {
 
   std::vector<double> correct_decoding_snr;
   std::vector<double> ML_decoding_error_snr;
-  correct_decoding_snr.resize(SNR_dB.size());
-  ML_decoding_error_snr.resize(SNR_dB.size());
+
 
   std::vector<double> DLD_correct_vec;
   std::vector<double> DLD_error_vec;
-  DLD_correct_vec.resize(SNR_dB.size());
-  DLD_error_vec.resize(SNR_dB.size());
+
 
   for (double snr_dB : SNR_dB) {
-    outputFile << "Now working on snr: " << snr_dB << "-------------------"
+    std::cout << "Now working on snr: " << snr_dB << "-------------------"
           << std::endl;
 
     std::vector<int> expected_list_ranks = {0, 0};
@@ -174,9 +186,17 @@ int main() {
     int DLD_correct = 0;
     int DLD_error = 0;
 
-    for (int trial = 0; trial < mc_N; ++trial) {
+    int number_of_trials = 0;
+    int number_of_errors = 0;
 
-      // outputFile << "Trial number: " << trial << std::endl;
+    while (number_of_errors < max_errors) {
+      
+      number_of_trials++;
+
+      if (number_of_trials % 5000 == 0) {
+        std::cout << "Trial number: " << number_of_trials << std::endl;
+        std::cout << "Current number of errors: " << number_of_errors << std::endl;
+      }
 
       std::vector<int> msg;
       for (int i = 0; i < num_bits; ++i) {
@@ -202,7 +222,9 @@ int main() {
       // outputFile << "Printing received signal: " << std::endl;
       // CodecUtils::outputMat(received_signal, outputFile);
       // outputFile << std::endl;
+      
 
+      // SOFT VITERBI DECODING
       MessageInformation output_ML =
           codec.softViterbiDecode(received_signal);
 
@@ -211,47 +233,50 @@ int main() {
         Correct_decoding++;
       } else {
         ML_decoding_error++;
+        number_of_errors++;
       }
       
-      DLDInfo output_DLD = DLD.adaptiveDecode(received_signal);
-      if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
-        DLD_correct++;
-      } else {
-        DLD_error++;
-      }
+      // // DLD DECODING
+      // DLDInfo output_DLD = DLD.adaptiveDecode(received_signal);
+      // if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
+      //   DLD_correct++;
+      // } else {
+      //   DLD_error++;
+      // }
+      
+      // // update list ranks
+      // for (int i = 0; i < expected_list_ranks.size(); ++i) {
+      //   expected_list_ranks[i] += output_DLD.list_ranks[i];
+      // } 
 
-      // update list ranks
-      for (int i = 0; i < expected_list_ranks.size(); ++i) {
-        expected_list_ranks[i] += output_DLD.list_ranks[i];
-      }
-      
-      if (trial % 500 == 0) {  
-      outputFile << "Trial: " << trial << std::endl;
+      // update in the outputfile
+      if (number_of_trials % 2000 == 0) {
+        outputFile << "Trial: " << number_of_trials << std::endl;
       }
     }
 
-    for (int j = 0; j < expected_list_ranks.size(); ++j) {
-      expected_list_ranks[j] /= mc_N;
-    }
+    // for (int j = 0; j < expected_list_ranks.size(); ++j) {
+    //   expected_list_ranks[j] /= mc_N;
+    // }
+    std::cout << "For snr = " << snr_dB << ", " << number_of_trials << " were ran to accumulate " << number_of_errors << " errors." << std::endl;
+    std::cout << "std viterbi correct decoding: " << Correct_decoding << " , Percentage: " << (double)Correct_decoding/number_of_trials << std::endl;
+    std::cout << "std viterbi wrong decoding: " << ML_decoding_error << " , Percentage: " << (double)ML_decoding_error/number_of_trials << std::endl;
+    // std::cout << "DLD correct decoding: " << DLD_correct << " , Percentage: " << (double)DLD_correct/mc_N << std::endl;
+    // std::cout << "DLD wrong decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/mc_N << std::endl;
 
-    outputFile << "std viterbi correct decoding: " << Correct_decoding << " , Percentage: " << (double)Correct_decoding/mc_N << std::endl;
-    outputFile << "std viterbi wrong decoding: " << ML_decoding_error << " , Percentage: " << (double)ML_decoding_error/mc_N << std::endl;
-    outputFile << "DLD correct decoding: " << DLD_correct << " , Percentage: " << (double)DLD_correct/mc_N << std::endl;
-    outputFile << "ML wrong decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/mc_N << std::endl;
+    // std::cout << "expected list ranks: [ " << expected_list_ranks[0] << ", " << expected_list_ranks[1] << " ]" << std::endl;
 
-    outputFile << "expected list ranks: [ " << expected_list_ranks[0] << ", " << expected_list_ranks[1] << " ]" << std::endl;
-
-    correct_decoding_snr.push_back((double)Correct_decoding/mc_N);
-    ML_decoding_error_snr.push_back((double)ML_decoding_error/mc_N);
-    DLD_correct_vec.push_back((double)DLD_correct/mc_N);
-    DLD_error_vec.push_back((double)DLD_error/mc_N);
+    correct_decoding_snr.push_back((double)Correct_decoding/number_of_trials);
+    ML_decoding_error_snr.push_back((double)ML_decoding_error/number_of_trials);
+    // DLD_correct_vec.push_back((double)DLD_correct/mc_N);
+    // DLD_error_vec.push_back((double)DLD_error/mc_N);
 
   }
   
-  outputFile << "Std viterbi CORRECT decoding percentage: "; CodecUtils::outputMat(correct_decoding_snr, outputFile); outputFile << std::endl;
-  outputFile << "Std viterbi WRONG decoding percentage: "; CodecUtils::outputMat(ML_decoding_error_snr, outputFile); outputFile << std::endl;
-  outputFile << "DLD Decoder CORRECT decoding percentage: "; CodecUtils::outputMat(DLD_correct_vec, outputFile); outputFile << std::endl;
-  outputFile << "DLD Decoder WRONG decoding percentage: "; CodecUtils::outputMat(DLD_error_vec, outputFile); outputFile << std::endl;
+  std::cout << "Std viterbi CORRECT decoding percentage: "; CodecUtils::print(correct_decoding_snr); std::cout << std::endl;
+  std::cout << "Std viterbi WRONG decoding percentage: "; CodecUtils::print(ML_decoding_error_snr); std::cout << std::endl;
+  // std::cout << "DLD Decoder CORRECT decoding percentage: "; CodecUtils::print(DLD_correct_vec); std::cout << std::endl;
+  // std::cout << "DLD Decoder WRONG decoding percentage: "; CodecUtils::print(DLD_error_vec); std::cout << std::endl;
   outputFile.close();
   return 0;
 }
