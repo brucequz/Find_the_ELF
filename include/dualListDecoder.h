@@ -16,9 +16,9 @@
 // struct CodeInformation;
 struct Cell {
   bool init = false;
-  double pathMetric = INT_MAX;
+  double pathMetric = 3000;
   int fatherState = -1;
-  double subPathMetric = INT_MAX;
+  double subPathMetric = 3000;
   int subFatherState = -1;
 };
 

@@ -2,13 +2,12 @@
 #include "../include/minHeap.h"
 #include "../include/viterbiCodec.h"
 
-
 namespace {
 
 template <typename T>
 void print(const std::vector<T>& vec) {
   for (const T& element : vec) {
-      std::cout << element << " ";
+    std::cout << element << " ";
   }
   std::cout << std::endl;
 }
@@ -16,13 +15,13 @@ void print(const std::vector<T>& vec) {
 template <typename T>
 void print(const std::vector<std::vector<T>>& matrix) {
   for (const std::vector<T>& row : matrix) {
-      for (const T& element : row) {
-          std::cout << element << " ";
-      }
-      std::cout << std::endl;
+    for (const T& element : row) {
+      std::cout << element << " ";
+    }
+    std::cout << std::endl;
   }
 }
-}
+}  // namespace
 
 std::vector<int> ViterbiCodec::convertPathtoMessage(
     const std::vector<int> path) {
@@ -122,7 +121,8 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintListViterbiDecoding(
     std::vector<int> message = convertPathtoMessage(path);
     // message.resize(message.size() - v_);
 
-    // if (checkCRC(message) && path.front() == path.back() && path.back() == 0) {
+    // if (checkCRC(message) && path.front() == path.back() && path.back() == 0)
+    // {
     //   MessageInformation mi;
     //   mi.path = path;
     //   mi.path_metric = detour.path_metric;
@@ -250,8 +250,8 @@ std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
 std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
     const std::vector<double>& received_signal) {
   /*
-  Decoding paths that only end in the zero-th state. 
-  
+  Decoding paths that only end in the zero-th state.
+
   */
 
   std::vector<MessageInformation> output;
@@ -261,7 +261,7 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
   int num_total_stages = trellis_states[0].size();
   std::vector<std::vector<int>> prev_paths;
   MinHeap heap;  // Detour Tree
-  
+
   DetourNode node;
   node.start_state = 0;
   node.path_metric = trellis_states[0][num_total_stages - 1].pathMetric;
@@ -319,15 +319,15 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
       path[stage - 1] = cur_state;
     }
     prev_paths.push_back(path);
-    
 
     std::vector<int> full_message = convertPathtoMessage(path);
-    std::vector<int> messageWithoutTrailingZeros = convertPathtoTrimmedMessage(path);
+    std::vector<int> messageWithoutTrailingZeros =
+        convertPathtoTrimmedMessage(path);
     std::vector<int> message = deconvolveCRC(messageWithoutTrailingZeros);
-    
 
     // TODO: can I divide and check crc??
-    if (checkCRC(messageWithoutTrailingZeros) && path.front() == path.back() && path.back() == 0) {
+    if (checkCRC(messageWithoutTrailingZeros) && path.front() == path.back() &&
+        path.back() == 0) {
       MessageInformation mi;
       mi.path = path;
       mi.path_metric = detour.path_metric;
@@ -339,18 +339,17 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
 
     num_path_searched++;
   }
-  
-  return output;
 
+  return output;
 }
 
 std::vector<MessageInformation> ViterbiCodec::unconstraintZTCCDecoding(
     const std::vector<double>& received_signal) {
   /*
-  Decoding paths that only end in the zero-th state. 
-  
+  Decoding paths that only end in the zero-th state.
+
   */
-  
+
   std::vector<MessageInformation> output;
   std::vector<std::vector<Cell>> trellis_states =
       constructZTCCTrellis(received_signal);
@@ -358,7 +357,7 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintZTCCDecoding(
   int num_total_stages = trellis_states[0].size();
   std::vector<std::vector<int>> prev_paths;
   MinHeap heap;  // Detour Tree
-  
+
   DetourNode node;
   node.start_state = 0;
   node.path_metric = trellis_states[0][num_total_stages - 1].pathMetric;
@@ -418,7 +417,6 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintZTCCDecoding(
     prev_paths.push_back(path);
     std::vector<int> message = convertPathtoMessage(path);
     message.resize(message.size() - v_);
-    
 
     MessageInformation mi;
     mi.path = path;
@@ -430,7 +428,6 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintZTCCDecoding(
 
     num_path_searched++;
   }
-  
-  return output;
 
+  return output;
 }

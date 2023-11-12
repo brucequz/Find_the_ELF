@@ -1,13 +1,14 @@
 #include "../include/dualListMap.h"
+
 #include "../include/dualListDecoder.h"
 
 void DualListMap::insert(const MessageInformation& mi) {
   /*
   Insert a MessageInformation into an unordered map
   Insertion logic:
-  
+
   extract the message from input argument
-  search if there exists a key-value pair with 
+  search if there exists a key-value pair with
   if there is a match
     add the maximum likelihood MI to the priority queue
     erase that message from the unordered map
@@ -37,8 +38,6 @@ void DualListMap::insert(const MessageInformation& mi) {
     dual_list_map_[mi.message] = mi;
   }
 }
-
-
 
 DLDInfo DualListMap::pop_queue() {
   if (queue_size() == 0) {

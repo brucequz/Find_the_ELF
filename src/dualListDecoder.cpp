@@ -1,20 +1,20 @@
 #include "../include/dualListDecoder.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <map>
 #include <vector>
-#include <cassert>
 
-#include "../include/feedForwardTrellis.h"
 #include "../include/dualListMap.h"
+#include "../include/feedForwardTrellis.h"
 
 namespace {
 
 template <typename T>
 void print(const std::vector<T>& vec) {
   for (const T& element : vec) {
-      std::cout << element << " ";
+    std::cout << element << " ";
   }
   std::cout << std::endl;
 }
@@ -22,13 +22,13 @@ void print(const std::vector<T>& vec) {
 template <typename T>
 void print(const std::vector<std::vector<T>>& matrix) {
   for (const std::vector<T>& row : matrix) {
-      for (const T& element : row) {
-          std::cout << element << " ";
-      }
-      std::cout << std::endl;
+    for (const T& element : row) {
+      std::cout << element << " ";
+    }
+    std::cout << std::endl;
   }
 }
-}
+}  // namespace
 namespace dualdecoderutils {
 std::vector<int> convertIntToBits(int integer, const int& length) {
   if (integer < 0) {
@@ -115,7 +115,8 @@ combine_maps(const std::vector<MessageInformation>& vec1,
 }
 }  // namespace dualdecoderutils
 
-DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path)
+DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
+                                 int max_searched_path)
     : code_info_(code_info), max_path_to_search_(max_searched_path) {
   CodeInformation code_list_0 = code_info[0];
   CodeInformation code_list_1 = code_info[1];
@@ -127,14 +128,13 @@ DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info, int max
 }
 
 DualListDecoder::~DualListDecoder() {
-  for (FeedForwardTrellis* &trellis_ptr: trellis_ptrs_) {
+  for (FeedForwardTrellis*& trellis_ptr : trellis_ptrs_) {
     delete trellis_ptr;
     trellis_ptr = nullptr;
   }
 }
 
-DLDInfo DualListDecoder::adaptiveDecode(
-    std::vector<double> received_signal) {
+DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
   /*
   This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -185,7 +185,6 @@ DLDInfo DualListDecoder::adaptiveDecode(
   double best_current_match = INT_MAX;
   double decoder_threshold_0 = INT_MAX;
   double decoder_threshold_1 = INT_MAX;
-
 
   // divide the received signal
   std::vector<double> received_codec_2;
@@ -239,8 +238,10 @@ DLDInfo DualListDecoder::adaptiveDecode(
       decoder_0_stop = true;
     }
     if (!decoder_0_stop) {
-      //std::cout << "decoder 0 traceback" << std::endl;
-      MessageInformation mi_0 = traceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0, prev_paths_list_0, num_path_searched_0, num_total_stages_0);
+      // std::cout << "decoder 0 traceback" << std::endl;
+      MessageInformation mi_0 =
+          traceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
+                    prev_paths_list_0, num_path_searched_0, num_total_stages_0);
       mi_0.decoder_index = 0;
       if (mi_0.path_metric >= decoder_threshold_0) {
         decoder_0_stop = true;
@@ -253,8 +254,10 @@ DLDInfo DualListDecoder::adaptiveDecode(
       decoder_1_stop = true;
     }
     if (!decoder_1_stop) {
-      //std::cout << "decoder 1 traceback" << std::endl;
-      MessageInformation mi_1 = traceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1, prev_paths_list_1, num_path_searched_1, num_total_stages_1);
+      // std::cout << "decoder 1 traceback" << std::endl;
+      MessageInformation mi_1 =
+          traceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
+                    prev_paths_list_1, num_path_searched_1, num_total_stages_1);
       mi_1.decoder_index = 1;
       if (mi_1.path_metric >= decoder_threshold_1) {
         decoder_1_stop = true;
@@ -289,7 +292,7 @@ DLDInfo DualListDecoder::adaptiveDecode(
   DLDInfo empty_message;
   empty_message.combined_metric = INT_MAX;
   empty_message.list_ranks = {max_path_to_search_, max_path_to_search_};
-  empty_message.message = std::vector<int>(64, -1); 
+  empty_message.message = std::vector<int>(64, -1);
 
   // free pointers
   delete heap_list_0;
@@ -298,7 +301,6 @@ DLDInfo DualListDecoder::adaptiveDecode(
   heap_list_1 = nullptr;
   // std::cout << "found nothing!" << std::endl;
   return empty_message;
-  
 }
 
 MessageInformation DualListDecoder::traceBack(
@@ -337,7 +339,8 @@ MessageInformation DualListDecoder::traceBack(
     path[resume_stage] = cur_state;
 
     for (int stage = resume_stage; stage > 0; stage--) {
-      double cur_sub_path_metric = trellis_states[cur_state][stage].subPathMetric;
+      double cur_sub_path_metric =
+          trellis_states[cur_state][stage].subPathMetric;
       double cur_path_metric = trellis_states[cur_state][stage].pathMetric;
 
       if (trellis_states[cur_state][stage].subFatherState != -1) {

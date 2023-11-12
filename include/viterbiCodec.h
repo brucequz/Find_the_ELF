@@ -63,7 +63,8 @@ void outputMat(const std::vector<T>& vec, std::ofstream& outputFile) {
 template <typename T>
 bool areVectorsEqual(const std::vector<T>& vector1, const std::vector<T>& vector2) {
   if (vector1.size() != vector2.size()) {
-      return false; // Vectors have different sizes, so they cannot be equal.
+    std::cout << "unequal sizes" << std::endl;
+    return false; // Vectors have different sizes, so they cannot be equal.
   }
 
   for (size_t i = 0; i < vector1.size(); ++i) {
@@ -126,6 +127,7 @@ class ViterbiCodec {
   std::vector<int> encodeZTCC(std::vector<int> message);
   MessageInformation viterbiDecode(const std::vector<int>& coded);
   MessageInformation softViterbiDecode(const std::vector<double>& coded);
+  MessageInformation softViterbiDecodeZTCC(const std::vector<double>& received_signal);
 
   std::vector<int> calculateCRC(const std::vector<int>& input);
   std::vector<int> convolveCRC(const std::vector<int>& input);

@@ -33,7 +33,25 @@ int decToOct(int decimal) {
   return octal;
 }
 
-}  // private namespace
+template <typename T>
+void print(const std::vector<T>& vec) {
+  for (const T& element : vec) {
+    std::cout << element << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void print(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+    for (const T& element : row) {
+      std::cout << element << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+}  // namespace
 
 FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
                                        std::vector<int> poly)
@@ -44,10 +62,12 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
       numStates_(std::pow(2, v)) {
   polynomials_ = poly;
   if (polynomials_.size() != n) {
-    std::cerr << "INVALID POLYNOMIAL: mismatch between number of output symbols and polynomials" << std::endl;
+    std::cerr << "INVALID POLYNOMIAL: mismatch between number of output "
+                 "symbols and polynomials"
+              << std::endl;
   }
   int min_poly = 0;
-  int max_poly = decToOct(static_cast<int>(std::pow(2.0, v+1)));
+  int max_poly = decToOct(static_cast<int>(std::pow(2.0, v + 1)));
   for (int poly_oct : poly) {
     if (poly_oct <= min_poly || poly_oct >= max_poly) {
       std::cerr << "INVALID POLYNOMIAL: too large or small" << std::endl;
@@ -69,10 +89,12 @@ FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
 
   polynomials_ = code.generator_poly;
   if (polynomials_.size() != n_) {
-    std::cerr << "INVALID POLYNOMIAL: mismatch between number of output symbols and polynomials" << std::endl;
+    std::cerr << "INVALID POLYNOMIAL: mismatch between number of output "
+                 "symbols and polynomials"
+              << std::endl;
   }
   int min_poly = 0;
-  int max_poly = decToOct(static_cast<int>(std::pow(2.0, code.v+1)));
+  int max_poly = decToOct(static_cast<int>(std::pow(2.0, code.v + 1)));
   for (int poly_oct : polynomials_) {
     if (poly_oct <= min_poly || poly_oct >= max_poly) {
       std::cerr << "INVALID POLYNOMIAL: too large or small" << std::endl;
@@ -91,7 +113,8 @@ std::vector<int> FeedForwardTrellis::encode(const std::vector<int>& message) {
   int cur_state = 0;
   for (int i = 0; i < message.size(); ++i) {
     if (message[i] >= 2) {
-      std::cerr << "INVALID INPUT MESSAGE: bit input greater than 1" << std::endl;
+      std::cerr << "INVALID INPUT MESSAGE: bit input greater than 1"
+                << std::endl;
     }
     int output = output_[cur_state][message[i]];
     int j = n_;
@@ -121,6 +144,9 @@ void FeedForwardTrellis::computeNextStates() {
           static_cast<int>(state / 2 + input * std::pow(2, power));
     }
   }
+
+  // std::cout << "printing trellis next state" << std::endl;
+  // print(nextStates_);
 }
 
 void FeedForwardTrellis::computeOutput() {
@@ -146,4 +172,7 @@ void FeedForwardTrellis::computeOutput() {
       }
     }
   }
+
+  // std::cout << "printing trellis output matrix" << std::endl;
+  // print(output_);
 }

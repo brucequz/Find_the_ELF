@@ -13,7 +13,7 @@ namespace {
 template <typename T>
 void print(const std::vector<T>& vec) {
   for (const T& element : vec) {
-      std::cout << element << " ";
+    std::cout << element << " ";
   }
   std::cout << std::endl;
 }
@@ -21,13 +21,23 @@ void print(const std::vector<T>& vec) {
 template <typename T>
 void print(const std::vector<std::vector<T>>& matrix) {
   for (const std::vector<T>& row : matrix) {
-      for (const T& element : row) {
-          std::cout << element << " ";
-      }
-      std::cout << std::endl;
+    for (const T& element : row) {
+      std::cout << element << " ";
+    }
+    std::cout << std::endl;
   }
 }
+
+template <typename T>
+void print_best_metrics(const std::vector<std::vector<T>>& matrix) {
+  for (const std::vector<T>& row : matrix) {
+    for (const T& element : row) {
+      std::cout << element.pathMetric << " ";
+    }
+    std::cout << std::endl;
+  }
 }
+}  // namespace
 namespace CodecUtils {
 
 std::vector<int> convertIntToBits(int integer, const int& length) {
@@ -150,6 +160,7 @@ std::vector<int> ViterbiCodec::encodeZTCC(std::vector<int> message) {
     message.push_back(0);
   }
   return trellis_ptr_->encode(message);
+  ;
 }
 
 MessageInformation ViterbiCodec::viterbiDecode(const std::vector<int>& coded) {
@@ -232,6 +243,51 @@ MessageInformation ViterbiCodec::softViterbiDecode(
     message[stage - 1] = input;
     cur_state = father_state;
   }
+
+  message.resize(message.size() - v_);
+  output.message = message;
+  output.path = path;
+  return output;
+}
+
+MessageInformation ViterbiCodec::softViterbiDecodeZTCC(const std::vector<double>& received_signal){
+  MessageInformation output;
+  std::vector<std::vector<Cell>> trellis_states =
+      constructTrellis(received_signal);
+
+  int num_total_stages = trellis_states[0].size();
+  MinHeap heap;  // Detour Tree
+
+  // Since it's ZTCC, we only need to add the path that starts at 0th state
+  DetourNode node;
+  node.start_state = 0;
+  node.path_metric = trellis_states[0][num_total_stages - 1].pathMetric;
+  heap.insert(node);
+
+  // pop the node with the smallest path metric - ML
+  DetourNode min_node = heap.pop();
+  if (min_node.start_state != 0) {
+    min_node = heap.pop();
+  }
+  std::vector<int> path(num_total_stages);
+  std::vector<int> message(k_ * (num_total_stages - 1), 0);
+
+  int cur_state = min_node.start_state;
+
+  for (int stage = num_total_stages - 1; stage >= 0; --stage) {
+    int father_state = trellis_states[cur_state][stage].fatherState;
+    path[stage] = cur_state;
+    if (stage == 0) {
+      break;
+    }
+    // assuming k_ == 1
+    assert(k_ == 1);
+    int input =
+        (cur_state == trellis_ptr_->nextStates_[father_state][0]) ? 0 : 1;
+    message[stage - 1] = input;
+    cur_state = father_state;
+  }
+
   message.resize(message.size() - v_);
   output.message = message;
   output.path = path;
@@ -363,6 +419,7 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
       }
     }
   }
+  //print_best_metrics(trellis_states);
   return trellis_states;
 }
 
@@ -377,7 +434,7 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructZTCCTrellis(
   int number_of_stages = signal_length / n_;
 
   // std::cout << "For standard list decoders: ";
-  // std::cout << k_ << ", " << n_ << ", " << v_ << ", " 
+  // std::cout << k_ << ", " << n_ << ", " << v_ << ", "
   // << crc_dec_ << ", " << crc_length_ << ", " << list_size_ << ". ";
   // std::cout << std::endl;
 
