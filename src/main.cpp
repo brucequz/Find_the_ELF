@@ -86,14 +86,14 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 
 int main() {
   // output path
-  std::string outputFilePath = "../output/even_smaller_example/";
-  std::ofstream outputFile(outputFilePath + "std_snr_10-50.txt");
+  std::string outputFilePath = "../output/smaller_example/";
+  std::ofstream outputFile(outputFilePath + "std_snr_30-40.txt");
   if (!outputFile.is_open()) {
     std::cerr << "Failed to open the file for writing." << std::endl;
     return 1;
   }
 
-  std::vector<double> EbN0 = {1, 2, 2.5, 3, 3.5, 4, 4.5, 5};
+  std::vector<double> EbN0 = {3, 3.5, 4};
   std::vector<double> SNR_dB;  // SNR is required for noise computations
   double offset = 10 * log10((double)2 * 64 /
                              (double)134);  // real rate of this code is 32/512
@@ -113,17 +113,17 @@ int main() {
   // }
 
   // int mc_N = 10000;
-  int max_errors = 1000;
+  int max_errors = 50;
   int list_size = 1;
 
   CodeInformation code;
   code.k = 1;
   code.n = 2;
-  code.v = 3;
+  code.v = 10;
   code.list_size = 1;
   code.crc_dec = -1;
   code.crc_length = -1;
-  code.generator_poly = {13, 17};  // octal
+  code.generator_poly = {2473, 3217};  // octal
   ViterbiCodec codec(code);
 
   CodeInformation code_1;
@@ -162,11 +162,11 @@ int main() {
   code_2.crc_length = 4;
   code_2.generator_poly = {221};
 
-  //ViterbiCodec codec_1(code_1);
-  //ViterbiCodec codec_2(code_2);
+  ViterbiCodec codec_1(code_1);
+  ViterbiCodec codec_2(code_2);
 
   // std::vector<CodeInformation> dld_codes = {code_1, code_2};
-  // DualListDecoder DLD(dld_codes, 1000000);
+  // DualListDecoder DLD(dld_codes, INT_MAX);
 
   int seed = 47;
   std::mt19937 msg_gen(seed);
@@ -175,12 +175,16 @@ int main() {
   std::vector<double> correct_decoding_snr;
   std::vector<double> ML_decoding_error_snr;
 
-  std::vector<double> DLD_correct_vec;
-  std::vector<double> DLD_error_vec;
+  // std::vector<double> DLD_correct_vec;
+  // std::vector<double> DLD_error_vec;
 
   // matlab debug purposes
   // std::vector<std::vector<int>> matlab_message;
   // std::vector<std::vector<double>> matlab_received_signal;
+  
+  std::cout << "Running STD tests for v = " << code.v << " test, with generator poly: " << code.generator_poly[0] << ", " << 
+  code.generator_poly[1] << " SNR = " << SNR_dB[0] << " - " << SNR_dB.back() << std::endl;
+
 
   for (double snr_dB : SNR_dB) {
     std::cout << "Now working on snr: " << snr_dB << "-------------------"
@@ -193,8 +197,8 @@ int main() {
     int Correct_decoding = 0;
 
     // DLD decoding
-    int DLD_correct = 0;
-    int DLD_error = 0;
+    // int DLD_correct = 0;
+    // int DLD_error = 0;
 
     int number_of_trials = 0;
     int number_of_errors = 0;
@@ -216,9 +220,9 @@ int main() {
 
       // coding
       std::vector<int> encoded_msg = codec.encodeZTCC(msg);
-      outputFile << " Printing coded message: " << std::endl;
-      CodecUtils::outputMat(encoded_msg, outputFile);
-      outputFile << std::endl;
+      // outputFile << " Printing coded message: " << std::endl;
+      // CodecUtils::outputMat(encoded_msg, outputFile);
+      // outputFile << std::endl;
 
       assert(encoded_msg.size() == (msg.size() + code.v) * 2);
 
@@ -229,9 +233,9 @@ int main() {
 
       std::vector<double> received_signal =
           AWGN::addNoise(modulated_signal, snr_dB);
-      outputFile << "Printing received signal: " << std::endl;
-      CodecUtils::outputMat(received_signal, outputFile);
-      outputFile << std::endl;
+      // outputFile << "Printing received signal: " << std::endl;
+      // CodecUtils::outputMat(received_signal, outputFile);
+      // outputFile << std::endl;
 
       // Creating matlab file for a single snr
       // matlab_message.push_back(msg);
@@ -248,12 +252,13 @@ int main() {
         number_of_errors++;
       }
 
-      // // DLD DECODING
+      // DLD DECODING
       // DLDInfo output_DLD = DLD.adaptiveDecode(received_signal);
       // if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
       //   DLD_correct++;
       // } else {
       //   DLD_error++;
+      //   number_of_errors++;
       // }
 
       // // update list ranks
@@ -280,8 +285,8 @@ int main() {
               << " , Percentage: "
               << (double)ML_decoding_error / number_of_trials << std::endl;
     // std::cout << "DLD correct decoding: " << DLD_correct << " , Percentage: "
-    // << (double)DLD_correct/mc_N << std::endl; std::cout << "DLD wrong
-    // decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/mc_N
+    // << (double)DLD_correct/number_of_trials << std::endl; 
+    // std::cout << "DLD wrong decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/number_of_trials
     // << std::endl;
 
     // std::cout << "expected list ranks: [ " << expected_list_ranks[0] << ", "
@@ -290,8 +295,8 @@ int main() {
     correct_decoding_snr.push_back((double)Correct_decoding / number_of_trials);
     ML_decoding_error_snr.push_back((double)ML_decoding_error /
                                     number_of_trials);
-    // DLD_correct_vec.push_back((double)DLD_correct/mc_N);
-    // DLD_error_vec.push_back((double)DLD_error/mc_N);
+    // DLD_correct_vec.push_back((double)DLD_correct/number_of_trials);
+    // DLD_error_vec.push_back((double)DLD_error/number_of_trials);
   }
   // MatlabUtils::writeToMat(matlab_message, "../test/Matlab_decoding_acc_verification/messages.mat", "messages");
   // MatlabUtils::writeToMat(matlab_received_signal, "../test/Matlab_decoding_acc_verification/received_signal.mat", "received_signal");
@@ -308,4 +313,9 @@ int main() {
   // CodecUtils::print(DLD_error_vec); std::cout << std::endl;
   outputFile.close();
   return 0;
+}
+
+
+void softViterbi() {
+  
 }
