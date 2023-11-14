@@ -286,7 +286,8 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
     }
     // std::cout << "hello" << std::endl;
   }
-
+  
+  // output we return when no agreed message is found
   output.push_back(output_0);
   output.push_back(output_1);
   DLDInfo empty_message;
