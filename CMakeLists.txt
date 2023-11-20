@@ -10,7 +10,7 @@ include(CTest)
 enable_testing()
 
 # Append the -g flag to the compiler options
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
 file(GLOB SOURCES "src/*.cpp")

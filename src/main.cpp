@@ -11,7 +11,7 @@
 // #include "mat.h"
 
 static std::random_device rd{};
-static std::mt19937 noise_gen(82);  // 82
+static std::mt19937 noise_gen(rd());  // 82
 
 namespace AWGN {
 
@@ -93,7 +93,7 @@ int main() {
     return 1;
   }
 
-  std::vector<double> EbN0 = {4};
+  std::vector<double> EbN0 = {4, 4.5, 5, 6};
   std::vector<double> SNR_dB;  // SNR is required for noise computations
   double offset = 10 * log10((double)2 * 64 /
                              (double)134);  // real rate of this code is 32/512
@@ -113,7 +113,7 @@ int main() {
   // }
 
   // int mc_N = 10000;
-  int max_errors = 5;
+  int max_errors = 100;
   int list_size = 1;
 
   CodeInformation code;
@@ -170,7 +170,7 @@ int main() {
 
   int seed = 47;
   std::mt19937 msg_gen(seed);
-  int num_bits = 5;
+  int num_bits = 64;
 
   std::vector<double> correct_decoding_snr;
   std::vector<double> ML_decoding_error_snr;
@@ -217,9 +217,9 @@ int main() {
         int random_bit = rand() % 2;
         msg.push_back(random_bit);
       }
-      outputFile << " Printing message: " << std::endl;
-      CodecUtils::outputMat(msg, outputFile);
-      outputFile << std::endl;
+      // outputFile << " Printing message: " << std::endl;
+      // CodecUtils::outputMat(msg, outputFile);
+      // outputFile << std::endl;
 
       // coding
       std::vector<int> encoded_msg = codec.encodeZTCC(msg);
@@ -236,16 +236,17 @@ int main() {
 
       std::vector<double> received_signal =
           AWGN::addNoise(modulated_signal, snr_dB);
-      outputFile << "Printing received signal: " << std::endl;
-      CodecUtils::outputMat(received_signal, outputFile);
-      outputFile << std::endl;
+      // outputFile << "Printing received signal: " << std::endl;
+      // CodecUtils::outputMat(received_signal, outputFile);
+      // outputFile << std::endl;
 
       // Creating matlab file for a single snr
       // matlab_message.push_back(msg);
       // matlab_received_signal.push_back(received_signal);
 
       // SOFT VITERBI DECODING
-      MessageInformation output_ML = codec.softViterbiDecodeZTCC(received_signal);
+      MessageInformation output_ML = codec.ztListDecoding(received_signal);
+
 
       assert(output_ML.message.size() == msg.size());
       if (CodecUtils::areVectorsEqual(output_ML.message, msg)) {
@@ -270,7 +271,7 @@ int main() {
       // }
 
       // update in the outputfile
-      if (number_of_trials % 1 == 0) {
+      if (number_of_trials % 2000 == 0) {
         outputFile << "Trial: " << number_of_trials << std::endl;
       }
     }

@@ -37,6 +37,24 @@ void print_best_metrics(const std::vector<std::vector<T>>& matrix) {
     std::cout << std::endl;
   }
 }
+void dec_to_binary(int input, std::vector<int>& output, int bit_number) {
+  output.assign(bit_number, -1);
+  for (int i = bit_number - 1; i >= 0; i--) {
+    int k = input >> i;
+    if (k & 1)
+      output[bit_number - 1 - i] = 1;
+    else
+      output[bit_number - 1 - i] = 0;
+  }
+}
+std::vector<int> get_point(int output, int n) {
+	std::vector<int> bin_output;
+	dec_to_binary(output, bin_output, n);
+	for (int i=0; i<n; i++){
+		bin_output[i] = -2 * bin_output[i] + 1;
+	}
+	return bin_output;
+}
 }  // namespace
 namespace CodecUtils {
 
@@ -254,7 +272,8 @@ MessageInformation ViterbiCodec::softViterbiDecodeZTCC(const std::vector<double>
   MessageInformation output;
   std::vector<std::vector<Cell>> trellis_states =
       constructZTCCTrellis(received_signal);
-
+  
+  
   int num_total_stages = trellis_states[0].size();
   MinHeap heap;  // Detour Tree
 
@@ -263,6 +282,8 @@ MessageInformation ViterbiCodec::softViterbiDecodeZTCC(const std::vector<double>
   node.start_state = 0;
   node.path_metric = trellis_states[0][num_total_stages - 1].pathMetric;
   heap.insert(node);
+
+  //std::cout << "soft Viterbi: " << node.path_metric << std::endl;
 
   // pop the node with the smallest path metric - ML
   DetourNode min_node = heap.pop();
@@ -478,14 +499,15 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructZTCCTrellis(
           target_cell->fatherState = cur_state;
         } else if (target_cell->pathMetric > temp_path_metric) {
           // the current path metric is better
-          target_cell->subPathMetric = target_cell->pathMetric;
-          target_cell->subFatherState = target_cell->fatherState;
+          //target_cell->subPathMetric = target_cell->pathMetric;
+          //target_cell->subFatherState = target_cell->fatherState;
           target_cell->pathMetric = temp_path_metric;
           target_cell->fatherState = cur_state;
         } else {
           // the current path metric is worse
-          target_cell->subPathMetric = temp_path_metric;
-          target_cell->subFatherState = cur_state;
+          //target_cell->subPathMetric = temp_path_metric;
+          //target_cell->subFatherState = cur_state;
+          continue;
         }
       }
     }
@@ -496,43 +518,42 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructZTCCTrellis(
 
 std::vector<std::vector<Cell>> ViterbiCodec::constructZTTrellis(std::vector<double> receivedMessage){
 	std::vector<std::vector<Cell>> trellisInfo;
-	trellisInfo = std::vector<std::vector<Cell>>(numStates_, std::vector<Cell>(receivedMessage.size()+1));
+  int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
+	trellisInfo = std::vector<std::vector<Cell>>(numStates_, std::vector<Cell>(lowrate_pathLength));
 
-	// initializes the valid starting state
-	trellisInfo[0][0].pathMetric = 0;
-	trellisInfo[0][0].init = true;
+	// initializes all the valid starting states
 
-	// precomputing euclidean distance between the received signal and +/- 1
-	std::vector<std::vector<double>> precomputedMetrics;
-	precomputedMetrics = std::vector<std::vector<double>>(receivedMessage.size(), std::vector<double>(2));
-
-	for(int stage = 0; stage < receivedMessage.size(); stage++){
-		precomputedMetrics[stage][0] = std::pow(receivedMessage[stage] - 1,2);
-		precomputedMetrics[stage][1] = std::pow(receivedMessage[stage] + 1,2);
-		// precomputedMetrics[stage][0] = std::abs(receivedMessage[stage] - 1);
-		// precomputedMetrics[stage][1] = std::abs(receivedMessage[stage] + 1);
-	}
-
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
+	
+	
 	// building the trellis
-	for(int stage = 0; stage < receivedMessage.size(); stage++){
-		for(int currentState = 0; currentState < trellis_ptr_->numStates_; currentState++){
+	for(int stage = 0; stage < lowrate_pathLength - 1; stage++){
+		for(int currentState = 0; currentState < numStates_; currentState++){
 			// if the state / stage is invalid, we move on
 			if(!trellisInfo[currentState][stage].init)
 				continue;
 
 			// otherwise, we compute the relevent information
 			for(int forwardPathIndex = 0; forwardPathIndex < trellis_ptr_->nextStates_[0].size(); forwardPathIndex++){
-				// note that the forwardPathIndex is also the bit that corresponds with the 
-				// trellis transition
+				// since our transitions correspond to symbols, the forwardPathIndex has no correlation 
+				// beyond indexing the forward path
 
 				int nextState = trellis_ptr_->nextStates_[currentState][forwardPathIndex];
-
+				
 				// if the nextState is invalid, we move on
 				if(nextState < 0)
 					continue;
-
-				double totalPathMetric = precomputedMetrics[stage][forwardPathIndex] + trellisInfo[currentState][stage].pathMetric;
-
+				
+				double branchMetric = 0;
+				std::vector<int> output_point = get_point(trellis_ptr_->output_[currentState][forwardPathIndex], n_);
+				
+				for(int i = 0; i < n_; i++){
+					branchMetric += std::pow(receivedMessage[n_ * stage + i] - (double)output_point[i], 2);
+					// branchMetric += std::abs(receivedMessage[lowrate_symbolLength * stage + i] - (double)output_point[i]);
+				}
+				double totalPathMetric = branchMetric + trellisInfo[currentState][stage].pathMetric;
+				
 				// dealing with cases of uninitialized states, when the transition becomes the optimal father state, and suboptimal father state, in order
 				if(!trellisInfo[nextState][stage + 1].init){
 					trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
@@ -540,14 +561,8 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructZTTrellis(std::vector<doub
 					trellisInfo[nextState][stage + 1].init = true;
 				}
 				else if(trellisInfo[nextState][stage + 1].pathMetric > totalPathMetric){
-					trellisInfo[nextState][stage + 1].subPathMetric = trellisInfo[nextState][stage + 1].pathMetric;
-					trellisInfo[nextState][stage + 1].subFatherState = trellisInfo[nextState][stage + 1].fatherState;
 					trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
 					trellisInfo[nextState][stage + 1].fatherState = currentState;
-				}
-				else{
-					trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
-					trellisInfo[nextState][stage + 1].subFatherState = currentState;
 				}
 			}
 

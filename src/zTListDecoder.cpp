@@ -29,17 +29,17 @@ std::vector<int> get_point(int output, int n) {
 }
 } // namespace
 
-MessageInformation ViterbiCodec::ztListDecoding(std::vector<double> receivedMessage){
+MessageInformation ViterbiCodec::ztListDecoding(std::vector<double> receivedMessage) {
 	std::vector<std::vector<Cell>> trellisInfo;
 	int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
 
 	trellisInfo = std::vector<std::vector<Cell>>(numStates_, std::vector<Cell>(lowrate_pathLength));
 
 	// initializes all the valid starting states
-	for(int i = 0; i < numStates_; i++){
-		trellisInfo[i][0].pathMetric = 0;
-		trellisInfo[i][0].init = true;
-	}
+	
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
+	
 	
 	// building the trellis
 	for(int stage = 0; stage < lowrate_pathLength - 1; stage++){
@@ -104,14 +104,7 @@ MessageInformation ViterbiCodec::ztListDecoding(std::vector<double> receivedMess
       path[stage - 1] = currentState;
   }
 
-  // std::vector<int> codeword = convertPathtoTrimmedMessage(path);
   std::vector<int> message = convertPathtoTrimmedMessage(path);
-  //std::cout<< "decoded message: ";
-  //for (int i=0; i<message.size(); i++){
-  //  std::cout<< message[i];
-  //}
-  //std::cout<< " end of message with length " << message.size() << std::endl;
-
   output.message = message;
   output.path = path;
   return output;

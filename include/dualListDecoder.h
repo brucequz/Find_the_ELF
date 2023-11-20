@@ -207,6 +207,7 @@ class DualListDecoder {
   std::vector<std::vector<Cell>> constructZTCCTrellis(
       const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr);
+  MessageInformation ztListDecoding(std::vector<double> receivedMessage);
   std::vector<int> convertPathtoMessage(
     const std::vector<int> path, FeedForwardTrellis* trellis_ptr);
   std::vector<int> convertPathtoTrimmedMessage(
