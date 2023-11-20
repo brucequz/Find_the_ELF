@@ -470,7 +470,7 @@ std::vector<int> DualListDecoder::convertPathtoTrimmedMessage(
     FeedForwardTrellis* trellis_ptr) {
   std::vector<int> message;
   message = convertPathtoMessage(path, trellis_ptr);
-  message.resize(message.size() - code.v);
+  message.resize(message.size() - (code.n/code.k)*code.v);
   return message;
 }
 

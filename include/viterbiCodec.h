@@ -90,34 +90,6 @@ namespace CRC {
   std::vector<int> decToBin(int input, int bit_number);
 }  // namespace CRC
 
-// struct Cell {
-//   bool init = false;
-//   double pathMetric = INT_MAX;
-//   int fatherState = -1;
-//   double subPathMetric = INT_MAX;
-//   int subFatherState = -1;
-// };
-
-// struct MessageInformation {
-//   MessageInformation(){};
-
-//   std::vector<int> message;
-//   std::vector<int> path;
-//   std::pair<int, int> begin_end_states;
-//   double path_metric;
-//   int list_rank;
-// };
-
-// struct CodeInformation {
-//   int k;  // input length
-//   int n;  // output length
-//   int v;  // memory elements
-//   int list_size = 1; // list decoder list size
-//   int crc_dec;
-//   int crc_length;
-//   std::vector<int> generator_poly;
-// };
-
 class ViterbiCodec {
  public:
   ViterbiCodec(int k, int n, int v, std::vector<int> poly);
@@ -128,6 +100,7 @@ class ViterbiCodec {
   MessageInformation viterbiDecode(const std::vector<int>& coded);
   MessageInformation softViterbiDecode(const std::vector<double>& coded);
   MessageInformation softViterbiDecodeZTCC(const std::vector<double>& received_signal);
+  MessageInformation ztListDecoding(std::vector<double> receivedMessage);
 
   std::vector<int> calculateCRC(const std::vector<int>& input);
   std::vector<int> convolveCRC(const std::vector<int>& input);
@@ -142,6 +115,8 @@ class ViterbiCodec {
       const std::vector<double>& received_signal);
   std::vector<MessageInformation> unconstraintListViterbiDecoding(
     const std::vector<double>& received_signal);
+  
+  
 
  private:
   int k_;  // input message length
@@ -160,6 +135,7 @@ class ViterbiCodec {
       const std::vector<double>& received_signal);
   std::vector<std::vector<Cell>> constructZTCCTrellis(
       const std::vector<double>& received_signal);
+  std::vector<std::vector<Cell>> constructZTTrellis(std::vector<double> receivedMessage);
   std::vector<int> convertPathtoMessage(const std::vector<int> path);
   std::vector<int> convertPathtoTrimmedMessage(const std::vector<int> path);
   bool checkCRC(std::vector<int> demodulated);
