@@ -88,7 +88,7 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 Functions that end with Experiment is a stand-alone experiment designed to run by itself
 Functions taht end with Decoding is a decoding function that takes in a single received message and 
 */
-void dualListDecoding(std::vector<double> SNR_dB, int maximum_list_size, int max_errors);
+void dualListExperiment(std::vector<double> SNR_dB, int maximum_list_size, int max_errors);
 void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors);
 
 
@@ -112,7 +112,7 @@ int main() {
 
   // 3. DLD decoding setup
   int DLD_maximum_list_size = 1e6;
-  dualListDecoding(SNR_dB, DLD_maximum_list_size, max_errors);
+  dualListExperiment(SNR_dB, DLD_maximum_list_size, max_errors);
 
   // soft Viterbi Experiment Setup
   softViterbiExperiment(SNR_dB, max_errors);
@@ -197,7 +197,7 @@ void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors) {
       // matlab_received_signal.push_back(received_signal);
 
       // // SOFT VITERBI DECODING
-      MessageInformation output_ML = codec.softViterbiDecodeZTCC(received_signal);
+      MessageInformation output_ML = codec.softViterbiDecoding(received_signal);
 
       assert(output_ML.message.size() == msg.size());
       if (CodecUtils::areVectorsEqual(output_ML.message, msg)) {
@@ -242,7 +242,7 @@ void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors) {
   outputFile.close();
 }
 
-void dualListDecoding(std::vector<double> SNR_dB, int maximum_list_size, int max_errors) {
+void dualListExperiment(std::vector<double> SNR_dB, int maximum_list_size, int max_errors) {
   /*
   function description here
   TODO:

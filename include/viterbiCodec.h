@@ -107,10 +107,7 @@ class ViterbiCodec {
   ~ViterbiCodec();
   std::vector<int> encode(const std::vector<int>& message);
   std::vector<int> encodeZTCC(std::vector<int> message);
-  MessageInformation viterbiDecode(const std::vector<int>& coded);
-  MessageInformation softViterbiDecode(const std::vector<double>& coded);
-  MessageInformation softViterbiDecodeZTCC(const std::vector<double>& received_signal);
-  MessageInformation ztListDecoding(std::vector<double> receivedMessage);
+  MessageInformation softViterbiDecoding(std::vector<double> receivedMessage);
 
   std::vector<int> calculateCRC(const std::vector<int>& input);
   std::vector<int> convolveCRC(const std::vector<int>& input);
@@ -139,12 +136,6 @@ class ViterbiCodec {
   int list_size_;
   FeedForwardTrellis* trellis_ptr_;
 
-  std::vector<std::vector<Cell>> constructTrellis(
-      const std::vector<int>& coded);
-  std::vector<std::vector<Cell>> constructTrellis(
-      const std::vector<double>& received_signal);
-  std::vector<std::vector<Cell>> constructZTCCTrellis(
-      const std::vector<double>& received_signal);
   std::vector<std::vector<Cell>> constructZTTrellis(std::vector<double> receivedMessage);
   std::vector<int> convertPathtoMessage(const std::vector<int> path);
   std::vector<int> convertPathtoTrimmedMessage(const std::vector<int> path);
