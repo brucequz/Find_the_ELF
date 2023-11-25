@@ -52,7 +52,7 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintListViterbiDecoding(
     const std::vector<double>& received_signal) {
   std::vector<MessageInformation> output;
   std::vector<std::vector<Cell>> trellis_states =
-      constructTrellis(received_signal);
+      constructZTTrellis(received_signal);
 
   int num_total_stages = trellis_states[0].size();
   std::vector<std::vector<int>> prev_paths;
@@ -152,7 +152,7 @@ std::vector<MessageInformation> ViterbiCodec::listViterbiDecoding(
     const std::vector<double>& received_signal) {
   std::vector<MessageInformation> output;
   std::vector<std::vector<Cell>> trellis_states =
-      constructTrellis(received_signal);
+      constructZTTrellis(received_signal);
 
   int num_total_stages = trellis_states[0].size();
   std::vector<std::vector<int>> prev_paths;
@@ -258,7 +258,7 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListViterbiDecoding(
 
   std::vector<MessageInformation> output;
   std::vector<std::vector<Cell>> trellis_states =
-      constructZTCCTrellis(received_signal);
+      constructZTTrellis(received_signal);
 
   int num_total_stages = trellis_states[0].size();
   std::vector<std::vector<int>> prev_paths;
@@ -354,7 +354,7 @@ std::vector<MessageInformation> ViterbiCodec::unconstraintZTCCDecoding(
 
   std::vector<MessageInformation> output;
   std::vector<std::vector<Cell>> trellis_states =
-      constructZTCCTrellis(received_signal);
+      constructZTTrellis(received_signal);
 
   int num_total_stages = trellis_states[0].size();
   std::vector<std::vector<int>> prev_paths;

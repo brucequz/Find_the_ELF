@@ -2,6 +2,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <map>
 #include <queue>
 #include <random>
@@ -93,11 +94,19 @@ void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors);
 
 
 
-int main() {
+int main(int argc, char* argv[]) {
 
   // variables setup
   // 1. snr
-  std::vector<double> EbN0 = {3, 3.5};
+  std::vector<double> EbN0;
+  std::istringstream iss(argv[1]);
+  std::string token;
+
+  while (std::getline(iss, token, ',')) {
+      // Convert each substring to a double and add it to the vector
+      EbN0.push_back(std::stod(token));
+  }
+  // std::vector<double> EbN0 = {3, 3.5};
   std::vector<double> SNR_dB;  // SNR is required for noise computations
   double offset = 10 * log10((double)2 * 64 /
                              (double)134);  // real rate of this code is 32/512
@@ -106,7 +115,7 @@ int main() {
   }
 
   // 2. number of maximum errors to accumulate
-  int max_errors = 500;
+  int max_errors = 50;
   int list_size = 1;
   
 
@@ -115,7 +124,7 @@ int main() {
   dualListExperiment(SNR_dB, DLD_maximum_list_size, max_errors);
 
   // soft Viterbi Experiment Setup
-  softViterbiExperiment(SNR_dB, max_errors);
+  // softViterbiExperiment(SNR_dB, max_errors);
   return 0;
 }
 
@@ -145,6 +154,9 @@ void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors) {
 
   std::vector<double> correct_decoding_snr;
   std::vector<double> ML_decoding_error_snr;
+  
+  std::cout << "Running STD tests for v = " << code.v << " test, with generator poly: " << code.generator_poly[0] << ", " << 
+  code.generator_poly[1] << " SNR = " << SNR_dB[0] << " - " << SNR_dB.back() << std::endl;
 
   for (double snr_dB : SNR_dB) {
     std::cout << "Now working on snr: " << snr_dB << "-------------------"
@@ -161,7 +173,7 @@ void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors) {
     while (number_of_errors < max_errors) {
       number_of_trials++;
 
-      if (number_of_trials % 20 == 0) {
+      if (number_of_trials % 500 == 0) {
         std::cout << "Trial number: " << number_of_trials << std::endl;
         std::cout << "Current number of errors: " << number_of_errors
                   << std::endl;
@@ -250,7 +262,11 @@ void dualListExperiment(std::vector<double> SNR_dB, int maximum_list_size, int m
   */
   // output path
   std::string outputFilePath = "../output/smaller_example/";
-  std::ofstream outputFile(outputFilePath + "DLD_" + std::to_string(maximum_list_size) + "_" + std::to_string(int(SNR_dB.front())) + "-" + 
+  std::ostringstream oss;
+  oss << std::scientific << maximum_list_size;
+
+  std::string scientificString = oss.str();
+  std::ofstream outputFile(outputFilePath + "DLD_" + scientificString + "_" + std::to_string(int(SNR_dB.front())) + "-" + 
                            std::to_string(int(SNR_dB.back())) + ".txt");
   if (!outputFile.is_open()) {
     std::cerr << "Failed to open the file for writing." << std::endl;
