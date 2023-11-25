@@ -11,7 +11,7 @@
 // #include "mat.h"
 
 static std::random_device rd{};
-static std::mt19937 noise_gen(rd());  // 82
+static std::mt19937 noise_gen(82);  // 82
 
 namespace AWGN {
 
@@ -84,16 +84,20 @@ std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
 
 // }  // namespace MatlabUtils
 
-int main() {
-  // output path
-  std::string outputFilePath = "../output/smaller_example/";
-  std::ofstream outputFile(outputFilePath + "softviterbicheck.txt");
-  if (!outputFile.is_open()) {
-    std::cerr << "Failed to open the file for writing." << std::endl;
-    return 1;
-  }
+/*
+Functions that end with Experiment is a stand-alone experiment designed to run by itself
+Functions taht end with Decoding is a decoding function that takes in a single received message and 
+*/
+void dualListDecoding(std::vector<double> SNR_dB, int maximum_list_size, int max_errors);
+void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors);
 
-  std::vector<double> EbN0 = {4, 4.5, 5, 6};
+
+
+int main() {
+
+  // variables setup
+  // 1. snr
+  std::vector<double> EbN0 = {3, 3.5};
   std::vector<double> SNR_dB;  // SNR is required for noise computations
   double offset = 10 * log10((double)2 * 64 /
                              (double)134);  // real rate of this code is 32/512
@@ -101,21 +105,159 @@ int main() {
     SNR_dB.push_back(EbN0[i]);
   }
 
-  // SNR
-  // double SNR_dB_start = 1.0;
-  // double SNR_dB_end = 7.0;
-  // double SNR_dB_step = 0.5;
-  // std::vector<double> SNR_dB = {};
-  // std::vector<double> SNR = {};
-  // for (double i = SNR_dB_start; i <= SNR_dB_end; i += SNR_dB_step) {
-  //   SNR_dB.push_back(i);
-  //   SNR.push_back(pow(10.0, i / 10.0));
-  // }
-
-  // int mc_N = 10000;
-  int max_errors = 100;
+  // 2. number of maximum errors to accumulate
+  int max_errors = 500;
   int list_size = 1;
+  
 
+  // 3. DLD decoding setup
+  int DLD_maximum_list_size = 1e6;
+  dualListDecoding(SNR_dB, DLD_maximum_list_size, max_errors);
+
+  // soft Viterbi Experiment Setup
+  softViterbiExperiment(SNR_dB, max_errors);
+  return 0;
+}
+
+void softViterbiExperiment(std::vector<double> SNR_dB, int max_errors) {
+  // output path
+  std::string outputFilePath = "../output/smaller_example/";
+  std::ofstream outputFile(outputFilePath + "STD_snr_" + std::to_string(int(SNR_dB.front())) + "-" + 
+                           std::to_string(int(SNR_dB.back())) + ".txt");
+  if (!outputFile.is_open()) {
+    std::cerr << "Failed to open the file for writing." << std::endl;
+  }
+
+  /// Building Codec
+  CodeInformation code;
+  code.k = 1;
+  code.n = 2;
+  code.v = 10;
+  code.list_size = 1;
+  code.crc_dec = -1;
+  code.crc_length = -1;
+  code.generator_poly = {2473, 3217};  // octal
+  ViterbiCodec codec(code);
+  
+  int seed = 47;
+  std::mt19937 msg_gen(seed);
+  int num_bits = 64;
+
+  std::vector<double> correct_decoding_snr;
+  std::vector<double> ML_decoding_error_snr;
+
+  for (double snr_dB : SNR_dB) {
+    std::cout << "Now working on snr: " << snr_dB << "-------------------"
+              << std::endl;
+
+    std::vector<int> expected_list_ranks = {0, 0};
+    
+    int ML_decoding_error = 0;
+    int Correct_decoding = 0;
+
+    int number_of_trials = 0;
+    int number_of_errors = 0;
+
+    while (number_of_errors < max_errors) {
+      number_of_trials++;
+
+      if (number_of_trials % 20 == 0) {
+        std::cout << "Trial number: " << number_of_trials << std::endl;
+        std::cout << "Current number of errors: " << number_of_errors
+                  << std::endl;
+      }
+
+      std::vector<int> msg;
+      for (int i = 0; i < num_bits; ++i) {
+        int random_bit = rand() % 2;
+        msg.push_back(random_bit);
+      }
+
+      // coding
+      std::vector<int> encoded_msg = codec.encodeZTCC(msg);
+      // outputFile << " Printing coded message: " << std::endl;
+      // CodecUtils::outputMat(encoded_msg, outputFile);
+      // outputFile << std::endl;
+
+      assert(encoded_msg.size() == (msg.size() + code.v) * 2);
+
+      std::vector<int> modulated_signal = BPSK::modulate(encoded_msg);
+      // outputFile << "Printing modulated signal: " << std::endl;
+      // CodecUtils::outputMat(modulated_signal, outputFile);
+      // outputFile << std::endl;
+
+      std::vector<double> received_signal =
+          AWGN::addNoise(modulated_signal, snr_dB);
+      // outputFile << "Printing received signal: " << std::endl;
+      // CodecUtils::outputMat(received_signal, outputFile);
+      // outputFile << std::endl;
+
+      // Creating matlab file for a single snr
+      // matlab_message.push_back(msg);
+      // matlab_received_signal.push_back(received_signal);
+
+      // // SOFT VITERBI DECODING
+      MessageInformation output_ML = codec.softViterbiDecodeZTCC(received_signal);
+
+      assert(output_ML.message.size() == msg.size());
+      if (CodecUtils::areVectorsEqual(output_ML.message, msg)) {
+        Correct_decoding++;
+      } else {
+        ML_decoding_error++;
+        number_of_errors++;
+      }
+
+      // update in the outputfile
+      if (number_of_trials % 2000 == 0) {
+        outputFile << "Trial: " << number_of_trials << std::endl;
+      }
+    }
+
+    std::cout << "For snr = " << snr_dB << ", " << number_of_trials
+              << " were ran to accumulate " << number_of_errors << " errors."
+              << std::endl;
+    std::cout << "std viterbi correct decoding: " << Correct_decoding
+              << " , Percentage: "
+              << (double)Correct_decoding / number_of_trials << std::endl;
+    std::cout << "std viterbi wrong decoding: " << ML_decoding_error
+              << " , Percentage: "
+              << (double)ML_decoding_error / number_of_trials << std::endl;
+    correct_decoding_snr.push_back((double)Correct_decoding / number_of_trials);
+    ML_decoding_error_snr.push_back((double)ML_decoding_error /
+                                    number_of_trials);
+  }
+
+
+  ///////////  End of experiment ////////////
+  // Matlab debug purposes
+  // MatlabUtils::writeToMat(matlab_message, "../test/Matlab_decoding_acc_verification/messages.mat", "messages");
+  // MatlabUtils::writeToMat(matlab_received_signal, "../test/Matlab_decoding_acc_verification/received_signal.mat", "received_signal");
+
+  std::cout << "Std viterbi CORRECT decoding percentage: ";
+  CodecUtils::print(correct_decoding_snr);
+  std::cout << std::endl;
+  std::cout << "Std viterbi WRONG decoding percentage: ";
+  CodecUtils::print(ML_decoding_error_snr);
+  std::cout << std::endl;
+  outputFile.close();
+}
+
+void dualListDecoding(std::vector<double> SNR_dB, int maximum_list_size, int max_errors) {
+  /*
+  function description here
+  TODO:
+  
+  */
+  // output path
+  std::string outputFilePath = "../output/smaller_example/";
+  std::ofstream outputFile(outputFilePath + "DLD_" + std::to_string(maximum_list_size) + "_" + std::to_string(int(SNR_dB.front())) + "-" + 
+                           std::to_string(int(SNR_dB.back())) + ".txt");
+  if (!outputFile.is_open()) {
+    std::cerr << "Failed to open the file for writing." << std::endl;
+  }
+  
+
+  /// Building Codec
   CodeInformation code;
   code.k = 1;
   code.n = 2;
@@ -139,7 +281,7 @@ int main() {
   code_1.k = 1;
   code_1.n = 1;
   code_1.v = 6;
-  code_1.list_size = list_size;
+  code_1.list_size = 1;
   code_1.crc_dec = 21;
   code_1.crc_length = 5;
   code_1.generator_poly = {163};  // octal
@@ -157,7 +299,7 @@ int main() {
   code_2.k = 1;
   code_2.n = 1;
   code_2.v = 7;
-  code_2.list_size = list_size;
+  code_2.list_size = 1;
   code_2.crc_dec = 11;
   code_2.crc_length = 4;
   code_2.generator_poly = {221};
@@ -165,24 +307,20 @@ int main() {
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);
 
-  // std::vector<CodeInformation> dld_codes = {code_1, code_2};
-  // DualListDecoder DLD(dld_codes, INT_MAX);
+  std::vector<CodeInformation> dld_codes = {code_1, code_2};
+  DualListDecoder DLD(dld_codes, maximum_list_size);
 
+
+  // Simulation begin
   int seed = 47;
   std::mt19937 msg_gen(seed);
   int num_bits = 64;
 
-  std::vector<double> correct_decoding_snr;
-  std::vector<double> ML_decoding_error_snr;
+  std::vector<double> DLD_correct_vec;
+  std::vector<double> DLD_list_exceed_vec;
+  std::vector<double> DLD_error_vec;
 
-  // std::vector<double> DLD_correct_vec;
-  // std::vector<double> DLD_error_vec;
-
-  // matlab debug purposes
-  // std::vector<std::vector<int>> matlab_message;
-  // std::vector<std::vector<double>> matlab_received_signal;
-  
-  std::cout << "Running STD tests for v = " << code.v << " test, with generator poly: " << code.generator_poly[0] << ", " << 
+  std::cout << "Running DLD tests for v = " << code.v << " test, with generator poly: " << code.generator_poly[0] << ", " << 
   code.generator_poly[1] << " SNR = " << SNR_dB[0] << " - " << SNR_dB.back() << std::endl;
 
 
@@ -192,13 +330,13 @@ int main() {
 
     std::vector<int> expected_list_ranks = {0, 0};
 
-    // standard viterbi
-    int ML_decoding_error = 0;
-    int Correct_decoding = 0;
+    int DLD_correct = 0;
+    int DLD_list_exceeded = 0;
+    int DLD_error = 0;
 
-    // DLD decoding
-    // int DLD_correct = 0;
-    // int DLD_error = 0;
+    // vector to keep track of list sizes for both decoders
+    std::vector<int> DLD_list_0_size;
+    std::vector<int> DLD_list_1_size;
 
     int number_of_trials = 0;
     int number_of_errors = 0;
@@ -206,7 +344,7 @@ int main() {
     while (number_of_errors < max_errors) {
       number_of_trials++;
 
-      if (number_of_trials % 5000 == 0) {
+      if (number_of_trials % 20 == 0) {
         std::cout << "Trial number: " << number_of_trials << std::endl;
         std::cout << "Current number of errors: " << number_of_errors
                   << std::endl;
@@ -217,9 +355,6 @@ int main() {
         int random_bit = rand() % 2;
         msg.push_back(random_bit);
       }
-      // outputFile << " Printing message: " << std::endl;
-      // CodecUtils::outputMat(msg, outputFile);
-      // outputFile << std::endl;
 
       // coding
       std::vector<int> encoded_msg = codec.encodeZTCC(msg);
@@ -227,7 +362,7 @@ int main() {
       // CodecUtils::outputMat(encoded_msg, outputFile);
       // outputFile << std::endl;
 
-      assert(encoded_msg.size() == ((msg.size() + code.v) * 2));
+      assert(encoded_msg.size() == (msg.size() + code.v) * 2);
 
       std::vector<int> modulated_signal = BPSK::modulate(encoded_msg);
       // outputFile << "Printing modulated signal: " << std::endl;
@@ -240,35 +375,56 @@ int main() {
       // CodecUtils::outputMat(received_signal, outputFile);
       // outputFile << std::endl;
 
-      // Creating matlab file for a single snr
-      // matlab_message.push_back(msg);
-      // matlab_received_signal.push_back(received_signal);
+      // DLD DECODING
+      DLDInfo output_DLD = DLD.adaptiveDecode(received_signal);
+      // we save the list ranks
+      DLD_list_0_size.push_back(output_DLD.list_ranks[0]);
+      DLD_list_1_size.push_back(output_DLD.list_ranks[1]);
 
-      // SOFT VITERBI DECODING
-      MessageInformation output_ML = codec.ztListDecoding(received_signal);
-
-
-      assert(output_ML.message.size() == msg.size());
-      if (CodecUtils::areVectorsEqual(output_ML.message, msg)) {
-        Correct_decoding++;
-      } else {
-        ML_decoding_error++;
+      if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
+        // correct decoding
+        DLD_correct++;
+      } else if (output_DLD.message == std::vector<int>(64, -1)) {
+        // list size exceeded
+        // we save the message, received_signal and record the maximum list size
+        DLD_list_exceeded++;
         number_of_errors++;
+        outputFile << "LSE Error: " << std::endl;
+        outputFile << "  Transmitted message: ";
+        CodecUtils::outputMat(msg, outputFile);
+        outputFile << std::endl;
+        outputFile << "  Received signal: ";
+        CodecUtils::outputMat(output_DLD.received_signal, outputFile);
+        outputFile << std::endl;
+        // of course the list size are going to be the maximum list size
+        outputFile << "  List sizes searched: ";
+        CodecUtils::outputMat(output_DLD.list_ranks, outputFile);
+        outputFile << std::endl;
+      }
+      else {
+        // if there is an error, we save the correct message, the incorrectly decoded message, and the received signal and record the list index.
+        DLD_error++;
+        number_of_errors++;
+        outputFile << "Decoding Error: " << std::endl;
+        outputFile << "  Transmitted message: ";
+        CodecUtils::outputMat(msg, outputFile);
+        outputFile << std::endl;
+        outputFile << "  Received signal: ";
+        CodecUtils::outputMat(output_DLD.received_signal, outputFile);
+        outputFile << std::endl;
+        outputFile << "  Decoded message: ";
+        CodecUtils::outputMat(output_DLD.message, outputFile);
+        outputFile << std::endl;
+        // of course the list size are going to be the maximum list size
+        outputFile << "  List sizes searched: ";
+        CodecUtils::outputMat(output_DLD.list_ranks, outputFile);
+        outputFile << std::endl;
       }
 
-      // DLD DECODING
-      // DLDInfo output_DLD = DLD.adaptiveDecode(received_signal);
-      // if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
-      //   DLD_correct++;
-      // } else {
-      //   DLD_error++;
-      //   number_of_errors++;
-      // }
-
-      // // update list ranks
-      // for (int i = 0; i < expected_list_ranks.size(); ++i) {
-      //   expected_list_ranks[i] += output_DLD.list_ranks[i];
-      // }
+      // update list ranks
+      for (int i = 0; i < expected_list_ranks.size(); ++i) {
+        expected_list_ranks[i] += output_DLD.list_ranks[i];
+      }
 
       // update in the outputfile
       if (number_of_trials % 2000 == 0) {
@@ -276,50 +432,40 @@ int main() {
       }
     }
 
-    // for (int j = 0; j < expected_list_ranks.size(); ++j) {
-    //   expected_list_ranks[j] /= mc_N;
-    // }
-    std::cout << "For snr = " << snr_dB << ", " << number_of_trials
-              << " were ran to accumulate " << number_of_errors << " errors."
-              << std::endl;
-    std::cout << "std viterbi correct decoding: " << Correct_decoding
-              << " , Percentage: "
-              << (double)Correct_decoding / number_of_trials << std::endl;
-    std::cout << "std viterbi wrong decoding: " << ML_decoding_error
-              << " , Percentage: "
-              << (double)ML_decoding_error / number_of_trials << std::endl;
-    // std::cout << "DLD correct decoding: " << DLD_correct << " , Percentage: "
-    // << (double)DLD_correct/number_of_trials << std::endl; 
-    // std::cout << "DLD wrong decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/number_of_trials
-    // << std::endl;
+    ////////  DLD Decoding Statistics /////////
+    for (int j = 0; j < expected_list_ranks.size(); ++j) {
+      expected_list_ranks[j] /= number_of_trials;
+    }
+    std::cout << "DLD correct decoding: " << DLD_correct << " , Percentage: "
+    << (double)DLD_correct/number_of_trials << std::endl; 
+    std::cout << "DLD Exceeded list:" << DLD_list_exceeded << ", Percentage: "
+    << (double)DLD_list_exceeded/number_of_trials << std::endl;
+    std::cout << "DLD wrong decoding: " << DLD_error << " , Percentage: " << (double)DLD_error/number_of_trials
+    << std::endl;
 
-    // std::cout << "expected list ranks: [ " << expected_list_ranks[0] << ", "
-    // << expected_list_ranks[1] << " ]" << std::endl;
+    std::cout << "expected list ranks: [ " << expected_list_ranks[0] << ", "
+    << expected_list_ranks[1] << " ]" << std::endl;
+    
+    // distance spectrum statistics
+    std::cout << "List ranks spectrum data: " << std::endl;
+    std::cout << "  List 0: ";
+    CodecUtils::printMat(DLD_list_0_size); std::cout << std::endl;
+    std::cout << "  List 1: ";
+    CodecUtils::printMat(DLD_list_1_size); std::cout << std::endl;
 
-    correct_decoding_snr.push_back((double)Correct_decoding / number_of_trials);
-    ML_decoding_error_snr.push_back((double)ML_decoding_error /
-                                    number_of_trials);
-    // DLD_correct_vec.push_back((double)DLD_correct/number_of_trials);
-    // DLD_error_vec.push_back((double)DLD_error/number_of_trials);
+
+    DLD_correct_vec.push_back((double)DLD_correct/number_of_trials);
+    DLD_list_exceed_vec.push_back((double)DLD_list_exceeded/number_of_trials);
+    DLD_error_vec.push_back((double)DLD_error/number_of_trials);
   }
-  // MatlabUtils::writeToMat(matlab_message, "../test/Matlab_decoding_acc_verification/messages.mat", "messages");
-  // MatlabUtils::writeToMat(matlab_received_signal, "../test/Matlab_decoding_acc_verification/received_signal.mat", "received_signal");
 
-  std::cout << "Std viterbi CORRECT decoding percentage: ";
-  CodecUtils::print(correct_decoding_snr);
-  std::cout << std::endl;
-  std::cout << "Std viterbi WRONG decoding percentage: ";
-  CodecUtils::print(ML_decoding_error_snr);
-  std::cout << std::endl;
-  // std::cout << "DLD Decoder CORRECT decoding percentage: ";
-  // CodecUtils::print(DLD_correct_vec); std::cout << std::endl; std::cout <<
-  // "DLD Decoder WRONG decoding percentage: ";
-  // CodecUtils::print(DLD_error_vec); std::cout << std::endl;
+
+  ///////////  End of simulation ////////////
+  std::cout << "DLD Decoder CORRECT decoding percentage: ";
+  CodecUtils::print(DLD_correct_vec); std::cout << std::endl;
+  std::cout << "DLD Decoder LIST EXCEEDED decoding percentage: ";
+  CodecUtils::print(DLD_list_exceed_vec); std::cout << std::endl;
+  std::cout << "DLD Decoder WRONG decoding percentage: ";
+  CodecUtils::print(DLD_error_vec); std::cout << std::endl;
   outputFile.close();
-  return 0;
-}
-
-
-void softViterbi() {
-  
 }

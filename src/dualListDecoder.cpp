@@ -273,6 +273,8 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
     if (mp.queue_size() != 0) {
       DLDInfo agreed_message = mp.pop_queue();
       best_current_match = agreed_message.combined_metric;
+      // record the received signal just in case the decoding is incorrect
+      agreed_message.received_signal = received_signal;
       decoder_threshold_0 = best_current_match - node_1.path_metric;
       decoder_threshold_1 = best_current_match - node_0.path_metric;
       best_combined_found = true;
@@ -292,7 +294,10 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
   DLDInfo empty_message;
   empty_message.combined_metric = INT_MAX;
   empty_message.list_ranks = {max_path_to_search_, max_path_to_search_};
+  // when the output is not found, we store the message to be all -1's
+  // and the received_signal
   empty_message.message = std::vector<int>(64, -1);
+  empty_message.received_signal = received_signal;
 
   // free pointers
   delete heap_list_0;

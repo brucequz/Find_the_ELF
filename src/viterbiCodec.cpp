@@ -317,17 +317,7 @@ MessageInformation ViterbiCodec::softViterbiDecodeZTCC(const std::vector<double>
 
 std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
     const std::vector<int>& coded) {
-  /*
-   *  Construct output reverse trellis states with cells containing relevant
-   * information for viterbi decoding.
-   *  Cell
-   * {
-   *    - branchMetric:
-   *    - pathMetric:
-   *    - init: whether or not output cell is activated, aka. reachable in the
-   * decoding process.
-   * }
-   */
+ 
 
   std::vector<std::vector<Cell>> trellis_states;
   int message_length = coded.size();
@@ -447,12 +437,16 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructTrellis(
 std::vector<std::vector<Cell>> ViterbiCodec::constructZTCCTrellis(
     const std::vector<double>& received_signal) {
   /*
-  Construct output trellis for traceback later with euclidean distances
-  as path metrics.
-
-  Input: received noisy signal
-  Output: a trellis of 
-  */
+   *  Construct output reverse trellis states with cells containing relevant
+   * information for viterbi decoding.
+   *  Cell
+   * {
+   *    - branchMetric:
+   *    - pathMetric:
+   *    - init: whether or not output cell is activated, aka. reachable in the
+   * decoding process.
+   * }
+   */
   std::vector<std::vector<Cell>> trellis_states;
   int signal_length = received_signal.size();
   int number_of_stages = signal_length / n_;

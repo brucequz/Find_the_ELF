@@ -60,6 +60,16 @@ void outputMat(const std::vector<T>& vec, std::ofstream& outputFile) {
   outputFile << "] with size: " << vec.size();
 }
 
+template<typename T>
+void printMat(const std::vector<T>& vec) {
+  std::cout << "[";
+  for (size_t i = 0; i < vec.size() - 1; ++i) {
+    std::cout << vec[i] << ", ";
+  }
+  std::cout << vec.back();
+  std::cout << "] with size: " << vec.size();
+}
+
 template <typename T>
 bool areVectorsEqual(const std::vector<T>& vector1, const std::vector<T>& vector2) {
   if (vector1.size() != vector2.size()) {

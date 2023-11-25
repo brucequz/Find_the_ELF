@@ -12,6 +12,7 @@ struct DLDInfo {
   double combined_metric;
   std::vector<int> message;
   std::vector<int> list_ranks;
+  std::vector<double> received_signal;
 };
 
 // Define a custom comparison function for the priority queue
