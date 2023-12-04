@@ -163,7 +163,7 @@ TEST(DuallistDecoder, SingleDecodeTest) {
 
   outputFile << std::endl;
 
-  DualListDecoder dld({code_1, code_2});
+  DualListDecoder dld({code_1, code_2}, 1e5);
   std::vector<std::vector<MessageInformation>> output_dld = dld.adaptiveDecode(received_signal_14);
   outputFile << "printing DLD list decoding results: " << std::endl;
   for (int i = 0; i < output_dld[0].size(); ++i) {

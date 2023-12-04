@@ -206,6 +206,9 @@ class DualListDecoder {
 
   std::vector<std::vector<Cell>> constructZTCCTrellis(
       const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr); // deprecated
+  std::vector<std::vector<Cell>> constructZTListTrellis(
+      const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr);
   MessageInformation ztListDecoding(std::vector<double> receivedMessage);
   std::vector<int> convertPathtoMessage(
@@ -214,6 +217,7 @@ class DualListDecoder {
     const std::vector<int> path, CodeInformation code, FeedForwardTrellis* trellis_ptr);
   std::vector<int> deconvolveCRC(const std::vector<int>& output, CodeInformation code);
   bool checkCRC(std::vector<int> demodulated, CodeInformation code);
+  bool crc_check(std::vector<int> input_data, int crc_bits_num, int crc_dec);
 };
 
 #endif

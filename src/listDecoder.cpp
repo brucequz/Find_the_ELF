@@ -42,8 +42,8 @@ std::vector<int> ViterbiCodec::convertPathtoTrimmedMessage(
     const std::vector<int> path) {
   std::vector<int> message;
   message = convertPathtoMessage(path);
-  //std::cout << "message size: " << message.size() << std::endl;
-  //std::cout << "truncating: " << v_ << std::endl;
+  // std::cout << "message size: " << message.size() << std::endl;
+  // std::cout << "truncating: " << v_ << std::endl;
   message.resize(message.size() - v_);
   return message;
 }

@@ -22,14 +22,21 @@ void DualListMap::insert(const MessageInformation& mi) {
     // key exists
     DLDInfo agreed_message;
     agreed_message.combined_metric = mi.path_metric + it->second.path_metric;
-    // be cautious since the existing message could come from any list decoder
+    // std::cout << "For the matched message: ";
+    //  be cautious since the existing message could come from any list decoder
     if (it->second.decoder_index == 0) {
       agreed_message.list_ranks = {it->second.list_rank, mi.list_rank};
+      // std::cout << "DLD 0 result is already in there with " <<
+      // it->second.path_metric << " pathMetric" << std::endl;
     } else if (it->second.decoder_index == 1) {
       agreed_message.list_ranks = {mi.list_rank, it->second.list_rank};
+      // std::cout << "DLD 1 result is already in there with " <<
+      // it->second.path_metric << " pathMetric" << std::endl;
     } else {
       std::cerr << "Invalid decoder order" << std::endl;
     }
+    // std::cout << "The newly inserted one has " << mi.path_metric << "as
+    // pathMetric." << std::endl;
     agreed_message.message = mi.message;
     agreed_messages_.push(agreed_message);
     dual_list_map_.erase(mi.message);

@@ -113,6 +113,30 @@ combine_maps(const std::vector<MessageInformation>& vec1,
 
   return result_queue;
 }
+
+void dec_to_binary(int input, std::vector<int>& output, int bit_number) {
+  output.assign(bit_number, -1);
+  for (int i = bit_number - 1; i >= 0; i--) {
+    int k = input >> i;
+    if (k & 1)
+      output[bit_number - 1 - i] = 1;
+    else
+      output[bit_number - 1 - i] = 0;
+  }
+}
+
+std::vector<int> get_point(int output, int n) {
+  std::vector<int> bin_output;
+  dec_to_binary(output, bin_output, n);
+  for (int i = 0; i < n; i++) {
+    bin_output[i] = -2 * bin_output[i] + 1;
+  }
+  return bin_output;
+}
+
+int bin_sum(int i, int j) {
+	return (i + j) % 2;
+}
 }  // namespace dualdecoderutils
 
 DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
@@ -206,7 +230,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
 
   // list decoder 0
   std::vector<std::vector<Cell>> trellis_0 =
-      constructZTCCTrellis(received_codec_1, code_0, trellis_ptrs_[0]);
+      constructZTListTrellis(received_codec_1, code_0, trellis_ptrs_[0]);
   int num_total_stages_0 = trellis_0[0].size();
   std::vector<std::vector<int>> prev_paths_list_0;
   MinHeap* heap_list_0 = new MinHeap;
@@ -220,7 +244,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
 
   // list decoder 1
   std::vector<std::vector<Cell>> trellis_1 =
-      constructZTCCTrellis(received_codec_2, code_1, trellis_ptrs_[1]);
+      constructZTListTrellis(received_codec_2, code_1, trellis_ptrs_[1]);
   int num_total_stages_1 = trellis_1[0].size();
   std::vector<std::vector<int>> prev_paths_list_1;
   MinHeap* heap_list_1 = new MinHeap;
@@ -371,7 +395,7 @@ MessageInformation DualListDecoder::traceBack(
         convertPathtoTrimmedMessage(path, code, trellis_ptr);
     std::vector<int> message = deconvolveCRC(messageWithoutTrailingZeros, code);
 
-    if (checkCRC(messageWithoutTrailingZeros, code) &&
+    if (crc_check(messageWithoutTrailingZeros, code.crc_length, code.crc_dec) &&
         path.front() == path.back() && path.back() == 0) {
       mi.path = path;
       mi.path_metric = detour.path_metric;
@@ -455,6 +479,78 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTCCTrellis(
   return trellis_states;
 }
 
+std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
+    const std::vector<double>& received_signal, CodeInformation code,
+    FeedForwardTrellis* trellis_ptr) {
+  std::vector<std::vector<Cell>> trellisInfo;
+  int lowrate_pathLength = (received_signal.size() / code.n) + 1;
+  int lowrate_numStates = std::pow(2, code.v);
+
+  trellisInfo = std::vector<std::vector<Cell>>(
+      lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
+
+  // initializes just the zeroth valid starting states
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
+
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < lowrate_numStates;
+         currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
+
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+           forwardPathIndex < trellis_ptr->nextStates_[0].size();
+           forwardPathIndex++) {
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
+
+        int nextState =
+            trellis_ptr->nextStates_[currentState][forwardPathIndex];
+
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
+
+        double branchMetric = 0;
+        std::vector<int> output_point = dualdecoderutils::get_point(
+            trellis_ptr->output_[currentState][forwardPathIndex], code.n);
+
+        for (int i = 0; i < code.n; i++) {
+          branchMetric += std::pow(
+              received_signal[code.n * stage + i] - (double)output_point[i], 2);
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+        }
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                   totalPathMetric) {
+          trellisInfo[nextState][stage + 1].subPathMetric =
+              trellisInfo[nextState][stage + 1].pathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState =
+              trellisInfo[nextState][stage + 1].fatherState;
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        } else {
+          trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState = currentState;
+        }
+      }
+    }
+  }
+  return trellisInfo;
+}
+
 std::vector<int> DualListDecoder::convertPathtoMessage(
     const std::vector<int> path, FeedForwardTrellis* trellis_ptr) {
   std::vector<int> message;
@@ -475,7 +571,7 @@ std::vector<int> DualListDecoder::convertPathtoTrimmedMessage(
     FeedForwardTrellis* trellis_ptr) {
   std::vector<int> message;
   message = convertPathtoMessage(path, trellis_ptr);
-  message.resize(message.size() - (code.n/code.k)*code.v);
+  message.resize(message.size() - (code.n / code.k) * code.v);
   return message;
 }
 
@@ -513,4 +609,18 @@ bool DualListDecoder::checkCRC(std::vector<int> demodulated,
   bool all_zero = std::all_of(demodulated.begin(), demodulated.end(),
                               [](int i) { return i == 0; });
   return all_zero;
+}
+
+bool DualListDecoder::crc_check(std::vector<int> input_data, int crc_bits_num, int crc_dec) {
+	std::vector<int> CRC;
+	dualdecoderutils::dec_to_binary(crc_dec, CRC, crc_bits_num);
+
+	for (int ii = 0; ii <= (int)input_data.size() - crc_bits_num; ii++) {
+		if (input_data[ii] == 1) {
+			// Note: transform doesn't include .end
+			std::transform(input_data.begin() + ii, input_data.begin() + (ii + crc_bits_num), CRC.begin(), input_data.begin() + ii, dualdecoderutils::bin_sum);
+		}
+	}
+	bool zeros = std::all_of(input_data.begin(), input_data.end(), [](int i) { return i == 0; });
+	return zeros;
 }

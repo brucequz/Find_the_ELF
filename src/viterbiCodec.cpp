@@ -99,12 +99,12 @@ void dec_to_binary(int input, std::vector<int>& output, int bit_number) {
 }
 
 std::vector<int> get_point(int output, int n) {
-	std::vector<int> bin_output;
-	dec_to_binary(output, bin_output, n);
-	for (int i=0; i<n; i++){
-		bin_output[i] = -2 * bin_output[i] + 1;
-	}
-	return bin_output;
+  std::vector<int> bin_output;
+  dec_to_binary(output, bin_output, n);
+  for (int i = 0; i < n; i++) {
+    bin_output[i] = -2 * bin_output[i] + 1;
+  }
+  return bin_output;
 }
 
 }  // namespace CodecUtils
@@ -183,67 +183,74 @@ std::vector<int> ViterbiCodec::encodeZTCC(std::vector<int> message) {
   return trellis_ptr_->encode(message);
 }
 
-MessageInformation ViterbiCodec::softViterbiDecoding(std::vector<double> receivedMessage) {
-	std::vector<std::vector<Cell>> trellisInfo;
-	int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
+MessageInformation ViterbiCodec::softViterbiDecoding(
+    std::vector<double> receivedMessage) {
+  std::vector<std::vector<Cell>> trellisInfo;
+  int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
 
-	trellisInfo = std::vector<std::vector<Cell>>(numStates_, std::vector<Cell>(lowrate_pathLength));
+  trellisInfo = std::vector<std::vector<Cell>>(
+      numStates_, std::vector<Cell>(lowrate_pathLength));
 
-	// initializes all the valid starting states
-	
+  // initializes all the valid starting states
+
   trellisInfo[0][0].pathMetric = 0;
   trellisInfo[0][0].init = true;
-	
-	
-	// building the trellis
-	for(int stage = 0; stage < lowrate_pathLength - 1; stage++){
-		for(int currentState = 0; currentState < numStates_; currentState++){
-			// if the state / stage is invalid, we move on
-			if(!trellisInfo[currentState][stage].init)
-				continue;
 
-			// otherwise, we compute the relevent information
-			for(int forwardPathIndex = 0; forwardPathIndex < trellis_ptr_->nextStates_[0].size(); forwardPathIndex++){
-				// since our transitions correspond to symbols, the forwardPathIndex has no correlation 
-				// beyond indexing the forward path
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < numStates_; currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
 
-				int nextState = trellis_ptr_->nextStates_[currentState][forwardPathIndex];
-				
-				// if the nextState is invalid, we move on
-				if(nextState < 0)
-					continue;
-				
-				double branchMetric = 0;
-				std::vector<int> output_point = CodecUtils::get_point(trellis_ptr_->output_[currentState][forwardPathIndex], n_);
-				
-				for(int i = 0; i < n_; i++){
-					branchMetric += std::pow(receivedMessage[n_ * stage + i] - (double)output_point[i], 2);
-					// branchMetric += std::abs(receivedMessage[lowrate_symbolLength * stage + i] - (double)output_point[i]);
-				}
-				double totalPathMetric = branchMetric + trellisInfo[currentState][stage].pathMetric;
-				
-				// dealing with cases of uninitialized states, when the transition becomes the optimal father state, and suboptimal father state, in order
-				if(!trellisInfo[nextState][stage + 1].init){
-					trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-					trellisInfo[nextState][stage + 1].fatherState = currentState;
-					trellisInfo[nextState][stage + 1].init = true;
-				}
-				else if(trellisInfo[nextState][stage + 1].pathMetric > totalPathMetric){
-					trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-					trellisInfo[nextState][stage + 1].fatherState = currentState;
-				}
-			}
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+           forwardPathIndex < trellis_ptr_->nextStates_[0].size();
+           forwardPathIndex++) {
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
 
-		}
-	}
+        int nextState =
+            trellis_ptr_->nextStates_[currentState][forwardPathIndex];
+
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
+
+        double branchMetric = 0;
+        std::vector<int> output_point = CodecUtils::get_point(
+            trellis_ptr_->output_[currentState][forwardPathIndex], n_);
+
+        for (int i = 0; i < n_; i++) {
+          branchMetric += std::pow(
+              receivedMessage[n_ * stage + i] - (double)output_point[i], 2);
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+        }
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                   totalPathMetric) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        }
+      }
+    }
+  }
 
   // perform the single traceback
-	MessageInformation output;
+  MessageInformation output;
 
   double minMetric = INT_MAX;
   int endingState = -1;
 
-  if(trellisInfo[0][lowrate_pathLength - 1].pathMetric < minMetric){
+  if (trellisInfo[0][lowrate_pathLength - 1].pathMetric < minMetric) {
     minMetric = trellisInfo[0][lowrate_pathLength - 1].pathMetric;
     endingState = 0;
   }
@@ -253,71 +260,79 @@ MessageInformation ViterbiCodec::softViterbiDecoding(std::vector<double> receive
   int currentState = endingState;
 
   // traceback
-  for(int stage = lowrate_pathLength - 1; stage > 0; stage--){
-      currentState = trellisInfo[currentState][stage].fatherState;
-      path[stage - 1] = currentState;
+  for (int stage = lowrate_pathLength - 1; stage > 0; stage--) {
+    currentState = trellisInfo[currentState][stage].fatherState;
+    path[stage - 1] = currentState;
   }
 
   std::vector<int> message = convertPathtoTrimmedMessage(path);
   output.message = message;
   output.path = path;
+  output.path_metric = minMetric;
+  output.begin_end_states = {path.front(), path.back()};
   return output;
 }
 
-
-std::vector<std::vector<Cell>> ViterbiCodec::constructZTTrellis(std::vector<double> receivedMessage){
-	std::vector<std::vector<Cell>> trellisInfo;
+std::vector<std::vector<Cell>> ViterbiCodec::constructZTTrellis(
+    std::vector<double> receivedMessage) {
+  std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
-	trellisInfo = std::vector<std::vector<Cell>>(numStates_, std::vector<Cell>(lowrate_pathLength));
+  trellisInfo = std::vector<std::vector<Cell>>(
+      numStates_, std::vector<Cell>(lowrate_pathLength));
 
-	// initializes all the valid starting states
+  // initializes all the valid starting states
 
   trellisInfo[0][0].pathMetric = 0;
   trellisInfo[0][0].init = true;
-	
-	
-	// building the trellis
-	for(int stage = 0; stage < lowrate_pathLength - 1; stage++){
-		for(int currentState = 0; currentState < numStates_; currentState++){
-			// if the state / stage is invalid, we move on
-			if(!trellisInfo[currentState][stage].init)
-				continue;
 
-			// otherwise, we compute the relevent information
-			for(int forwardPathIndex = 0; forwardPathIndex < trellis_ptr_->nextStates_[0].size(); forwardPathIndex++){
-				// since our transitions correspond to symbols, the forwardPathIndex has no correlation 
-				// beyond indexing the forward path
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < numStates_; currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
 
-				int nextState = trellis_ptr_->nextStates_[currentState][forwardPathIndex];
-				
-				// if the nextState is invalid, we move on
-				if(nextState < 0)
-					continue;
-				
-				double branchMetric = 0;
-				std::vector<int> output_point = CodecUtils::get_point(trellis_ptr_->output_[currentState][forwardPathIndex], n_);
-				
-				for(int i = 0; i < n_; i++){
-					branchMetric += std::pow(receivedMessage[n_ * stage + i] - (double)output_point[i], 2);
-					// branchMetric += std::abs(receivedMessage[lowrate_symbolLength * stage + i] - (double)output_point[i]);
-				}
-				double totalPathMetric = branchMetric + trellisInfo[currentState][stage].pathMetric;
-				
-				// dealing with cases of uninitialized states, when the transition becomes the optimal father state, and suboptimal father state, in order
-				if(!trellisInfo[nextState][stage + 1].init){
-					trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-					trellisInfo[nextState][stage + 1].fatherState = currentState;
-					trellisInfo[nextState][stage + 1].init = true;
-				}
-				else if(trellisInfo[nextState][stage + 1].pathMetric > totalPathMetric){
-					trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-					trellisInfo[nextState][stage + 1].fatherState = currentState;
-				}
-			}
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+           forwardPathIndex < trellis_ptr_->nextStates_[0].size();
+           forwardPathIndex++) {
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
 
-		}
-	}
-	return trellisInfo;
+        int nextState =
+            trellis_ptr_->nextStates_[currentState][forwardPathIndex];
+
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
+
+        double branchMetric = 0;
+        std::vector<int> output_point = CodecUtils::get_point(
+            trellis_ptr_->output_[currentState][forwardPathIndex], n_);
+
+        for (int i = 0; i < n_; i++) {
+          branchMetric += std::pow(
+              receivedMessage[n_ * stage + i] - (double)output_point[i], 2);
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+        }
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                   totalPathMetric) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        }
+      }
+    }
+  }
+  return trellisInfo;
 }
 
 std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
