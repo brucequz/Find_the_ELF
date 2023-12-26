@@ -160,7 +160,7 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
-DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
   /*
   This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -235,7 +235,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
   // list decoder 0
   //std::cout << "Time before list decoder 0: " << timeDurations[0].count() << " milliseconds." << std::endl;
   std::vector<std::vector<Cell>> trellis_0 =
-      constructZTListTrellis_precompute(received_codec_1, code_0, trellis_ptrs_[0], timeDurations[0]);
+      ConstructZTCCTrellis_WithList_ProductMetric(received_codec_1, code_0, trellis_ptrs_[0], timeDurations[0]);
   int num_total_stages_0 = trellis_0[0].size();
   std::vector<std::vector<int>> prev_paths_list_0;
   MinHeap* heap_list_0 = new MinHeap;
@@ -250,7 +250,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
   // list decoder 1
   //std::cout << "Time before list decoder 1: " << timeDurations[0].count() << " milliseconds." << std::endl;
   std::vector<std::vector<Cell>> trellis_1 =
-      constructZTListTrellis_precompute(received_codec_2, code_1, trellis_ptrs_[1], timeDurations[0]);
+      ConstructZTCCTrellis_WithList_ProductMetric(received_codec_2, code_1, trellis_ptrs_[1], timeDurations[0]);
   int num_total_stages_1 = trellis_1[0].size();
   std::vector<std::vector<int>> prev_paths_list_1;
   MinHeap* heap_list_1 = new MinHeap;
@@ -282,7 +282,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
       
       // std::cout << "decoder 0 traceback" << std::endl;
       MessageInformation mi_0 =
-          traceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
+          TraceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
                     prev_paths_list_0, num_path_searched_0, num_total_stages_0);
       mi_0.decoder_index = 0;
       if (mi_0.path_metric != -1.0) {
@@ -302,7 +302,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
       // std::cout << "decoder 1 traceback" << std::endl;
       // std::cout << "before " << num_path_searched_1 << std::endl;
       MessageInformation mi_1 =
-          traceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
+          TraceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
                     prev_paths_list_1, num_path_searched_1, num_total_stages_1);
       // std::cout << "after " << num_path_searched_1 << std::endl;
       mi_1.decoder_index = 1;
@@ -365,11 +365,12 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
   return empty_message;
 }
 
-MessageInformation DualListDecoder::traceBack(
+MessageInformation DualListDecoder::TraceBack(
     MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
     const std::vector<std::vector<Cell>>& trellis_states,
     std::vector<std::vector<int>>& prev_paths, int& num_path_searched,
     int num_total_stages) {
+  
   MessageInformation mi;
   bool found_path = false;
 
@@ -435,7 +436,7 @@ MessageInformation DualListDecoder::traceBack(
         convertPathtoTrimmedMessage(path, code, trellis_ptr);
     std::vector<int> message = deconvolveCRC(messageWithoutTrailingZeros, code);
 
-    if (crc_check(messageWithoutTrailingZeros, code.crc_length, code.crc_dec) &&
+    if (CRC_Check(messageWithoutTrailingZeros, code.crc_length, code.crc_dec) &&
         path.front() == path.back() && path.back() == 0) {
       mi.path = path;
       mi.path_metric = detour.path_metric;
@@ -450,78 +451,67 @@ MessageInformation DualListDecoder::traceBack(
   return mi;
 }
 
-std::vector<std::vector<Cell>> DualListDecoder::constructZTCCTrellis(
-    const std::vector<double>& received_signal, CodeInformation code,
-    FeedForwardTrellis* trellis_ptr) {
-  /*
-  Construct output trellis for traceback later with euclidean distances
-  as path metrics.
-  */
-
-  std::vector<std::vector<Cell>> trellis_states;
-  int signal_length = received_signal.size();
-  int number_of_stages = signal_length / code.n;
-
-  trellis_states.resize(std::pow(2, code.v),
-                        std::vector<Cell>(number_of_stages + 1));
-  trellis_states[0][0].init = true;
-  trellis_states[0][0].pathMetric = 0.0;
-
-  for (int cur_stage = 0; cur_stage < number_of_stages; ++cur_stage) {
-    for (int cur_state = 0; cur_state < std::pow(2, code.v); ++cur_state) {
-      if (!trellis_states[cur_state][cur_stage].init) {
-        continue;
-      }
-      double cur_path_metric = trellis_states[cur_state][cur_stage].pathMetric;
-      auto begin = received_signal.begin() + cur_stage * code.n;
-      auto end = begin + code.n;
-      std::vector<double> target_message(begin, end);
-
-      // activate the next states
-      for (int i = 0; i < trellis_ptr->nextStates_[cur_state].size(); ++i) {
-        int next_state = trellis_ptr->nextStates_[cur_state][i];
-        // trellis_states[next_state][cur_stage + 1].init = true;
-
-        int possible_output = trellis_ptr->output_[cur_state][i];
-        std::vector<int> expected_output =
-            dualdecoderutils::convertIntToBits(possible_output, code.n);
-
-        // modualted expected output
-        std::vector<int> expected_signal = BPSK::modulate(expected_output);
-
-        double branch_metric = dualdecoderutils::euclideanDistance(
-            target_message, expected_signal);
-        double temp_path_metric = cur_path_metric + branch_metric;
-
-        Cell* target_cell = &trellis_states[next_state][cur_stage + 1];
-
-        if (!target_cell->init) {
-          // if the next state is not initialized, we temporarily store the path
-          // metric
-          target_cell->init = true;
-          target_cell->pathMetric = temp_path_metric;
-          target_cell->fatherState = cur_state;
-        } else if (target_cell->pathMetric > temp_path_metric) {
-          // the current path metric is better
-          target_cell->subPathMetric = target_cell->pathMetric;
-          target_cell->subFatherState = target_cell->fatherState;
-          target_cell->pathMetric = temp_path_metric;
-          target_cell->fatherState = cur_state;
-        } else {
-          // the current path metric is worse
-          target_cell->subPathMetric = temp_path_metric;
-          target_cell->subFatherState = cur_state;
-        }
-      }
-    }
-  }
-
-  return trellis_states;
-}
-
-std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
+std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
     const std::vector<double>& received_signal, CodeInformation code,
     FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
+  /*
+  @brief: Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+    using a regular euclidean metric.
+
+  @param:
+    - 'received_signal': a vector of double that records the received values (deviates from +/-1).
+
+    - 'code': a dictionary encompasses all information related to a convolutional code.
+        - 'n': convolutional code output number of bits. Example: n=2 for a rate 1/2 code.
+        - 'k': convolutional code input number of bits. Example: k=1 for a rate 1/2 code.
+        - 'v': number of memory elements in convolutional code. Example: v=6 for a CC with generator
+            polynomial: x^6+x^5+x^4+x+1.
+
+    - 'trellis_ptr': a pointer that points to a FeedForwardTrellis object with following member variables
+        - 'nextStates_': a 2d vector of size [2^(code.v), 2] for a binary convolutional code with v memory
+                          elements.
+                          At position (i, j), it determines the next state in integer when the currect state
+                          is i and currect input is j.
+        - 'output_': a 2d vector of size [2^(code.v), 2] for a binary convolutional code with v memery elements.
+                          At position (i, j), it determines the output as integer (0 or 1 for binary code) 
+                          when the currect state is i and currect input is j.
+                          To convert it to BPSK modulation, use dualdecoderutils::get_point().
+
+    - 'ssv_time': a chrono milliseconds object passed in by reference to increment an outer variable that keep
+       track of dual list decoder trellis construction time. It tracks the time of add-compare-select operation
+       of all active nodes.
+
+       Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2) + 1.5*(k+m-v)*2^(v+1)
+       Define 1 unit of complexity as the complexity required to perform one addition.
+         - 2^(v+1)-2: addition complexity on the first v section of a ZTCC trellis. Use sum of geometric series.
+         - 1.5*(2^(v+1)-2): add-compare-select complexity on the last v section of a ZTCC trellis. Use sum of geometric series.
+         - 1.5*(k+m-v)*2^(v+1): add-compare-select complexity on the middle (k+m-v) section of a ZTCC trellis.
+
+  @return:
+    - 'trellisInfo': a 2d vector of 'Cell', where each 'Cell' object constains the following information:
+          -   struct Cell {
+                            bool init = false;
+                            double pathMetric = 3000;
+                            int fatherState = -1;
+                            double subPathMetric = 3000;
+                            int subFatherState = -1;
+                          };
+
+          - 'init': a boolean variable indicating whether the Cell should be considered during forward propagation
+          and traceback. Example: For a ZTCC, the lower left triangle of the first v stages and the lower right
+          triangle of the last v stages do not need to be initialized.
+
+          - 'pathMetric': a double variable that stores the optimal path metric up to that Cell.
+
+          - 'fatherState': a integer variable that stores the optimal father state in integer of that Cell.
+
+          - 'subPathMetric': a double variabel that stores the suboptimal path metric up to that Cell.
+
+          - 'subFatherState': a integer variable that stores the suboptimal path metric up to that Cell.
+
+          Note: The 'subPathMetric' and 'subFatherState' enable list decoding, i.e. additional traceback.
+  
+  */
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (received_signal.size() / code.n) + 1;
   int lowrate_numStates = std::pow(2, code.v);
@@ -608,9 +598,68 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
   return trellisInfo;
 }
 
-std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis_precompute(
+std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
       const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
+  /*
+  @brief: Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+    using a special metric shown by Bill Ryan. Instead of calculating euclidean distance between received point and +/- 1,
+    we compute the product of these two values.
+
+  @param:
+    - 'received_signal': a vector of double that records the received values (deviates from +/-1).
+
+    - 'code': a dictionary encompasses all information related to a convolutional code.
+        - 'n': convolutional code output number of bits. Example: n=2 for a rate 1/2 code.
+        - 'k': convolutional code input number of bits. Example: k=1 for a rate 1/2 code.
+        - 'v': number of memory elements in convolutional code. Example: v=6 for a CC with generator
+            polynomial: x^6+x^5+x^4+x+1.
+
+    - 'trellis_ptr': a pointer that points to a FeedForwardTrellis object with following member variables
+        - 'nextStates_': a 2d vector of size [2^(code.v), 2] for a binary convolutional code with v memory
+                          elements.
+                          At position (i, j), it determines the next state in integer when the currect state
+                          is i and currect input is j.
+        - 'output_': a 2d vector of size [2^(code.v), 2] for a binary convolutional code with v memery elements.
+                          At position (i, j), it determines the output as integer (0 or 1 for binary code) 
+                          when the currect state is i and currect input is j.
+                          To convert it to BPSK modulation, use dualdecoderutils::get_point().
+
+    - 'ssv_time': a chrono milliseconds object passed in by reference to increment an outer variable that keep
+       track of dual list decoder trellis construction time. It tracks the time of add-compare-select operation
+       of all active nodes.
+
+       Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2) + 1.5*(k+m-v)*2^(v+1)
+       Define 1 unit of complexity as the complexity required to perform one addition.
+         - 2^(v+1)-2: addition complexity on the first v section of a ZTCC trellis. Use sum of geometric series.
+         - 1.5*(2^(v+1)-2): add-compare-select complexity on the last v section of a ZTCC trellis. Use sum of geometric series.
+         - 1.5*(k+m-v)*2^(v+1): add-compare-select complexity on the middle (k+m-v) section of a ZTCC trellis.
+
+  @return:
+    - 'trellisInfo': a 2d vector of 'Cell', where each 'Cell' object constains the following information:
+          -   struct Cell {
+                            bool init = false;
+                            double pathMetric = 3000;
+                            int fatherState = -1;
+                            double subPathMetric = 3000;
+                            int subFatherState = -1;
+                          };
+
+          - 'init': a boolean variable indicating whether the Cell should be considered during forward propagation
+          and traceback. Example: For a ZTCC, the lower left triangle of the first v stages and the lower right
+          triangle of the last v stages do not need to be initialized.
+
+          - 'pathMetric': a double variable that stores the optimal path metric up to that Cell.
+
+          - 'fatherState': a integer variable that stores the optimal father state in integer of that Cell.
+
+          - 'subPathMetric': a double variabel that stores the suboptimal path metric up to that Cell.
+
+          - 'subFatherState': a integer variable that stores the suboptimal path metric up to that Cell.
+
+          Note: The 'subPathMetric' and 'subFatherState' enable list decoding, i.e. additional traceback.
+  
+  */
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (received_signal.size() / code.n) + 1;
   int lowrate_numStates = std::pow(2, code.v);
@@ -655,22 +704,11 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis_precomput
         if (stage >= (lowrate_pathLength - code.v - 1)) {
           if (forwardPathIndex == 1) continue;
         }
-
-        // since our transitions correspond to symbols, the forwardPathIndex has
-        // no correlation beyond indexing the forward path
         
         int nextState =
             trellis_ptr->nextStates_[currentState][forwardPathIndex];
-
         // if the nextState is invalid, we move on
         if (nextState < 0) continue;
-        
-        
-        // double totalPathMetric =
-        //     precomputedMetrics[stage][forwardPathIndex] + trellisInfo[currentState][stage].pathMetric;
-        // // if (stage == 0) {
-        // //   std::cout << "Debug: totalPathMetric: " << totalPathMetric << std::endl;
-        // // }
 
         double branchMetric = 0;
         // std::cout << "code.n: " << code.n << std::endl;
@@ -688,7 +726,6 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis_precomput
 
           //// special metric for BPSK
           branchMetric += -(received_signal[code.n * stage + i] * (double)output_point[i]);
-
         }
         
         double totalPathMetric =
@@ -764,25 +801,7 @@ std::vector<int> DualListDecoder::deconvolveCRC(const std::vector<int>& output,
   return result;
 }
 
-bool DualListDecoder::checkCRC(std::vector<int> demodulated,
-                               CodeInformation code) {
-  // check crc by dividing the demodulated signal with crc poly
-  std::vector<int> crc_bin = CRC::decToBin(code.crc_dec, code.crc_length);
-
-  for (int ii = 0; ii <= (int)demodulated.size() - code.crc_length; ii++) {
-    if (demodulated[ii] == 1) {
-      // Note: transform doesn't include .end
-      std::transform(demodulated.begin() + ii,
-                     demodulated.begin() + (ii + code.crc_length),
-                     crc_bin.begin(), demodulated.begin() + ii, CRC::binSum);
-    }
-  }
-  bool all_zero = std::all_of(demodulated.begin(), demodulated.end(),
-                              [](int i) { return i == 0; });
-  return all_zero;
-}
-
-bool DualListDecoder::crc_check(std::vector<int> input_data, int crc_bits_num, int crc_dec) {
+bool DualListDecoder::CRC_Check(std::vector<int> input_data, int crc_bits_num, int crc_dec) {
 	std::vector<int> CRC;
 	dualdecoderutils::dec_to_binary(crc_dec, CRC, crc_bits_num);
 

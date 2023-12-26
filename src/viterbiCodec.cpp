@@ -282,7 +282,7 @@ MessageInformation ViterbiCodec::softViterbiDecoding(
   return output;
 }
 
-std::vector<std::vector<Cell>> ViterbiCodec::constructZTTrellis(
+std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_NoList_EuclideanMetric(
     std::vector<double> receivedMessage) {
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
@@ -344,44 +344,113 @@ std::vector<std::vector<Cell>> ViterbiCodec::constructZTTrellis(
   return trellisInfo;
 }
 
-std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
-  // generating (crc_length - 1) number of redundancy bits (crc bits)
-  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_WithList_ProductMetric(
+    std::vector<double> receivedMessage) {
+  std::vector<std::vector<Cell>> trellisInfo;
+  int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
+  trellisInfo = std::vector<std::vector<Cell>>(
+      numStates_, std::vector<Cell>(lowrate_pathLength));
 
-  std::vector<int> output = input;
-  output.resize(input.size() + crc_length_ - 1, 0);
+  // initializes all the valid starting states
 
-  // long division
-  for (int i = 0; i < input.size(); ++i) {
-    if (output[i] == 1) {
-      std::transform(output.begin() + i, output.begin() + i + crc_length_,
-                     crc_bin.begin(), output.begin() + i, CRC::binSum);
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
+
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < numStates_; currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
+
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+           forwardPathIndex < trellis_ptr_->nextStates_[0].size();
+           forwardPathIndex++) {
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
+
+        int nextState =
+            trellis_ptr_->nextStates_[currentState][forwardPathIndex];
+
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
+
+        double branchMetric = 0;
+        std::vector<int> output_point = CodecUtils::get_point(
+            trellis_ptr_->output_[currentState][forwardPathIndex], n_);
+
+        for (int i = 0; i < n_; i++) {
+          branchMetric += std::pow(
+              receivedMessage[n_ * stage + i] - (double)output_point[i], 2);
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+        }
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                   totalPathMetric) {
+          trellisInfo[nextState][stage + 1].subPathMetric =
+              trellisInfo[nextState][stage + 1].pathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState =
+              trellisInfo[nextState][stage + 1].fatherState;
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        } else {
+          trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState = currentState;
+        }
+      }
     }
   }
-
-  std::copy(input.begin(), input.end(), output.begin());
-
-  return output;
+  return trellisInfo;
 }
 
-std::vector<int> ViterbiCodec::convolveCRC(const std::vector<int>& input) {
-  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
-  int input_size = input.size();
-  int crc_size = crc_bin.size();
-  int output_size = input_size + crc_size - 1;
-  std::vector<int> output(output_size, 0);
+// std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
+//   // generating (crc_length - 1) number of redundancy bits (crc bits)
+//   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
 
-  for (int i = 0; i < input_size; ++i) {
-    for (int j = 0; j < crc_size; ++j) {
-      output[i + j] += input[i] * crc_bin[j];
-    }
-  }
+//   std::vector<int> output = input;
+//   output.resize(input.size() + crc_length_ - 1, 0);
 
-  std::for_each(output.begin(), output.end(),
-                [](int& element) { element %= 2; });
+//   // long division
+//   for (int i = 0; i < input.size(); ++i) {
+//     if (output[i] == 1) {
+//       std::transform(output.begin() + i, output.begin() + i + crc_length_,
+//                      crc_bin.begin(), output.begin() + i, CRC::binSum);
+//     }
+//   }
 
-  return output;
-}
+//   std::copy(input.begin(), input.end(), output.begin());
+
+//   return output;
+// }
+
+// std::vector<int> ViterbiCodec::convolveCRC(const std::vector<int>& input) {
+//   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+//   int input_size = input.size();
+//   int crc_size = crc_bin.size();
+//   int output_size = input_size + crc_size - 1;
+//   std::vector<int> output(output_size, 0);
+
+//   for (int i = 0; i < input_size; ++i) {
+//     for (int j = 0; j < crc_size; ++j) {
+//       output[i + j] += input[i] * crc_bin[j];
+//     }
+//   }
+
+//   std::for_each(output.begin(), output.end(),
+//                 [](int& element) { element %= 2; });
+
+//   return output;
+// }
 
 std::vector<int> ViterbiCodec::deconvolveCRC(const std::vector<int>& output) {
   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);

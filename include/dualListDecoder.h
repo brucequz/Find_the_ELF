@@ -13,9 +13,8 @@
 #include "dualListMap.h"
 #include "stopWatch.h"
 
-// struct Cell;
-// struct MessageInformation;
-// struct CodeInformation;
+class FeedForwardTrellis;
+
 struct Cell {
   bool init = false;
   double pathMetric = 3000;
@@ -43,12 +42,6 @@ struct CodeInformation {
   int crc_length;
   std::vector<int> generator_poly;
 };
-
-// struct DLDInfo {
-//   double combined_metric;
-//   std::vector<int> message;
-//   std::vector<int> list_ranks;
-// };
 
 namespace dualdecoderutils {
 
@@ -119,8 +112,6 @@ bool areVectorsEqual(const std::vector<T>& vector1,
   return true;  // All elements are equal.
 }
 
-
-
 // Define a custom comparison function for the priority queue
 struct CompareCombinedMetric {
   bool operator()(const DLDInfo& a, const DLDInfo& b) const {
@@ -134,70 +125,21 @@ struct CompareCombinedMetric {
 std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric>
 combine_maps(const std::vector<MessageInformation>& vec1,
              const std::vector<MessageInformation>& vec2);
+}
 
-// template <typename T>
-// bool areVectorsEqual(const std::vector<T>& vector1, const std::vector<T>& vector2) {
-//   if (vector1.size() != vector2.size()) {
-//       return false; // Vectors have different sizes, so they cannot be equal.
-//   }
-
-//   for (size_t i = 0; i < vector1.size(); ++i) {
-//       if (vector1[i] != vector2[i]) {
-//           return false; // Elements at index i are different.
-//       }
-//   }
-
-//   return true; // All elements are equal.
-// }
-
-}  // namespace dualdecoderutils
-
-
-
-// namespace bpsk {
-
-// std::vector<int> modulate(std::vector<int> encoded_msg) {
-//   std::vector<int> modulated_signal(encoded_msg.size());
-//   for (int i = 0; i < encoded_msg.size(); ++i) {
-//     modulated_signal[i] = -2 * encoded_msg[i] + 1;
-//   }
-//   return modulated_signal;
-// }
-
-// std::vector<int> demodulate(std::vector<double> received_signal) {
-//   std::vector<int> hard_decision_demodulated_signal(received_signal.size());
-//   for (int i = 0; i < received_signal.size(); ++i) {
-//     hard_decision_demodulated_signal[i] = (received_signal[i] < 0.0);
-//   }
-//   return hard_decision_demodulated_signal;
-// }
-
-// }  // namespace bpsk
-
-// namespace crc {
-
-// int binSum(const int& x, const int& y) { return (x + y) % 2; }
-
-// std::vector<int> decToBin(int input, int bit_number) {
-//   std::vector<int> output(bit_number, 0);
-//   for (int i = bit_number - 1; i >= 0; --i) {
-//     output[bit_number - 1 - i] = ((input >> i) & 1);
-//   }
-//   return output;
-// }
-
-// }  // namespace crc
-
-class FeedForwardTrellis;
 
 class DualListDecoder {
  public:
   DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path);
   ~DualListDecoder();
-
-  DLDInfo adaptiveDecode(
+  
+  // Decoding function that alternates between two dual list decoders.
+  // This function does not take crc degrees into consideration
+  DLDInfo AdaptiveDecode(
       std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
-  MessageInformation traceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
+  
+  
+  MessageInformation TraceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
                              int& num_path_searched, int num_total_stages);
 
@@ -206,23 +148,42 @@ class DualListDecoder {
   std::vector<FeedForwardTrellis*> trellis_ptrs_;
   int max_path_to_search_;
 
-  std::vector<std::vector<Cell>> constructZTCCTrellis(
-      const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr); // deprecated
-  std::vector<std::vector<Cell>> constructZTListTrellis(
-      const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
-  std::vector<std::vector<Cell>> constructZTListTrellis_precompute(
+  /// ZTCC
+  // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  // Uses a regular euclidean metric.
+  std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_EuclideanMetric(
       const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
-  MessageInformation ztListDecoding(std::vector<double> receivedMessage);
+
+  // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  // Uses a special metric shown by Bill Ryan. Instead of calculating euclidean distance between received point and +/- 1,
+  // we compute the product of these two values.
+  std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_ProductMetric(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
+
+  /// TBCC
+  // @todo
+  // Construct a TBCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  // Uses a regular euclidean metric.
+  std::vector<std::vector<Cell>> ConstructTBCCTrellis_WithList_EuclideanMetric(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
+
+  // @todo
+  // Construct a TBCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  // Uses a special metric shown by Bill Ryan. Instead of calculating euclidean distance between received point and +/- 1,
+  // we compute the product of these two values.
+  std::vector<std::vector<Cell>> ConstructTBCCTrellis_WithList_ProductMetric(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
+  
   std::vector<int> convertPathtoMessage(
     const std::vector<int> path, FeedForwardTrellis* trellis_ptr);
   std::vector<int> convertPathtoTrimmedMessage(
     const std::vector<int> path, CodeInformation code, FeedForwardTrellis* trellis_ptr);
   std::vector<int> deconvolveCRC(const std::vector<int>& output, CodeInformation code);
-  bool checkCRC(std::vector<int> demodulated, CodeInformation code);
-  bool crc_check(std::vector<int> input_data, int crc_bits_num, int crc_dec);
+  bool CRC_Check(std::vector<int> input_data, int crc_bits_num, int crc_dec);
 };
 
 #endif

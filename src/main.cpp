@@ -489,7 +489,7 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
     // outputFile << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.adaptiveDecode(received_signal, stepTimeDurations);
+    DLDInfo output_DLD = DLD.AdaptiveDecode(received_signal, stepTimeDurations);
 
     // if DLD declares List size exceeded
     // then resort to soft viterbi decoding
@@ -673,7 +673,7 @@ bool dualListDecode(std::vector<double> received_signal,
 
   std::vector<std::chrono::milliseconds> timeDurations(3, std::chrono::milliseconds(0));
 
-  DLDInfo output_DLD = DLD.adaptiveDecode(received_signal, timeDurations);
+  DLDInfo output_DLD = DLD.AdaptiveDecode(received_signal, timeDurations);
 
   DLD_list_0_size = output_DLD.list_ranks[0];
   DLD_list_1_size = output_DLD.list_ranks[1];
@@ -880,7 +880,7 @@ void dualListExperiment(std::vector<double> SNR_dB, int maximum_list_size,
       //     0.0228116, 0.22973,   2.44116,   1.02029};
 
       // DLD DECODING
-      DLDInfo output_DLD = DLD.adaptiveDecode(received_signal, timeDurations);
+      DLDInfo output_DLD = DLD.AdaptiveDecode(received_signal, timeDurations);
 
       // if DLD declares List size exceeded
       // then resort to soft viterbi decoding

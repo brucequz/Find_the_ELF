@@ -32,7 +32,6 @@ class DualListMap{
     int queue_size() {return agreed_messages_.size();};
     DLDInfo pop_queue();
 
-
   private:
     std::map<std::vector<int>, MessageInformation> dual_list_map_;
     std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric> agreed_messages_;
