@@ -2,12 +2,14 @@
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <map>
 #include <vector>
 
 #include "../include/dualListMap.h"
 #include "../include/feedForwardTrellis.h"
+#include "../include/stopWatch.h"
 
 namespace {
 
@@ -158,7 +160,7 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
-DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
+DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
   /*
   This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -227,14 +229,17 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
   bool best_combined_found = false;
   CodeInformation code_0 = code_info_[0];
   CodeInformation code_1 = code_info_[1];
+  // step 1 start: SSV add-compare-select and initial traceback time for both decoders
+  // auto ssv_start_time = std::chrono::steady_clock::now();
 
   // list decoder 0
+  //std::cout << "Time before list decoder 0: " << timeDurations[0].count() << " milliseconds." << std::endl;
   std::vector<std::vector<Cell>> trellis_0 =
-      constructZTListTrellis(received_codec_1, code_0, trellis_ptrs_[0]);
+      constructZTListTrellis_precompute(received_codec_1, code_0, trellis_ptrs_[0], timeDurations[0]);
   int num_total_stages_0 = trellis_0[0].size();
   std::vector<std::vector<int>> prev_paths_list_0;
   MinHeap* heap_list_0 = new MinHeap;
-
+  //std::cout << "Time after list decoder 0: " << timeDurations[0].count() << " milliseconds." << std::endl;
   DetourNode node_0;
   node_0.start_state = 0;
   node_0.path_metric = trellis_0[0][num_total_stages_0 - 1].pathMetric;
@@ -243,11 +248,13 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
   bool decoder_0_stop = false;
 
   // list decoder 1
+  //std::cout << "Time before list decoder 1: " << timeDurations[0].count() << " milliseconds." << std::endl;
   std::vector<std::vector<Cell>> trellis_1 =
-      constructZTListTrellis(received_codec_2, code_1, trellis_ptrs_[1]);
+      constructZTListTrellis_precompute(received_codec_2, code_1, trellis_ptrs_[1], timeDurations[0]);
   int num_total_stages_1 = trellis_1[0].size();
   std::vector<std::vector<int>> prev_paths_list_1;
   MinHeap* heap_list_1 = new MinHeap;
+  //std::cout << "Time after list decoder 1: " << timeDurations[0].count() << " milliseconds." << std::endl;
 
   DetourNode node_1;
   node_1.start_state = 0;
@@ -255,42 +262,61 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
   heap_list_1->insert(node_1);
   int num_path_searched_1 = 0;
   bool decoder_1_stop = false;
+  
+  // step 1 end: SSV add-compare-select and initial traceback time for both decoders
+  // auto ssv_end_time = std::chrono::steady_clock::now();
+  // auto ssv_duration = std::chrono::duration_cast<std::chrono::milliseconds>(ssv_end_time - ssv_start_time);
 
+  // step 2: time taken for additional traceback opearations required by SLVD for both decoders
+  
+
+  // time taken to do additional traceback and insertion
+  Stopwatch sw_step2_3;
+  sw_step2_3.tic();
   while (!best_combined_found) {
     // list decoder 0 traceback
-    if (num_path_searched_0 > max_path_to_search_) {
+    if (num_path_searched_0 >= max_path_to_search_) {
       decoder_0_stop = true;
     }
     if (!decoder_0_stop) {
+      
       // std::cout << "decoder 0 traceback" << std::endl;
       MessageInformation mi_0 =
           traceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
                     prev_paths_list_0, num_path_searched_0, num_total_stages_0);
       mi_0.decoder_index = 0;
-      if (mi_0.path_metric >= decoder_threshold_0) {
-        decoder_0_stop = true;
+      if (mi_0.path_metric != -1.0) {
+        // if list size is not exceeded
+        if (mi_0.path_metric >= decoder_threshold_0) {
+          decoder_0_stop = true;
+        }
+        mp.insert(mi_0);
+        output_0.push_back(mi_0);
       }
-      mp.insert(mi_0);
-      output_0.push_back(mi_0);
     }
     // list decoder 1 traceback
-    if (num_path_searched_1 > max_path_to_search_) {
+    if (num_path_searched_1 >= max_path_to_search_) {
       decoder_1_stop = true;
     }
     if (!decoder_1_stop) {
       // std::cout << "decoder 1 traceback" << std::endl;
+      // std::cout << "before " << num_path_searched_1 << std::endl;
       MessageInformation mi_1 =
           traceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
                     prev_paths_list_1, num_path_searched_1, num_total_stages_1);
+      // std::cout << "after " << num_path_searched_1 << std::endl;
       mi_1.decoder_index = 1;
-      if (mi_1.path_metric >= decoder_threshold_1) {
-        decoder_1_stop = true;
+      if (mi_1.path_metric != -1.0) {
+        if (mi_1.path_metric >= decoder_threshold_1) {
+          decoder_1_stop = true;
+        }
+        mp.insert(mi_1);
+        output_1.push_back(mi_1);
       }
-      mp.insert(mi_1);
-      output_1.push_back(mi_1);
     }
 
     if (decoder_0_stop && decoder_1_stop) {
+      // std::cout << "Both decoders declared stop" << std::endl;
       break;
     }
 
@@ -308,10 +334,17 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal) {
       heap_list_0 = nullptr;
       heap_list_1 = nullptr;
       // std::cout << "found agreed message" << std::endl;
+      // std::cout << "Debug: agreed message list size: ";
+      // dualdecoderutils::print(agreed_message.list_ranks);
+      // std::cout << std::endl;
+
       return agreed_message;
     }
     // std::cout << "hello" << std::endl;
   }
+  sw_step2_3.toc();
+  timeDurations[2] += sw_step2_3.getElapsed();
+  sw_step2_3.reset();
 
   output.push_back(output_0);
   output.push_back(output_1);
@@ -339,7 +372,13 @@ MessageInformation DualListDecoder::traceBack(
     int num_total_stages) {
   MessageInformation mi;
   bool found_path = false;
+
   while (!found_path) {
+    if (num_path_searched >= max_path_to_search_) {
+      // declare list size exceeded
+      mi.path_metric = -1.0;
+      return mi;
+    }
     DetourNode detour = heap->pop();
     std::vector<int> path(num_total_stages);
 
@@ -366,12 +405,13 @@ MessageInformation DualListDecoder::traceBack(
     }
 
     path[resume_stage] = cur_state;
-
+    
+    
     for (int stage = resume_stage; stage > 0; stage--) {
       double cur_sub_path_metric =
           trellis_states[cur_state][stage].subPathMetric;
       double cur_path_metric = trellis_states[cur_state][stage].pathMetric;
-
+      
       if (trellis_states[cur_state][stage].subFatherState != -1) {
         DetourNode localDetour;
         localDetour.start_state = 0;
@@ -401,7 +441,7 @@ MessageInformation DualListDecoder::traceBack(
       mi.path_metric = detour.path_metric;
       // convert path to message
       mi.message = message;
-      mi.list_rank = num_path_searched;
+      mi.list_rank = num_path_searched+1;
       found_path = true;
     }
 
@@ -481,7 +521,7 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTCCTrellis(
 
 std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
     const std::vector<double>& received_signal, CodeInformation code,
-    FeedForwardTrellis* trellis_ptr) {
+    FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (received_signal.size() / code.n) + 1;
   int lowrate_numStates = std::pow(2, code.v);
@@ -493,27 +533,38 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
   trellisInfo[0][0].pathMetric = 0;
   trellisInfo[0][0].init = true;
 
+  Stopwatch sw;
+  sw.tic();
   // building the trellis
   for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
     for (int currentState = 0; currentState < lowrate_numStates;
          currentState++) {
       // if the state / stage is invalid, we move on
       if (!trellisInfo[currentState][stage].init) continue;
-
+      
+      
       // otherwise, we compute the relevent information
       for (int forwardPathIndex = 0;
            forwardPathIndex < trellis_ptr->nextStates_[0].size();
            forwardPathIndex++) {
+        
+        // we will only constrain to travelling on 0 path in the ending v stages
+        if (stage >= (lowrate_pathLength - code.v - 1)) {
+          if (forwardPathIndex == 1) continue;
+        }
+
         // since our transitions correspond to symbols, the forwardPathIndex has
         // no correlation beyond indexing the forward path
-
+        
         int nextState =
             trellis_ptr->nextStates_[currentState][forwardPathIndex];
 
         // if the nextState is invalid, we move on
         if (nextState < 0) continue;
-
+        
+ 
         double branchMetric = 0;
+        // std::cout << "code.n: " << code.n << std::endl;
         std::vector<int> output_point = dualdecoderutils::get_point(
             trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
@@ -523,12 +574,129 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
           // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
           // stage + i] - (double)output_point[i]);
         }
+
         double totalPathMetric =
             branchMetric + trellisInfo[currentState][stage].pathMetric;
 
         // dealing with cases of uninitialized states, when the transition
         // becomes the optimal father state, and suboptimal father state, in
-        // order
+        // order    
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                   totalPathMetric) {
+          trellisInfo[nextState][stage + 1].subPathMetric =
+              trellisInfo[nextState][stage + 1].pathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState =
+              trellisInfo[nextState][stage + 1].fatherState;
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        } else {
+          trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState = currentState;
+        }
+        
+      }
+    }
+  }
+  
+  sw.toc();
+  ssv_time += sw.getElapsed();
+  sw.reset();
+  return trellisInfo;
+}
+
+std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis_precompute(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
+  std::vector<std::vector<Cell>> trellisInfo;
+  int lowrate_pathLength = (received_signal.size() / code.n) + 1;
+  int lowrate_numStates = std::pow(2, code.v);
+
+  trellisInfo = std::vector<std::vector<Cell>>(
+      lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
+
+  // initializes just the zeroth valid starting states
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
+
+  // precomputing euclidean distance between the received signal and +/-1
+  std::vector<std::vector<double>> precomputedMetrics;
+  precomputedMetrics = std::vector<std::vector<double>>(received_signal.size(), std::vector<double>(2));
+  
+  for (int state = 0; state < lowrate_numStates; state++) {
+    for (int forwardPathIndex = 0; forwardPathIndex < std::pow(code.k,2); forwardPathIndex++) {
+      
+    }
+  }
+  for (int stage = 0; stage < received_signal.size(); stage++) {
+    precomputedMetrics[stage][0] = std::pow(received_signal[stage] - 1, 2); // distance between +1
+    precomputedMetrics[stage][1] = std::pow(received_signal[stage] + 1, 2); // distance between -1
+  }
+
+  Stopwatch sw;
+  sw.tic();
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < lowrate_numStates;
+         currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
+      
+      
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+           forwardPathIndex < trellis_ptr->nextStates_[0].size();
+           forwardPathIndex++) {
+        
+        // we will only constrain to travelling on 0 path in the ending v stages
+        if (stage >= (lowrate_pathLength - code.v - 1)) {
+          if (forwardPathIndex == 1) continue;
+        }
+
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
+        
+        int nextState =
+            trellis_ptr->nextStates_[currentState][forwardPathIndex];
+
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
+        
+        
+        // double totalPathMetric =
+        //     precomputedMetrics[stage][forwardPathIndex] + trellisInfo[currentState][stage].pathMetric;
+        // // if (stage == 0) {
+        // //   std::cout << "Debug: totalPathMetric: " << totalPathMetric << std::endl;
+        // // }
+
+        double branchMetric = 0;
+        // std::cout << "code.n: " << code.n << std::endl;
+        std::vector<int> output_point = dualdecoderutils::get_point(
+            trellis_ptr->output_[currentState][forwardPathIndex], code.n);
+
+        for (int i = 0; i < code.n; i++) {
+          //// euclidean metric 
+          // branchMetric += std::pow(
+              // received_signal[code.n * stage + i] - (double)output_point[i], 2);
+
+          //// absolute metric
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+
+          //// special metric for BPSK
+          branchMetric += -(received_signal[code.n * stage + i] * (double)output_point[i]);
+
+        }
+        
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order    
         if (!trellisInfo[nextState][stage + 1].init) {
           trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
           trellisInfo[nextState][stage + 1].fatherState = currentState;
@@ -548,6 +716,9 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis(
       }
     }
   }
+  sw.toc();
+  ssv_time += sw.getElapsed();
+  sw.reset();
   return trellisInfo;
 }
 

@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "dualListDecoder.h"
+#include "stopWatch.h"
 
 class FeedForwardTrellis;
 
@@ -107,7 +108,7 @@ class ViterbiCodec {
   ~ViterbiCodec();
   std::vector<int> encode(const std::vector<int>& message);
   std::vector<int> encodeZTCC(std::vector<int> message);
-  MessageInformation softViterbiDecoding(std::vector<double> receivedMessage);
+  MessageInformation softViterbiDecoding(std::vector<double> receivedMessage, std::chrono::milliseconds& ssv_traceback_time);
 
   std::vector<int> calculateCRC(const std::vector<int>& input);
   std::vector<int> convolveCRC(const std::vector<int>& input);

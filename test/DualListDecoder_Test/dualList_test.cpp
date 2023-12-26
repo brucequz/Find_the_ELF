@@ -57,29 +57,42 @@ TEST(DuallistDecoder, SingleDecodeTest) {
   if (!outputFile.is_open()) {
     std::cerr << "Failed to open the file for writing." << std::endl;
   }
+
   CodeInformation code_1;
-  // x^14+x^13+x^9+x^8+x^7+x^6+x^3+x+1 = 
-  //                        CRC: (x^3+x^2+1) 
+  // 61713
+  // x^14+x^13+x^9+x^8+x^7+x^6+x^3+x+1 =
+  //                        CRC: (x^3+x^2+1)
   //                        generator: (x^11+x^8+x^7+x^3+x^2+x+1)
+
+  // 3217
+  // x^10 + x^9 + x^7 + x^3 + x^2 + x + 1
+  //                        CRC: (x^4+x^2+1)
+  //                        generator: x^6+x^5+x^4+x+1
   code_1.k = 1;
   code_1.n = 1;
-  code_1.v = 11;
-  code_1.list_size = 100;
-  code_1.crc_dec = 13;
-  code_1.crc_length = 4;
-  code_1.generator_poly = {4617};
+  code_1.v = 6;
+  code_1.list_size = 1;
+  code_1.crc_dec = 21;
+  code_1.crc_length = 5;
+  code_1.generator_poly = {163};  // octal
 
   CodeInformation code_2;
+  // 56721
   // x^14+x^12+x^11+x^10+x^8+x^7+x^6+x^4+1 =
-  //                         CRC: (x^2+x+1) 
-  //                         generator: x^12+x^11+x^10+x^9+x^8+x^5+x^3+x+1 
+  //                         CRC: (x^2+x+1)
+  //                         generator: x^12+x^11+x^10+x^9+x^8+x^5+x^3+x+1
+
+  // 2473
+  // x^10 + x^8 + x^5 + x^4 + x^3 + x + 1
+  //                         CRC: (x^3+x+1)
+  //                         generator: x^7+x^4+1
   code_2.k = 1;
   code_2.n = 1;
-  code_2.v = 12;
-  code_2.list_size = 100;
-  code_2.crc_dec = 7;
-  code_2.crc_length = 3;
-  code_2.generator_poly = {17453};
+  code_2.v = 7;
+  code_2.list_size = 1;
+  code_2.crc_dec = 11;
+  code_2.crc_length = 4;
+  code_2.generator_poly = {221};
 
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);
@@ -94,13 +107,20 @@ TEST(DuallistDecoder, SingleDecodeTest) {
   code_3.generator_poly = {56721, 61713};
   ViterbiCodec codec_3(code_3);
 
-  double snr = -1.0;
+  double snr = 4.5;
 
   // ZTCC Encode Test
   outputFile << "Running simulation under snr = " << snr << std::endl;
 
   // generate random message
-  std::vector<int> msg = {1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1};
+  srand(seed);
+  noise_gen.seed(82);
+  int num_bits = 16;
+  std::vector<int> msg;
+  for (int i = 0; i < num_bits; ++i) {
+    int random_bit = rand() % 2;
+    msg.push_back(random_bit);
+  }
   outputFile << "msg: ";
   outputMat(msg, outputFile);
   outputFile << std::endl;
@@ -146,7 +166,7 @@ TEST(DuallistDecoder, SingleDecodeTest) {
   std::vector<MessageInformation> output_1 = codec_1.ZTCCListViterbiDecoding(received_codec_1);
   std::vector<MessageInformation> output_2 = codec_2.ZTCCListViterbiDecoding(received_codec_2);
 
-  std::vector<MessageInformation> output_3 = codec_3.unconstraintZTCCDecoding(received_signal_14);
+  std::vector<MessageInformation> output_3 = codec_3.ZTCCListViterbiDecoding(received_signal_14);
 
   outputFile << std::endl;
 

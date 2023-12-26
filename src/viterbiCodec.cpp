@@ -7,6 +7,7 @@
 
 #include "../include/feedForwardTrellis.h"
 #include "../include/minHeap.h"
+#include "../include/stopWatch.h"
 
 namespace {
 
@@ -184,7 +185,7 @@ std::vector<int> ViterbiCodec::encodeZTCC(std::vector<int> message) {
 }
 
 MessageInformation ViterbiCodec::softViterbiDecoding(
-    std::vector<double> receivedMessage) {
+    std::vector<double> receivedMessage, std::chrono::milliseconds& ssv_traceback_time) {
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
 
@@ -195,6 +196,10 @@ MessageInformation ViterbiCodec::softViterbiDecoding(
 
   trellisInfo[0][0].pathMetric = 0;
   trellisInfo[0][0].init = true;
+
+  // Add stopwatch
+  Stopwatch soft_sw;
+  soft_sw.tic();
 
   // building the trellis
   for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
@@ -265,6 +270,10 @@ MessageInformation ViterbiCodec::softViterbiDecoding(
     path[stage - 1] = currentState;
   }
 
+  soft_sw.toc();
+  ssv_traceback_time += soft_sw.getElapsed();
+  soft_sw.reset();
+  
   std::vector<int> message = convertPathtoTrimmedMessage(path);
   output.message = message;
   output.path = path;

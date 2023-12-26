@@ -7,9 +7,11 @@
 #include <iostream>
 #include <fstream>
 #include <climits>
+#include <chrono>
 
 #include "minHeap.h"
 #include "dualListMap.h"
+#include "stopWatch.h"
 
 // struct Cell;
 // struct MessageInformation;
@@ -194,7 +196,7 @@ class DualListDecoder {
   ~DualListDecoder();
 
   DLDInfo adaptiveDecode(
-      std::vector<double> received_signal);
+      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   MessageInformation traceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
                              int& num_path_searched, int num_total_stages);
@@ -209,7 +211,10 @@ class DualListDecoder {
       FeedForwardTrellis* trellis_ptr); // deprecated
   std::vector<std::vector<Cell>> constructZTListTrellis(
       const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr);
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
+  std::vector<std::vector<Cell>> constructZTListTrellis_precompute(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
   MessageInformation ztListDecoding(std::vector<double> receivedMessage);
   std::vector<int> convertPathtoMessage(
     const std::vector<int> path, FeedForwardTrellis* trellis_ptr);
