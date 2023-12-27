@@ -1,3 +1,13 @@
+/**
+ * @file main.cpp
+ * @author Bruce Qu (brucequ@ucla.edu)
+ * @brief 
+ * @version 0.1
+ * @date 2023-12-27
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <algorithm>
 #include <cassert>
 #include <fstream>
@@ -377,13 +387,21 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   // x^10 + x^9 + x^7 + x^3 + x^2 + x + 1
   //                        CRC: (x^4+x^2+1)
   //                        generator: x^6+x^5+x^4+x+1
+
+  // When using x^6+x^5+x^4+x+1 as generator polynomial, the octal representation is 163
+  // Its decimal representation used for crc is 115
+
+  // When using x^4+x^2+1 as generator polynomial, the octal representation is 25
+  // Its decimal representation used for crc is 21
+
+  // Therefore, the pair is either {21, 163} or {115, 25}
   code_1.k = 1;
   code_1.n = 1;
-  code_1.v = 6;
+  code_1.v = 4;
   code_1.list_size = 1;
-  code_1.crc_dec = 21;
-  code_1.crc_length = 5;
-  code_1.generator_poly = {163};  // octal
+  code_1.crc_dec = 115;  // decimal
+  code_1.crc_length = 7;  // highest degree + 1
+  code_1.generator_poly = {25};  // octal
 
   CodeInformation code_2;
   // 56721
@@ -395,13 +413,21 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   // x^10 + x^8 + x^5 + x^4 + x^3 + x + 1
   //                         CRC: (x^3+x+1)
   //                         generator: x^7+x^4+1
+
+  // When using x^7+x^4+1 as generator polynomial, the octal representation is 221
+  // Its decimal representation used for crc is 145
+
+  // When using x^3+x+1 as generator polynomial, the octal representation is 13
+  // Its decimal representation used for crc is 11
+
+  // Therefore, the pair is either {11, 221} or {145, 13}
   code_2.k = 1;
   code_2.n = 1;
-  code_2.v = 7;
+  code_2.v = 3;
   code_2.list_size = 1;
-  code_2.crc_dec = 11;
-  code_2.crc_length = 4;
-  code_2.generator_poly = {221};
+  code_2.crc_dec = 145;  // decimal
+  code_2.crc_length = 8;  // highest degree + 1
+  code_2.generator_poly = {13};  // octal 
 
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);

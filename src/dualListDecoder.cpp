@@ -1,3 +1,13 @@
+/**
+ * @file dualListDecoder.cpp
+ * @author Bruce Qu (brucequ@ucla.edu)
+ * @brief 
+ * @version 0.1
+ * @date 2023-12-27
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include "../include/dualListDecoder.h"
 
 #include <algorithm>
@@ -11,6 +21,10 @@
 #include "../include/feedForwardTrellis.h"
 #include "../include/stopWatch.h"
 
+/**
+ * @namespace private namespace 
+ * 
+ */
 namespace {
 
 template <typename T>
@@ -31,6 +45,11 @@ void print(const std::vector<std::vector<T>>& matrix) {
   }
 }
 }  // namespace
+
+/**
+ * @namespace dualdecoderutils namespace 
+ * 
+ */
 namespace dualdecoderutils {
 std::vector<int> convertIntToBits(int integer, const int& length) {
   if (integer < 0) {
@@ -160,11 +179,13 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
+
 DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
-  /*
+  /**
   This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
-
+  
+  @var
   local variables:
     - double best_current_match;
     - double smallest_future_match;
@@ -454,20 +475,19 @@ MessageInformation DualListDecoder::TraceBack(
 std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
     const std::vector<double>& received_signal, CodeInformation code,
     FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
-  /*
-  @brief: Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  /**
+  @brief Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
     using a regular euclidean metric.
 
-  @param:
-    - 'received_signal': a vector of double that records the received values (deviates from +/-1).
+  @param received_signal: a vector of double that records the received values (deviates from +/-1).
 
-    - 'code': a dictionary encompasses all information related to a convolutional code.
+  @param code: a dictionary encompasses all information related to a convolutional code.
         - 'n': convolutional code output number of bits. Example: n=2 for a rate 1/2 code.
         - 'k': convolutional code input number of bits. Example: k=1 for a rate 1/2 code.
         - 'v': number of memory elements in convolutional code. Example: v=6 for a CC with generator
             polynomial: x^6+x^5+x^4+x+1.
 
-    - 'trellis_ptr': a pointer that points to a FeedForwardTrellis object with following member variables
+  @param trellis_ptr: a pointer that points to a FeedForwardTrellis object with following member variables
         - 'nextStates_': a 2d vector of size [2^(code.v), 2] for a binary convolutional code with v memory
                           elements.
                           At position (i, j), it determines the next state in integer when the currect state
@@ -477,18 +497,18 @@ std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_Eu
                           when the currect state is i and currect input is j.
                           To convert it to BPSK modulation, use dualdecoderutils::get_point().
 
-    - 'ssv_time': a chrono milliseconds object passed in by reference to increment an outer variable that keep
+  @param ssv_time: a chrono milliseconds object passed in by reference to increment an outer variable that keep
        track of dual list decoder trellis construction time. It tracks the time of add-compare-select operation
        of all active nodes.
 
-       Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2) + 1.5*(k+m-v)*2^(v+1)
-       Define 1 unit of complexity as the complexity required to perform one addition.
+  @note Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2) + 1.5*(k+m-v)*2^(v+1)
+        Define 1 unit of complexity as the complexity required to perform one addition.
          - 2^(v+1)-2: addition complexity on the first v section of a ZTCC trellis. Use sum of geometric series.
          - 1.5*(2^(v+1)-2): add-compare-select complexity on the last v section of a ZTCC trellis. Use sum of geometric series.
          - 1.5*(k+m-v)*2^(v+1): add-compare-select complexity on the middle (k+m-v) section of a ZTCC trellis.
 
-  @return:
-    - 'trellisInfo': a 2d vector of 'Cell', where each 'Cell' object constains the following information:
+  @return trellisInfo: std::vector<std::vector<Cell>>
+          Each 'Cell' object constains the following information:
           -   struct Cell {
                             bool init = false;
                             double pathMetric = 3000;
@@ -601,21 +621,20 @@ std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_Eu
 std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
       const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
-  /*
-  @brief: Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  /**
+  @brief Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
     using a special metric shown by Bill Ryan. Instead of calculating euclidean distance between received point and +/- 1,
     we compute the product of these two values.
 
-  @param:
-    - 'received_signal': a vector of double that records the received values (deviates from +/-1).
+  @param received_signal: a vector of double that records the received values (deviates from +/-1).
 
-    - 'code': a dictionary encompasses all information related to a convolutional code.
+  @param code: a dictionary encompasses all information related to a convolutional code.
         - 'n': convolutional code output number of bits. Example: n=2 for a rate 1/2 code.
         - 'k': convolutional code input number of bits. Example: k=1 for a rate 1/2 code.
         - 'v': number of memory elements in convolutional code. Example: v=6 for a CC with generator
             polynomial: x^6+x^5+x^4+x+1.
 
-    - 'trellis_ptr': a pointer that points to a FeedForwardTrellis object with following member variables
+  @param trellis_ptr: a pointer that points to a FeedForwardTrellis object with following member variables
         - 'nextStates_': a 2d vector of size [2^(code.v), 2] for a binary convolutional code with v memory
                           elements.
                           At position (i, j), it determines the next state in integer when the currect state
@@ -625,18 +644,18 @@ std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_Pr
                           when the currect state is i and currect input is j.
                           To convert it to BPSK modulation, use dualdecoderutils::get_point().
 
-    - 'ssv_time': a chrono milliseconds object passed in by reference to increment an outer variable that keep
+  @param ssv_time: a chrono milliseconds object passed in by reference to increment an outer variable that keep
        track of dual list decoder trellis construction time. It tracks the time of add-compare-select operation
        of all active nodes.
 
-       Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2) + 1.5*(k+m-v)*2^(v+1)
-       Define 1 unit of complexity as the complexity required to perform one addition.
+  @note Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2) + 1.5*(k+m-v)*2^(v+1)
+        Define 1 unit of complexity as the complexity required to perform one addition.
          - 2^(v+1)-2: addition complexity on the first v section of a ZTCC trellis. Use sum of geometric series.
          - 1.5*(2^(v+1)-2): add-compare-select complexity on the last v section of a ZTCC trellis. Use sum of geometric series.
          - 1.5*(k+m-v)*2^(v+1): add-compare-select complexity on the middle (k+m-v) section of a ZTCC trellis.
 
-  @return:
-    - 'trellisInfo': a 2d vector of 'Cell', where each 'Cell' object constains the following information:
+  @return trellisInfo: std::vector<std::vector<Cell>>
+          Each 'Cell' object constains the following information:
           -   struct Cell {
                             bool init = false;
                             double pathMetric = 3000;
