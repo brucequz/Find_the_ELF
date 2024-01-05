@@ -108,6 +108,9 @@ std::vector<int> get_point(int output, int n) {
   return bin_output;
 }
 
+int bin_sum(int i, int j) {
+	return (i + j) % 2;
+}
 }  // namespace CodecUtils
 
 namespace BPSK {
@@ -214,6 +217,11 @@ MessageInformation ViterbiCodec::softViterbiDecoding(
         // since our transitions correspond to symbols, the forwardPathIndex has
         // no correlation beyond indexing the forward path
 
+        // we will only constrain to travelling on 0 path in the ending v stages
+        if (stage >= (lowrate_pathLength - v_ - 1)) {
+          if (forwardPathIndex == 1) continue;
+        }
+
         int nextState =
             trellis_ptr_->nextStates_[currentState][forwardPathIndex];
 
@@ -307,6 +315,11 @@ std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_NoList_Euclide
         // since our transitions correspond to symbols, the forwardPathIndex has
         // no correlation beyond indexing the forward path
 
+        // we will only constrain to travelling on 0 path in the ending v stages
+        if (stage >= (lowrate_pathLength - v_ - 1)) {
+          if (forwardPathIndex == 1) continue;
+        }
+
         int nextState =
             trellis_ptr_->nextStates_[currentState][forwardPathIndex];
 
@@ -344,7 +357,7 @@ std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_NoList_Euclide
   return trellisInfo;
 }
 
-std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_WithList_ProductMetric(
+std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_WithList_EuclideanMetric(
     std::vector<double> receivedMessage) {
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
@@ -368,6 +381,11 @@ std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_WithList_Produ
            forwardPathIndex++) {
         // since our transitions correspond to symbols, the forwardPathIndex has
         // no correlation beyond indexing the forward path
+
+        // we will only constrain to travelling on 0 path in the ending v stages
+        if (stage >= (lowrate_pathLength - v_ - 1)) {
+          if (forwardPathIndex == 1) continue;
+        }
 
         int nextState =
             trellis_ptr_->nextStates_[currentState][forwardPathIndex];
@@ -413,45 +431,6 @@ std::vector<std::vector<Cell>> ViterbiCodec::ConstructZTCCTrellis_WithList_Produ
   return trellisInfo;
 }
 
-// std::vector<int> ViterbiCodec::calculateCRC(const std::vector<int>& input) {
-//   // generating (crc_length - 1) number of redundancy bits (crc bits)
-//   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
-
-//   std::vector<int> output = input;
-//   output.resize(input.size() + crc_length_ - 1, 0);
-
-//   // long division
-//   for (int i = 0; i < input.size(); ++i) {
-//     if (output[i] == 1) {
-//       std::transform(output.begin() + i, output.begin() + i + crc_length_,
-//                      crc_bin.begin(), output.begin() + i, CRC::binSum);
-//     }
-//   }
-
-//   std::copy(input.begin(), input.end(), output.begin());
-
-//   return output;
-// }
-
-// std::vector<int> ViterbiCodec::convolveCRC(const std::vector<int>& input) {
-//   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
-//   int input_size = input.size();
-//   int crc_size = crc_bin.size();
-//   int output_size = input_size + crc_size - 1;
-//   std::vector<int> output(output_size, 0);
-
-//   for (int i = 0; i < input_size; ++i) {
-//     for (int j = 0; j < crc_size; ++j) {
-//       output[i + j] += input[i] * crc_bin[j];
-//     }
-//   }
-
-//   std::for_each(output.begin(), output.end(),
-//                 [](int& element) { element %= 2; });
-
-//   return output;
-// }
-
 std::vector<int> ViterbiCodec::deconvolveCRC(const std::vector<int>& output) {
   std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
   std::vector<int> result(output.size() - crc_bin.size() + 1, 0);
@@ -469,19 +448,16 @@ std::vector<int> ViterbiCodec::deconvolveCRC(const std::vector<int>& output) {
   return result;
 }
 
-bool ViterbiCodec::checkCRC(std::vector<int> demodulated) {
-  // check crc by dividing the demodulated signal with crc poly
-  std::vector<int> crc_bin = CRC::decToBin(crc_dec_, crc_length_);
+bool ViterbiCodec::CRC_Check(std::vector<int> input_data, int crc_bits_num, int crc_dec) {
+	std::vector<int> CRC;
+	CodecUtils::dec_to_binary(crc_dec, CRC, crc_bits_num);
 
-  for (int ii = 0; ii <= (int)demodulated.size() - crc_length_; ii++) {
-    if (demodulated[ii] == 1) {
-      // Note: transform doesn't include .end
-      std::transform(demodulated.begin() + ii,
-                     demodulated.begin() + (ii + crc_length_), crc_bin.begin(),
-                     demodulated.begin() + ii, CRC::binSum);
-    }
-  }
-  bool all_zero = std::all_of(demodulated.begin(), demodulated.end(),
-                              [](int i) { return i == 0; });
-  return all_zero;
+	for (int ii = 0; ii <= (int)input_data.size() - crc_bits_num; ii++) {
+		if (input_data[ii] == 1) {
+			// Note: transform doesn't include .end
+			std::transform(input_data.begin() + ii, input_data.begin() + (ii + crc_bits_num), CRC.begin(), input_data.begin() + ii, CodecUtils::bin_sum);
+		}
+	}
+	bool zeros = std::all_of(input_data.begin(), input_data.end(), [](int i) { return i == 0; });
+	return zeros;
 }

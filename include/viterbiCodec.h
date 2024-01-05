@@ -115,7 +115,7 @@ class ViterbiCodec {
   std::vector<int> deconvolveCRC(const std::vector<int>& output);
 
   // Function definition in listDecoder.cpp
-  std::vector<MessageInformation> ZTCCListDecoding(
+  MessageInformation ZTCCListDecoding(
     const std::vector<double>& received_signal);
   
   
@@ -130,15 +130,18 @@ class ViterbiCodec {
   int numStates_;
   int list_size_;
   FeedForwardTrellis* trellis_ptr_;
-
+  
+  // Trellis construction for softViterbiDecoding function only. The construction process will not keep track of
+  // of the suboptimal path metric / father state
   std::vector<std::vector<Cell>> ConstructZTCCTrellis_NoList_EuclideanMetric(std::vector<double> receivedMessage);
 
-  // @todo
-  std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_ProductMetric(std::vector<double> receivedMessage);
+  // Trellis construction function for decoders with list decoding functionality. It will keep track of the suboptimal
+  // path metrics and suboptimal father state
+  std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_EuclideanMetric(std::vector<double> receivedMessage);
 
   std::vector<int> convertPathtoMessage(const std::vector<int> path);
   std::vector<int> convertPathtoTrimmedMessage(const std::vector<int> path);
-  bool checkCRC(std::vector<int> demodulated);
+  bool CRC_Check(std::vector<int> input_data, int crc_bits_num, int crc_dec);
 };
 
 #endif

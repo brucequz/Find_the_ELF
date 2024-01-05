@@ -165,11 +165,21 @@ DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
     : code_info_(code_info), max_path_to_search_(max_searched_path) {
   CodeInformation code_list_0 = code_info[0];
   CodeInformation code_list_1 = code_info[1];
-
+  
+  std::cout << "hello" << std::endl;
   FeedForwardTrellis* trellis_ptr_0 = new FeedForwardTrellis(code_list_0);
   FeedForwardTrellis* trellis_ptr_1 = new FeedForwardTrellis(code_list_1);
   trellis_ptrs_.push_back(trellis_ptr_0);
   trellis_ptrs_.push_back(trellis_ptr_1);
+
+  if (code_list_0.v == 0 || code_list_1.v == 0) {
+        std::cerr << "Cannot calculate the ratio when one of the numbers is zero." << std::endl;
+  }
+  int largerCRCDegree = (code_list_0.v >= code_list_1.v) ? code_list_0.v : code_list_1.v;
+  int smallerCRCDegree = (code_list_0.v <= code_list_1.v) ? code_list_0.v : code_list_1.v;
+
+  // Calculate the ratio
+  int crc_ratio = largerCRCDegree / smallerCRCDegree;
 }
 
 DualListDecoder::~DualListDecoder() {
@@ -179,13 +189,11 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
-
-DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
   /**
-  This function adaptively expand the list size until the smallest future match
+  @brief This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
   
-  @var
   local variables:
     - double best_current_match;
     - double smallest_future_match;
@@ -254,13 +262,11 @@ DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std
   // auto ssv_start_time = std::chrono::steady_clock::now();
 
   // list decoder 0
-  //std::cout << "Time before list decoder 0: " << timeDurations[0].count() << " milliseconds." << std::endl;
   std::vector<std::vector<Cell>> trellis_0 =
       ConstructZTCCTrellis_WithList_ProductMetric(received_codec_1, code_0, trellis_ptrs_[0], timeDurations[0]);
   int num_total_stages_0 = trellis_0[0].size();
   std::vector<std::vector<int>> prev_paths_list_0;
   MinHeap* heap_list_0 = new MinHeap;
-  //std::cout << "Time after list decoder 0: " << timeDurations[0].count() << " milliseconds." << std::endl;
   DetourNode node_0;
   node_0.start_state = 0;
   node_0.path_metric = trellis_0[0][num_total_stages_0 - 1].pathMetric;
@@ -269,13 +275,11 @@ DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std
   bool decoder_0_stop = false;
 
   // list decoder 1
-  //std::cout << "Time before list decoder 1: " << timeDurations[0].count() << " milliseconds." << std::endl;
   std::vector<std::vector<Cell>> trellis_1 =
       ConstructZTCCTrellis_WithList_ProductMetric(received_codec_2, code_1, trellis_ptrs_[1], timeDurations[0]);
   int num_total_stages_1 = trellis_1[0].size();
   std::vector<std::vector<int>> prev_paths_list_1;
   MinHeap* heap_list_1 = new MinHeap;
-  //std::cout << "Time after list decoder 1: " << timeDurations[0].count() << " milliseconds." << std::endl;
 
   DetourNode node_1;
   node_1.start_state = 0;
@@ -283,13 +287,6 @@ DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std
   heap_list_1->insert(node_1);
   int num_path_searched_1 = 0;
   bool decoder_1_stop = false;
-  
-  // step 1 end: SSV add-compare-select and initial traceback time for both decoders
-  // auto ssv_end_time = std::chrono::steady_clock::now();
-  // auto ssv_duration = std::chrono::duration_cast<std::chrono::milliseconds>(ssv_end_time - ssv_start_time);
-
-  // step 2: time taken for additional traceback opearations required by SLVD for both decoders
-  
 
   // time taken to do additional traceback and insertion
   Stopwatch sw_step2_3;
@@ -386,12 +383,29 @@ DLDInfo DualListDecoder::AdaptiveDecode(std::vector<double> received_signal, std
   return empty_message;
 }
 
+
 MessageInformation DualListDecoder::TraceBack(
     MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
     const std::vector<std::vector<Cell>>& trellis_states,
     std::vector<std::vector<int>>& prev_paths, int& num_path_searched,
     int num_total_stages) {
-  
+  /**
+   * @brief Does a single traceback using pre-build trellis pointed to by trellis_ptr
+   * 
+   * @param heap:A pointer to a Minheap that stores all detour nodes, which encapsulates path metric.
+   * 
+   * @param code:A struct of CodeInformation that stores k, n, v, crc_degree, and crc_length.
+   * 
+   * @param trellis_ptr:trellis output mapping and nextStates mapping
+   * 
+   * @param trellis_states:A pointer that points to a 2d vector of Cells that store 
+   * 
+   * @param prev_paths 
+   * @param num_path_searched 
+   * @param num_total_stages 
+   * @return MessageInformation 
+   */
+
   MessageInformation mi;
   bool found_path = false;
 

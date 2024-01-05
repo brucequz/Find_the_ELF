@@ -47,7 +47,7 @@ void print(const std::vector<std::vector<T>>& matrix) {
     for (const T& element : row) {
       std::cout << element << " ";
     }
-    std::cout << std::endl;
+    std::cout << ";" << std::endl;
   }
 }
 
@@ -61,6 +61,11 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
       numOutputSymbols_(std::pow(2, n)),
       numStates_(std::pow(2, v)) {
   polynomials_ = poly;
+  std::cout << "For v = " << v << std::endl;
+  std::cout << "polynomial: ";
+  print(poly);
+  std::cout << std::endl;
+
   if (polynomials_.size() != n) {
     std::cerr << "INVALID POLYNOMIAL: mismatch between number of output "
                  "symbols and polynomials"
@@ -78,6 +83,10 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
 
   computeNextStates();
   computeOutput();
+  std::cout << "For v = " << v << std::endl;
+  std::cout << "outputs: ";
+  // print(output_);
+  std::cout << std::endl;
 }
 
 FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
@@ -105,6 +114,7 @@ FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
 
   computeNextStates();
   computeOutput();
+
 }
 
 std::vector<int> FeedForwardTrellis::encode(const std::vector<int>& message) {

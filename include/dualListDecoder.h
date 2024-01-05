@@ -31,6 +31,7 @@ struct MessageInformation {
   std::pair<int, int> begin_end_states;
   double path_metric;
   int list_rank;
+  bool list_size_exceeded;  // added, but not used in anywhere else
 };
 
 struct CodeInformation {
@@ -135,9 +136,13 @@ class DualListDecoder {
   
   // Decoding function that alternates between two dual list decoders.
   // This function does not take crc degrees into consideration
-  DLDInfo AdaptiveDecode(
+  DLDInfo AdaptiveDecode_SimpleAlternate(
       std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
+  // Decoding function that alternates between two dual list decoders considering crc degrees.
+  // For example, if crc degree for two decoders are 3 and 5 respectively. Then every 8 and 32 codewords
+  // in both lists there exist one codeword that passes crc (?).
+  DLDInfo AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
   MessageInformation TraceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
@@ -147,8 +152,9 @@ class DualListDecoder {
   std::vector<CodeInformation> code_info_;
   std::vector<FeedForwardTrellis*> trellis_ptrs_;
   int max_path_to_search_;
+  int crc_ratio; // ratio between crc degree of both dld decoders. For example, crc1 = 3, crc2 = 5. Then crc_ratio = 2^5 / 2^3 = 4;
 
-  /// ZTCC
+  //// ZTCC
   // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
   // Uses a regular euclidean metric.
   std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_EuclideanMetric(
@@ -162,7 +168,7 @@ class DualListDecoder {
       const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
 
-  /// TBCC
+  //// TBCC
   // @todo
   // Construct a TBCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
   // Uses a regular euclidean metric.
