@@ -61,10 +61,6 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
       numOutputSymbols_(std::pow(2, n)),
       numStates_(std::pow(2, v)) {
   polynomials_ = poly;
-  std::cout << "For v = " << v << std::endl;
-  std::cout << "polynomial: ";
-  print(poly);
-  std::cout << std::endl;
 
   if (polynomials_.size() != n) {
     std::cerr << "INVALID POLYNOMIAL: mismatch between number of output "
@@ -83,10 +79,6 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
 
   computeNextStates();
   computeOutput();
-  std::cout << "For v = " << v << std::endl;
-  std::cout << "outputs: ";
-  // print(output_);
-  std::cout << std::endl;
 }
 
 FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
@@ -113,8 +105,13 @@ FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
   output_.resize(numStates_, std::vector<int>(numInputSymbols_));
 
   computeNextStates();
+  // std::cout << "v = " << code.v << std::endl;
+  // print(nextStates_);
+  // std::cout << std::endl;
   computeOutput();
-
+  // std::cout << "v = " << code.v << std::endl;
+  // print(output_);
+  // std::cout << std::endl;
 }
 
 std::vector<int> FeedForwardTrellis::encode(const std::vector<int>& message) {

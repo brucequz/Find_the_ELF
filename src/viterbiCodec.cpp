@@ -203,7 +203,7 @@ MessageInformation ViterbiCodec::softViterbiDecoding(
   // Add stopwatch
   Stopwatch soft_sw;
   soft_sw.tic();
-
+  
   // building the trellis
   for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
     for (int currentState = 0; currentState < numStates_; currentState++) {

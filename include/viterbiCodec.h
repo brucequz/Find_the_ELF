@@ -115,10 +115,12 @@ class ViterbiCodec {
   std::vector<int> deconvolveCRC(const std::vector<int>& output);
 
   // Function definition in listDecoder.cpp
-  MessageInformation ZTCCListDecoding(
+  std::vector<MessageInformation> ZTCCListDecoding_fullInformation_WithConstraint(
     const std::vector<double>& received_signal);
   
   
+  std::vector<MessageInformation> ZTCCListDecoding_fullInformation_NoConstraint(
+    const std::vector<double>& received_signal);
 
  private:
   int k_;  // input message length

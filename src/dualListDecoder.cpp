@@ -166,7 +166,6 @@ DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
   CodeInformation code_list_0 = code_info[0];
   CodeInformation code_list_1 = code_info[1];
   
-  std::cout << "hello" << std::endl;
   FeedForwardTrellis* trellis_ptr_0 = new FeedForwardTrellis(code_list_0);
   FeedForwardTrellis* trellis_ptr_1 = new FeedForwardTrellis(code_list_1);
   trellis_ptrs_.push_back(trellis_ptr_0);
@@ -179,7 +178,8 @@ DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
   int smallerCRCDegree = (code_list_0.v <= code_list_1.v) ? code_list_0.v : code_list_1.v;
 
   // Calculate the ratio
-  int crc_ratio = largerCRCDegree / smallerCRCDegree;
+  crc_ratio_ = int(std::pow(2,largerCRCDegree) / std::pow(2,smallerCRCDegree));
+  // std::cout << "crc_ratio_" << crc_ratio_ << std::endl;
 }
 
 DualListDecoder::~DualListDecoder() {
@@ -300,10 +300,10 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> rece
       
       // std::cout << "decoder 0 traceback" << std::endl;
       MessageInformation mi_0 =
-          TraceBack(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
+          TraceBack_Single(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
                     prev_paths_list_0, num_path_searched_0, num_total_stages_0);
       mi_0.decoder_index = 0;
-      if (mi_0.path_metric != -1.0) {
+      if (!mi_0.list_size_exceeded) {
         // if list size is not exceeded
         if (mi_0.path_metric >= decoder_threshold_0) {
           decoder_0_stop = true;
@@ -320,11 +320,11 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> rece
       // std::cout << "decoder 1 traceback" << std::endl;
       // std::cout << "before " << num_path_searched_1 << std::endl;
       MessageInformation mi_1 =
-          TraceBack(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
+          TraceBack_Single(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
                     prev_paths_list_1, num_path_searched_1, num_total_stages_1);
       // std::cout << "after " << num_path_searched_1 << std::endl;
       mi_1.decoder_index = 1;
-      if (mi_1.path_metric != -1.0) {
+      if (!mi_1.list_size_exceeded) {
         if (mi_1.path_metric >= decoder_threshold_1) {
           decoder_1_stop = true;
         }
@@ -339,6 +339,8 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> rece
     }
 
     if (mp.queue_size() != 0) {
+      //std::cout << "Agreed message found: " << std::endl;
+      //std::cout << "Simple alternate algorithm ended with path searched: [" << num_path_searched_0 << ", " << num_path_searched_1 << std::endl; 
       DLDInfo agreed_message = mp.pop_queue();
       best_current_match = agreed_message.combined_metric;
       // record the received signal just in case the decoding is incorrect
@@ -384,7 +386,235 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> rece
 }
 
 
-MessageInformation DualListDecoder::TraceBack(
+DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+  /**
+   * @brief 
+   * 
+   * @param received_signal 
+   * @param timeDurations 
+   * @return DLDInfo 
+   */
+
+  std::vector<std::vector<MessageInformation>> output;
+  std::vector<MessageInformation> output_0;
+  std::vector<MessageInformation> output_1;
+  DualListMap mp;
+  double best_current_match = INT_MAX;
+  double decoder_threshold_0 = INT_MAX;
+  double decoder_threshold_1 = INT_MAX;
+
+
+
+  // Set up variables
+  bool best_combined_found = false;
+  CodeInformation code_0 = code_info_[0];
+  CodeInformation code_1 = code_info_[1];
+
+  // crc traceback degree comparison
+  // the smaller crc should traceback once every 
+  int list_decoder_0_num_tracebacks = 1;
+  int list_decoder_1_num_tracebacks = 1;
+  if (code_0.v <= code_1.v) {
+    list_decoder_1_num_tracebacks = crc_ratio_;
+  } else {
+    list_decoder_0_num_tracebacks = crc_ratio_;
+  }
+
+  // divide the received signal
+  std::vector<double> received_codec_2;
+  std::vector<double> received_codec_1;
+
+  // unleaver to unleave the bits from received_signal
+  for (size_t i = 0; i < received_signal.size(); ++i) {
+    if (i % 2 == 0) {
+      received_codec_2.push_back(received_signal[i]);
+    } else {
+      received_codec_1.push_back(received_signal[i]);
+    }
+  }
+
+  // list decoder 0
+  std::vector<std::vector<Cell>> trellis_0 =
+      ConstructZTCCTrellis_WithList_ProductMetric(received_codec_1, code_0, trellis_ptrs_[0], timeDurations[0]);
+  int num_total_stages_0 = trellis_0[0].size();
+  std::vector<std::vector<int>> prev_paths_list_0;
+  MinHeap* heap_list_0 = new MinHeap;
+  DetourNode node_0;
+  node_0.start_state = 0;
+  node_0.path_metric = trellis_0[0][num_total_stages_0 - 1].pathMetric;
+  heap_list_0->insert(node_0);
+  int num_path_searched_0 = 0;
+  bool decoder_0_stop = false;
+
+  // list decoder 1
+  std::vector<std::vector<Cell>> trellis_1 =
+      ConstructZTCCTrellis_WithList_ProductMetric(received_codec_2, code_1, trellis_ptrs_[1], timeDurations[0]);
+  int num_total_stages_1 = trellis_1[0].size();
+  std::vector<std::vector<int>> prev_paths_list_1;
+  MinHeap* heap_list_1 = new MinHeap;
+  DetourNode node_1;
+  node_1.start_state = 0;
+  node_1.path_metric = trellis_1[0][num_total_stages_1 - 1].pathMetric;
+  heap_list_1->insert(node_1);
+  int num_path_searched_1 = 0;
+  bool decoder_1_stop = false;
+
+  // time taken to do additional traceback and insertion
+  Stopwatch traceback_insertion_stopwatch;
+  traceback_insertion_stopwatch.tic();
+  while (!best_combined_found) {
+    // list decoder 0 traceback
+    if (num_path_searched_0 >= max_path_to_search_) {
+      decoder_0_stop = true;
+    }
+    if (!decoder_0_stop) {
+      
+      // std::cout << "decoder 0 traceback" << std::endl;
+      std::vector<MessageInformation> mi_0_out(list_decoder_0_num_tracebacks);
+      mi_0_out =
+          TraceBack_Multiple(heap_list_0, code_0, trellis_ptrs_[0], trellis_0,
+                    prev_paths_list_0, num_path_searched_0, num_total_stages_0, list_decoder_0_num_tracebacks);
+      for (MessageInformation mi_0 : mi_0_out) {
+        mi_0.decoder_index = 0;
+        if (!mi_0.list_size_exceeded) {
+          // if list size is not exceeded
+          if (mi_0.path_metric >= decoder_threshold_0) {
+            decoder_0_stop = true;
+          }
+          mp.insert(mi_0);
+          output_0.push_back(mi_0);
+        }
+      }
+    }
+    // list decoder 1 traceback
+    if (num_path_searched_1 >= max_path_to_search_) {
+      decoder_1_stop = true;
+    }
+    if (!decoder_1_stop) {
+      // std::cout << "decoder 1 traceback" << std::endl;
+      // std::cout << "before " << num_path_searched_1 << std::endl;
+      std::vector<MessageInformation> mi_1_out(list_decoder_1_num_tracebacks);
+      mi_1_out =
+          TraceBack_Multiple(heap_list_1, code_1, trellis_ptrs_[1], trellis_1,
+                    prev_paths_list_1, num_path_searched_1, num_total_stages_1, list_decoder_1_num_tracebacks);
+      // std::cout << "after " << num_path_searched_1 << std::endl;
+      for (MessageInformation mi_1 : mi_1_out) {
+        mi_1.decoder_index = 1;
+        if (!mi_1.list_size_exceeded) {
+          if (mi_1.path_metric >= decoder_threshold_1) {
+            decoder_1_stop = true;
+          }
+          mp.insert(mi_1);
+          output_1.push_back(mi_1);
+        }
+      }
+    }
+
+    if (decoder_0_stop && decoder_1_stop) {
+      // std::cout << "Both decoders declared stop" << std::endl;
+      break;
+    }
+
+    if (mp.queue_size() != 0) {
+      //std::cout << "Agreed message found: " << std::endl;
+      //std::cout << "CRC alternate algorithm ended with path searched: [" << num_path_searched_0 << ", " << num_path_searched_1 << std::endl; 
+      DLDInfo agreed_message = mp.pop_queue();
+      best_current_match = agreed_message.combined_metric;
+      // record the received signal just in case the decoding is incorrect
+      agreed_message.received_signal = received_signal;
+      decoder_threshold_0 = best_current_match - node_1.path_metric;
+      decoder_threshold_1 = best_current_match - node_0.path_metric;
+      best_combined_found = true;
+      // free pointers
+      delete heap_list_0;
+      delete heap_list_1;
+      heap_list_0 = nullptr;
+      heap_list_1 = nullptr;
+      // std::cout << "found agreed message" << std::endl;
+      // std::cout << "Debug: agreed message list size: ";
+      // dualdecoderutils::print(agreed_message.list_ranks);
+      // std::cout << std::endl;
+
+      return agreed_message;
+    }
+  }
+  traceback_insertion_stopwatch.toc();
+  timeDurations[2] += traceback_insertion_stopwatch.getElapsed();
+  traceback_insertion_stopwatch.reset();
+
+  output.push_back(output_0);
+  output.push_back(output_1);
+  DLDInfo empty_message;
+  empty_message.combined_metric = INT_MAX;
+  empty_message.list_ranks = {max_path_to_search_, max_path_to_search_};
+  // when the output is not found, we store the message to be all -1's
+  // and the received_signal
+  empty_message.message = std::vector<int>(64, -1);
+  empty_message.received_signal = received_signal;
+
+  // free pointers
+  delete heap_list_0;
+  delete heap_list_1;
+  heap_list_0 = nullptr;
+  heap_list_1 = nullptr;
+  // std::cout << "found nothing!" << std::endl;
+  return empty_message;
+}
+
+
+// DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate(
+//       std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+//   /**
+//   @brief This function will 'look ahead' whenever it finds a crc-passing and zero-terminated codeword.
+//   Record the total metric after reconstruction as 'baseline'. This baseline can always be updated and replaced.
+//   If on both lists, we reach a metric which would be greater than the 'baseline' even there does not exist a match,
+//   algorithm terminates.
+  
+//   local variables:
+//     - double best_current_match;
+//     - double smallest_future_match;
+//        - smallest metric on the left +
+
+//   caveat: cache miss (due to size of minHeap)
+
+//   algorithm 'look ahead' decoder:
+//     Input: a received signal and code polynomials and crc polynomials
+//     Output: a vector of agreed messages (maximum likelihood message)
+
+//       create an unordered map to store available messages
+//       while ML path is not found
+//         add a new l1 path to the map
+//           if path already exists in map
+//             end while
+//           end if
+//         add a new l2 path to the map
+//           if path already exists in map
+//             end while
+//           end if
+//       end while
+
+      
+
+//       if the most likely agreed message is found
+//         set BCM to the combined path metric
+//         create thresholds constraint on both list decoders. (l1, l2)
+
+//         if (a new path generated on l1 >= l1 threshold)
+//           stop path tracing from l1
+//         end if
+//         if (a new path generated on l2 >= l2 threshold)
+//           stop path tracing from l2
+//         end if
+
+//         if both list decoders are stopped
+//           return maximum likelihood message
+//         end if
+//       end if
+//   */
+// }
+
+
+MessageInformation DualListDecoder::TraceBack_Single(
     MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
     const std::vector<std::vector<Cell>>& trellis_states,
     std::vector<std::vector<int>>& prev_paths, int& num_path_searched,
@@ -412,7 +642,7 @@ MessageInformation DualListDecoder::TraceBack(
   while (!found_path) {
     if (num_path_searched >= max_path_to_search_) {
       // declare list size exceeded
-      mi.path_metric = -1.0;
+      mi.list_size_exceeded = true;
       return mi;
     }
     DetourNode detour = heap->pop();
@@ -484,6 +714,114 @@ MessageInformation DualListDecoder::TraceBack(
     num_path_searched++;
   }
   return mi;
+}
+
+std::vector<MessageInformation> DualListDecoder::TraceBack_Multiple(
+    MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
+    const std::vector<std::vector<Cell>>& trellis_states,
+    std::vector<std::vector<int>>& prev_paths, int& num_path_searched,
+    int num_total_stages, int num_trace_back) {
+  /**
+   * @brief Does multiple tracebacks using pre-build trellis pointed to by trellis_ptr
+   * 
+   * @param heap:A pointer to a Minheap that stores all detour nodes, which encapsulates path metric.
+   * 
+   * @param code:A struct of CodeInformation that stores k, n, v, crc_degree, and crc_length.
+   * 
+   * @param trellis_ptr:trellis output mapping and nextStates mapping
+   * 
+   * @param trellis_states:A pointer that points to a 2d vector of Cells that store 
+   * 
+   * @param prev_paths 
+   * @param num_path_searched 
+   * @param num_total_stages 
+   * @param num_trace_back
+   * @return MessageInformation 
+   */
+  
+  std::vector<MessageInformation> output;
+  for (int i = 0; i < num_trace_back; i++) {
+    MessageInformation mi;
+    bool found_path = false;
+
+    while (!found_path) {
+      if (num_path_searched >= max_path_to_search_) {
+        // declare list size exceeded
+        mi.list_size_exceeded = true;
+        output.push_back(mi);
+        return output;
+      }
+      DetourNode detour = heap->pop();
+      std::vector<int> path(num_total_stages);
+
+      int resume_stage = num_total_stages - 1;
+      double forward_partial_path_metric = 0.0;
+      int cur_state = detour.start_state;
+
+      if (detour.original_path != -1) {
+        forward_partial_path_metric = detour.forward_path_metric;
+        resume_stage = detour.detour_stage;
+
+        path = prev_paths[detour.original_path];
+        cur_state = path[resume_stage];
+
+        double cur_sub_path_metric =
+            trellis_states[cur_state][resume_stage].subPathMetric;
+
+        cur_state = trellis_states[cur_state][resume_stage].subFatherState;
+
+        resume_stage--;
+        double prev_path_metric =
+            trellis_states[cur_state][resume_stage].pathMetric;
+        forward_partial_path_metric += cur_sub_path_metric - prev_path_metric;
+      }
+
+      path[resume_stage] = cur_state;
+      
+      
+      for (int stage = resume_stage; stage > 0; stage--) {
+        double cur_sub_path_metric =
+            trellis_states[cur_state][stage].subPathMetric;
+        double cur_path_metric = trellis_states[cur_state][stage].pathMetric;
+        
+        if (trellis_states[cur_state][stage].subFatherState != -1) {
+          DetourNode localDetour;
+          localDetour.start_state = 0;
+          localDetour.path_metric =
+              cur_sub_path_metric + forward_partial_path_metric;
+          localDetour.forward_path_metric = forward_partial_path_metric;
+          localDetour.original_path = num_path_searched;
+          localDetour.detour_stage = stage;
+          heap->insert(localDetour);
+        }
+
+        cur_state = trellis_states[cur_state][stage].fatherState;
+        double prev_path_metric = trellis_states[cur_state][stage - 1].pathMetric;
+        forward_partial_path_metric += cur_path_metric - prev_path_metric;
+        path[stage - 1] = cur_state;
+      }
+      prev_paths.push_back(path);
+
+      std::vector<int> full_message = convertPathtoMessage(path, trellis_ptr);
+      std::vector<int> messageWithoutTrailingZeros =
+          convertPathtoTrimmedMessage(path, code, trellis_ptr);
+      std::vector<int> message = deconvolveCRC(messageWithoutTrailingZeros, code);
+
+      if (CRC_Check(messageWithoutTrailingZeros, code.crc_length, code.crc_dec) &&
+          path.front() == path.back() && path.back() == 0) {
+        mi.path = path;
+        mi.path_metric = detour.path_metric;
+        // convert path to message
+        mi.message = message;
+        mi.list_rank = num_path_searched+1;
+        found_path = true;
+      }
+
+      num_path_searched++;
+    }
+    output.push_back(mi);
+  }
+  return output;
 }
 
 std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(

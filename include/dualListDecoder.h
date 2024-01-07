@@ -31,7 +31,8 @@ struct MessageInformation {
   std::pair<int, int> begin_end_states;
   double path_metric;
   int list_rank;
-  bool list_size_exceeded;  // added, but not used in anywhere else
+  int crc_passing_rank;
+  bool list_size_exceeded = false;  // added, used in DLD
 };
 
 struct CodeInformation {
@@ -143,16 +144,27 @@ class DualListDecoder {
   // For example, if crc degree for two decoders are 3 and 5 respectively. Then every 8 and 32 codewords
   // in both lists there exist one codeword that passes crc (?).
   DLDInfo AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+
+
+  DLDInfo LookAheadDecode_SimpleAlternate(
+      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
-  MessageInformation TraceBack(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
+  MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
                              int& num_path_searched, int num_total_stages);
+  
+  // Trace back according to crc degree
+  std::vector<MessageInformation> TraceBack_Multiple(
+                            MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
+                            const std::vector<std::vector<Cell>>& trellis_states,
+                            std::vector<std::vector<int>>& prev_paths, int& num_path_searched,
+                            int num_total_stages, int num_trace_back);
 
  private:
   std::vector<CodeInformation> code_info_;
   std::vector<FeedForwardTrellis*> trellis_ptrs_;
   int max_path_to_search_;
-  int crc_ratio; // ratio between crc degree of both dld decoders. For example, crc1 = 3, crc2 = 5. Then crc_ratio = 2^5 / 2^3 = 4;
+  int crc_ratio_; // ratio between crc degree of both dld decoders. For example, crc1 = 3, crc2 = 5. Then crc_ratio = 2^5 / 2^3 = 4;
 
   //// ZTCC
   // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
