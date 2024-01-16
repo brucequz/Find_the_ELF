@@ -103,24 +103,20 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListDecoding_fullInformation_W
 		previousPaths.push_back(path);
 
 		std::vector<int> ztmessage = convertPathtoTrimmedMessage(path);
-		std::vector<int> message = convertPathtoMessage(path);
-		// std::cout<< "decoded message: " << std::endl;
-		// for (int i=0; i<message.size(); i++){
-		// 	std::cout<< message[i];
-		// }
-		// std::cout<< "end of message" << std::endl;
+
 
 		// ztcc decoding requires only a crc check since the starting / ending states are fixed
 		if(CRC_Check(ztmessage, crc_length_, crc_dec_)){
+            std::vector<int> original_message = deconvolveCRC(ztmessage);
 			assert(path[0] == 0);
 			assert(path.back() == 0);
 			MessageInformation mi;
-			mi.message = ztmessage;
+			mi.message = original_message;
 			mi.path = path;
 			mi.path_metric = detour.path_metric;
 			mi.crc_passing_rank = crc_passing_path+1;
 			mi.list_rank = numPathSearched+1;
-			if (crc_passing_path % 50000 == 0){
+			if (crc_passing_path % 1 == 0){
 				output.push_back(mi);
 			}
 			crc_passing_path++;
@@ -214,13 +210,12 @@ std::vector<MessageInformation> ViterbiCodec::ZTCCListDecoding_fullInformation_N
 		// std::cout<< "end of message" << std::endl;
 
 		// ztcc decoding requires only a crc check since the starting / ending states are fixed
-		
-    MessageInformation mi;
-    mi.path_metric = detour.path_metric;
-    mi.message = ztmessage;
-    mi.path = path;
-    mi.list_rank = numPathSearched+1;
-    output.push_back(mi);
+		MessageInformation mi;
+		mi.path_metric = detour.path_metric;
+		mi.message = ztmessage;
+		mi.path = path;
+		mi.list_rank = numPathSearched+1;
+		output.push_back(mi);
 
 		numPathSearched++;
 	}

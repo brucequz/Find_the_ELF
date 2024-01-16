@@ -63,6 +63,7 @@ FeedForwardTrellis::FeedForwardTrellis(int k, int n, int v,
   polynomials_ = poly;
 
   if (polynomials_.size() != n) {
+    std::cerr << "n = " << n_ << std::endl;
     std::cerr << "INVALID POLYNOMIAL: mismatch between number of output "
                  "symbols and polynomials"
               << std::endl;
@@ -90,6 +91,7 @@ FeedForwardTrellis::FeedForwardTrellis(CodeInformation code) {
 
   polynomials_ = code.generator_poly;
   if (polynomials_.size() != n_) {
+    std::cerr << "v = " << code.v << std::endl;
     std::cerr << "INVALID POLYNOMIAL: mismatch between number of output "
                  "symbols and polynomials"
               << std::endl;

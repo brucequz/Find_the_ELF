@@ -133,8 +133,11 @@ combine_maps(const std::vector<MessageInformation>& vec1,
 class DualListDecoder {
  public:
   DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path);
+  DualListDecoder(CodeInformation encoder, std::vector<CodeInformation> code_info, int max_searched_path);
   ~DualListDecoder();
   
+  // RATE 1/1 DLD DECODERS
+
   // Decoding function that alternates between two dual list decoders.
   // This function does not take crc degrees into consideration
   DLDInfo AdaptiveDecode_SimpleAlternate(
@@ -144,10 +147,15 @@ class DualListDecoder {
   // For example, if crc degree for two decoders are 3 and 5 respectively. Then every 8 and 32 codewords
   // in both lists there exist one codeword that passes crc (?).
   DLDInfo AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+  
+  // RATE 1/2 DLD DECODERS
 
+  // Decoding dunction that contains two rate 1/2 decoders. It alternates between two dual list decoders.
+  // This function does not take crc degrees into consideration
+  DLDInfo AdaptiveDecode_SimpleAlternate_rate_1_2(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
-  DLDInfo LookAheadDecode_SimpleAlternate(
-      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+  DLDInfo LookAheadDecode_SimpleAlternate_rate_1_2(
+      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations, std::vector<double> metric_0, std::vector<double> metric_1);
   
   MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
@@ -160,7 +168,13 @@ class DualListDecoder {
                             std::vector<std::vector<int>>& prev_paths, int& num_path_searched,
                             int num_total_stages, int num_trace_back);
 
+
+  // RATE 1/2 DLD Utilities
+  std::vector<double> HardDecode(const std::vector<double>& received_signal);
+
  private:
+  CodeInformation encoder_;
+  FeedForwardTrellis* encoder_trellis_ptr_;
   std::vector<CodeInformation> code_info_;
   std::vector<FeedForwardTrellis*> trellis_ptrs_;
   int max_path_to_search_;

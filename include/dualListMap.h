@@ -29,12 +29,15 @@ class DualListMap{
     ~DualListMap() {};
 
     void insert(const MessageInformation& mi);  // insert to priority queue when agreed message is found
+    void insert(const MessageInformation& mi, double true_metric); 
     int queue_size() {return agreed_messages_.size();};
     DLDInfo pop_queue();
-
+    DLDInfo get_top();
+    
+    std::map<std::vector<int>, MessageInformation> dual_list_map_; // dictionary
+    std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric> agreed_messages_; // priority queue
+    
   private:
-    std::map<std::vector<int>, MessageInformation> dual_list_map_;
-    std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric> agreed_messages_;
 
 };
 
