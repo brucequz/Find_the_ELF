@@ -25,11 +25,55 @@
 // #include "mat.h"
 
 #define K 64
-#define RDEN 3
 #define V 10
-#define MAX_LIST_SIZE 100
-#define TRIALS 1e5
-// rate 1/3
+#define MAX_LIST_SIZE 1000
+#define TRIALS 5e5
+
+// --------------------------- rate 1/2 into two rate 1/1 ---------------------------
+
+  // 3345: 11011100101 x^10 + x^9 + x^7 + x^6 + x^5 + x^2 + 1
+  // One can divide it into: (x^3 + x^2 + 1)*(x^7 + x^3 + 1)
+  // x^7 + x^3 + 1 is (binary)10001001, (octal)211, (decimal)137
+  // x^3 + x^2 + 1 is (binary)1101, (octal)15, (decimal)13 
+
+  // 3613: 11110001011 x^10 + x^9 + x^8 + x^7 + x^3 + x + 1
+  // One can divide it into: (x^6 + x^5 + x^2 + x + 1)*(x^4 + x^2 + 1)
+  // x^6 + x^5 + x^2 + x + 1 is (binary)1100111, (octal)147, (decimal)103
+  // x^4 + x^2 + 1 is (binary)10101, (octal)25, (decimal)21
+  #define RDEN 2
+  #define A 3345
+  #define B 3613
+
+  #define V_1 7
+  #define CC_1 211
+  #define CRC_1 13
+  #define CRC_LENGTH_1 4
+  
+  #define V_2 6
+  #define CC_2 147
+  #define CRC_2 21
+  #define CRC_LENGTH_2 5
+  #define PUNCTURE 0
+  #define PUNC_RATE 2
+
+  // below are the null values
+  #define AB 3325
+  #define AC 3237
+  #define DC 2711
+
+  #define C 63
+  #define D 67
+
+  #define CRC_A 37
+  #define CRC_C 51
+
+  #define PUNC_1 0
+  #define PUNC_3 5
+
+// --------------------------- rate 1/2 into two rate 1/1 ---------------------------
+
+// --------------------------- rate 1/3 ---------------------------
+// #define RDEN 3
 // #define AB 3325
 // #define AC 3237
 // #define DC 2711
@@ -41,24 +85,27 @@
 // #define CRC_A 37
 // #define CRC_C 51
 
-// #define PUNCURE 0
+// #define PUNCTURE 0
 
-// puncture 1/2
-#define PUNC_1 0
-#define PUNC_3 5
-#define AB 2267
-#define AC 3631
-#define DC 2353
-#define A 51
-#define B 57
-#define C 61
-#define D 73
+// --------------------------- rate 1/3 ---------------------------
 
-#define CRC_A 41
-#define CRC_C 49
+// --------------------------- puncture 1/2 ---------------------------
+// #define PUNC_1 0
+// #define PUNC_3 5
+// #define AB 2267
+// #define AC 3631
+// #define DC 2353
+// #define A 51
+// #define B 57
+// #define C 61
+// #define D 73
 
-#define PUNCTURE 1
+// #define CRC_A 41
+// #define CRC_C 49
+
+// #define PUNCTURE 1
 #define PUNC_RATE 2
+// --------------------------- puncture 1/2 ---------------------------
 
 static std::random_device rd{};
 static std::mt19937 noise_gen(91);  // 82
@@ -209,9 +256,9 @@ int main(int argc, char* argv[]) {
   }
 
   ////////////////////// Dual List Decoding Experiment //////////////////////
-  // for (double snr_dB : SNR_dB) {
-  //   dualListExperiment(snr_dB, 1e5, 1000);
-  // }
+  for (double snr_dB : SNR_dB) {
+    dualListExperiment(snr_dB, 1e5, 1000);
+  }
 
   ////////////////////// Time and Complexity Experiment //////////////////////
   // for (double snr_dB : SNR_dB) {
@@ -244,9 +291,9 @@ int main(int argc, char* argv[]) {
   // }
 
   ////////////////////// Time and Complexity Experiment //////////////////////
-  for (double snr_dB : SNR_dB) {
-    TimeAndComplexitySimulation_rate_1_3(snr_dB);
-  }
+  // for (double snr_dB : SNR_dB) {
+  //   TimeAndComplexitySimulation_rate_1_3(snr_dB);
+  // }
 
   ////////////////////// Find D_free //////////////////////
   // FindDFree_ADFree();
@@ -816,7 +863,7 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   
   DLD_correct_vec.push_back((double)(DLD_correct+SSV_correct) / number_of_trials);
   DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
-  DLD_error_vec.push_back((double)DLD_error / number_of_trials);
+  DLD_error_vec.push_back((double)DLD_error+SSV_error / number_of_trials);
   
 
   ///////////  End of simulation ////////////
@@ -927,27 +974,38 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
 
   */
   // output path
-  std::string outputFilePath = "../output/list_size_exceeded/";
-  std::ostringstream oss;
-  oss << std::scientific << maximum_list_size;
+  // std::string outputFilePath = "../output/list_size_exceeded/";
+  // std::ostringstream oss;
+  // oss << std::scientific << maximum_list_size;
 
-  std::string scientificString = oss.str();
-  std::ofstream outputFile(outputFilePath + "DLD_" + scientificString + "_" +
-                           std::to_string(double(snr_dB))+ ".txt");
-  if (!outputFile.is_open()) {
-    std::cerr << "Failed to open the file for writing." << std::endl;
-  }
+  // std::string scientificString = oss.str();
+  // std::ofstream outputFile(outputFilePath + "DLD_" + scientificString + "_" +
+  //                          std::to_string(double(snr_dB))+ ".txt");
+  // if (!outputFile.is_open()) {
+  //   std::cerr << "Failed to open the file for writing." << std::endl;
+  // }
 
   /// Building Codec
   CodeInformation code;
   code.k = 1;
   code.n = 2;
-  code.v = 10;
+  code.v = V;
   code.list_size = 5;
   code.crc_dec = -1;
   code.crc_length = -1;
-  code.generator_poly = {2473, 3217};  // octal
+  code.generator_poly = {B, A};  // octal
   ViterbiCodec codec(code);
+
+
+  // 3345: 11011100101 x^10 + x^9 + x^7 + x^6 + x^5 + x^2 + 1
+  // One can divide it into: (x^3 + x^2 + 1)*(x^7 + x^3 + 1)
+  // x^7 + x^3 + 1 is (binary)10001001, (octal)211, (decimal)137
+  // x^3 + x^2 + 1 is (binary)1101, (octal)15, (decimal)13 
+
+  // 3613: 11110001011 x^10 + x^9 + x^8 + x^7 + x^3 + x + 1
+  // One can divide it into: (x^6 + x^5 + x^2 + x + 1)*(x^4 + x^2 + 1)
+  // x^6 + x^5 + x^2 + x + 1 is (binary)1100111, (octal)147, (decimal)103
+  // x^4 + x^2 + 1 is (binary)10101, (octal)25, (decimal)21
 
   CodeInformation code_1;
   // 61713
@@ -961,11 +1019,11 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
   //                        generator: x^6+x^5+x^4+x+1
   code_1.k = 1;
   code_1.n = 1;
-  code_1.v = 6;
-  code_1.list_size = 5e4;  // This is only useful when using list decoding functions in ViterbiCodec
-  code_1.crc_dec = 21;
-  code_1.crc_length = 5;
-  code_1.generator_poly = {163};  // octal
+  code_1.v = V_1;
+  code_1.list_size = MAX_LIST_SIZE;  // This is only useful when using list decoding functions in ViterbiCodec
+  code_1.crc_dec = CRC_1;
+  code_1.crc_length = CRC_LENGTH_1;
+  code_1.generator_poly = {CC_1};  // octal
 
   CodeInformation code_2;
   // 56721
@@ -979,11 +1037,11 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
   //                         generator: x^7+x^4+1
   code_2.k = 1;
   code_2.n = 1;
-  code_2.v = 7;
-  code_2.list_size = 5e4;  // This is only useful when using list decoding functions in ViterbiCodec
-  code_2.crc_dec = 11;
-  code_2.crc_length = 4;
-  code_2.generator_poly = {221};
+  code_2.v = V_2;
+  code_2.list_size = MAX_LIST_SIZE;  // This is only useful when using list decoding functions in ViterbiCodec
+  code_2.crc_dec = CRC_2;
+  code_2.crc_length = CRC_LENGTH_2;
+  code_2.generator_poly = {CC_2};
 
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);
@@ -994,7 +1052,7 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
   // Simulation begin
   int seed = 47;
   std::mt19937 msg_gen(seed);
-  int num_bits = 64;
+  int num_bits = K;
 
   std::vector<double> DLD_correct_vec;
   std::vector<double> DLD_list_exceed_vec;
@@ -1003,6 +1061,8 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
   std::cout << "Running DLD tests for v = " << code.v
             << " test, with generator poly: " << code.generator_poly[0] << ", "
             << code.generator_poly[1] << " SNR = " << snr_dB << std::endl;
+
+  std::cout << "Current max list size: " << maximum_list_size << std::endl;
 
   
   std::cout << "Now working on snr: " << snr_dB << "-------------------"
@@ -1031,7 +1091,7 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
   while (number_of_trials < 10000) {
     number_of_trials++;
 
-    if (number_of_trials % 1 == 0) {
+    if (number_of_trials % 5000 == 0) {
       std::cout << "Trial number: " << number_of_trials << std::endl;
       std::cout << "Current number of errors: " << number_of_errors
                 << std::endl;
@@ -1096,49 +1156,49 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
     //     0.0228116, 0.22973,   2.44116,   1.02029};
     
     
-    // Using ZTCC list decoding to verify my result
-    std::vector<MessageInformation> output = codec.ZTCCListDecoding_fullInformation_NoConstraint(received_signal);
-    std::cout << "printing single ztcc full information list decoding results: " << std::endl;
-    for (int i = 0; i < output.size(); ++i) {
-      std::cout << " " << i << "th path  (" << "list rank = " << output[i].list_rank << "): ";
-      print(output[i].message);
-      std::cout << " with pathMetric = " << output[i].path_metric;
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    // // Using ZTCC list decoding to verify my result
+    // std::vector<MessageInformation> output = codec.ZTCCListDecoding_fullInformation_NoConstraint(received_signal);
+    // std::cout << "printing single ztcc full information list decoding results: " << std::endl;
+    // for (int i = 0; i < output.size(); ++i) {
+    //   std::cout << " " << i << "th path  (" << "list rank = " << output[i].list_rank << "): ";
+    //   print(output[i].message);
+    //   std::cout << " with pathMetric = " << output[i].path_metric;
+    //   std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
     
-    // unleaver to unleave the bits from received_signal
-    std::vector<double> received_codec_2;
-    std::vector<double> received_codec_1;
-    for (size_t i = 0; i < received_signal.size(); ++i) {
-      if (i % 2 == 0) {
-        received_codec_2.push_back(received_signal[i]);
-      } else {
-        received_codec_1.push_back(received_signal[i]);
-      }
-    }
-    std::vector<MessageInformation> output_1 = codec_1.ZTCCListDecoding_fullInformation_WithConstraint(received_codec_1);
-        std::cout << "printing DLD1 full information list decoding results: " << std::endl;
-    for (int i = 0; i < output_1.size(); ++i) {
-      std::cout << " " << output_1[i].crc_passing_rank << "th crc-passing path  (" << "list rank = " << output_1[i].list_rank << "): ";
-      print(output_1[i].message);
-      std::cout << " with pathMetric = " << output_1[i].path_metric;
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    // // unleaver to unleave the bits from received_signal
+    // std::vector<double> received_codec_2;
+    // std::vector<double> received_codec_1;
+    // for (size_t i = 0; i < received_signal.size(); ++i) {
+    //   if (i % 2 == 0) {
+    //     received_codec_2.push_back(received_signal[i]);
+    //   } else {
+    //     received_codec_1.push_back(received_signal[i]);
+    //   }
+    // }
+    // std::vector<MessageInformation> output_1 = codec_1.ZTCCListDecoding_fullInformation_WithConstraint(received_codec_1);
+    //     std::cout << "printing DLD1 full information list decoding results: " << std::endl;
+    // for (int i = 0; i < output_1.size(); ++i) {
+    //   std::cout << " " << output_1[i].crc_passing_rank << "th crc-passing path  (" << "list rank = " << output_1[i].list_rank << "): ";
+    //   print(output_1[i].message);
+    //   std::cout << " with pathMetric = " << output_1[i].path_metric;
+    //   std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
 
-    std::vector<MessageInformation> output_2 = codec_2.ZTCCListDecoding_fullInformation_WithConstraint(received_codec_2);
-        std::cout << "printing DLD2 full information list decoding results: " << std::endl;
-    for (int i = 0; i < output_2.size(); ++i) {
-      std::cout << " " << output_2[i].crc_passing_rank << "th crc-passing path  (" << "list rank = " << output_2[i].list_rank << "): ";
-      print(output_2[i].message);
-      std::cout << " with pathMetric = " << output_2[i].path_metric;
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    // std::vector<MessageInformation> output_2 = codec_2.ZTCCListDecoding_fullInformation_WithConstraint(received_codec_2);
+    //     std::cout << "printing DLD2 full information list decoding results: " << std::endl;
+    // for (int i = 0; i < output_2.size(); ++i) {
+    //   std::cout << " " << output_2[i].crc_passing_rank << "th crc-passing path  (" << "list rank = " << output_2[i].list_rank << "): ";
+    //   print(output_2[i].message);
+    //   std::cout << " with pathMetric = " << output_2[i].path_metric;
+    //   std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.AdaptiveDecode_CRCAlternate(received_signal, timeDurations);
+    DLDInfo output_DLD = DLD.AdaptiveDecode_SimpleAlternate(received_signal, timeDurations);
     
     // if DLD declares List size exceeded
     // then resort to soft viterbi decoding
@@ -1160,99 +1220,94 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
       // we save the message, received_signal and record the maximum list size
       DLD_list_exceeded++;
       number_of_errors++;
-      outputFile << "LSE Error: " << std::endl;
-      outputFile << "  Transmitted message: ";
-      CodecUtils::outputMat(msg, outputFile);
-      outputFile << std::endl;
-      outputFile << "  Received signal: ";
-      CodecUtils::outputMat(output_DLD.received_signal, outputFile);
-      outputFile << std::endl;
-      // of course the list size are going to be the maximum list size
-      outputFile << "  List sizes searched: ";
-      CodecUtils::outputMat(output_DLD.list_ranks, outputFile);
-      outputFile << std::endl;
+      // outputFile << "LSE Error: " << std::endl;
+      // outputFile << "  Transmitted message: ";
+      // CodecUtils::outputMat(msg, outputFile);
+      // outputFile << std::endl;
+      // outputFile << "  Received signal: ";
+      // CodecUtils::outputMat(output_DLD.received_signal, outputFile);
+      // outputFile << std::endl;
+      // // of course the list size are going to be the maximum list size
+      // outputFile << "  List sizes searched: ";
+      // CodecUtils::outputMat(output_DLD.list_ranks, outputFile);
+      // outputFile << std::endl;
 
-      MessageInformation ssv_output =
-          codec.softViterbiDecoding(received_signal, softDurations);
-      if (ssv_output.message == msg) {
+      // MessageInformation ssv_output =
+      //     codec.softViterbiDecoding(received_signal, softDurations);
+      // if (ssv_output.message == msg) {
         
-        outputFile << " SSV decoded successfully!!!" << std::endl;
-        outputFile << " Now running DLD with a larger list size" << std::endl;
-        bool decoding_5e6 = dualListDecode(received_signal, msg, 5e6);
-        outputFile << " 5e6 list size Decoding result: "
-                    <<  decoding_5e6 << std::endl;
+      //   // outputFile << " SSV decoded successfully!!!" << std::endl;
+      //   // outputFile << " Now running DLD with a larger list size" << std::endl;
+      //   // bool decoding_5e6 = dualListDecode(received_signal, msg, 5e6);
+      //   // outputFile << " 5e6 list size Decoding result: "
+      //   //             <<  decoding_5e6 << std::endl;
         
-        received_to_correct_dist.push_back(ssv_output.path_metric);
-        if (decoding_5e6 == true) {
-          received_to_decoded_dist.push_back(ssv_output.path_metric);
-          std::cout << "SSV decoding path metric " << ssv_output.path_metric << std::endl; 
-        } else {
-          received_to_decoded_dist.push_back(-1.0);
-        }
-      } else {
-        outputFile << " SSV decoding insuccessful" << std::endl;
-        received_to_correct_dist.push_back(-1.0);
-        received_to_decoded_dist.push_back(-1.0);
-      }
-      number_of_errors = max_errors + 1;
-      break;
+      //   received_to_correct_dist.push_back(ssv_output.path_metric);
+      //   if (decoding_5e6 == true) {
+      //     received_to_decoded_dist.push_back(ssv_output.path_metric);
+      //     std::cout << "SSV decoding path metric " << ssv_output.path_metric << std::endl; 
+      //   } else {
+      //     received_to_decoded_dist.push_back(-1.0);
+      //   }
+      // } else {
+      //   outputFile << " SSV decoding insuccessful" << std::endl;
+      //   received_to_correct_dist.push_back(-1.0);
+      //   received_to_decoded_dist.push_back(-1.0);
+      // }
+      // number_of_errors = max_errors + 1;
+      // break;
     } else {
       // CASE 3
       // if there is an error, we save the correct message, the incorrectly
       // decoded message, and the received signal and record the list index.
       DLD_error++;
       number_of_errors++;
-      outputFile << "Decoding Error: " << std::endl;
-      outputFile << "  Transmitted message: ";
-      CodecUtils::outputMat(msg, outputFile);
-      outputFile << std::endl;
-      outputFile << "  Received signal: ";
-      CodecUtils::outputMat(output_DLD.received_signal, outputFile);
-      outputFile << std::endl;
-      outputFile << "  Decoded message: ";
-      CodecUtils::outputMat(output_DLD.message, outputFile);
-      outputFile << std::endl;
-      outputFile << "  List sizes searched: ";
-      CodecUtils::outputMat(output_DLD.list_ranks, outputFile);
-      outputFile << std::endl;
+      // outputFile << "Decoding Error: " << std::endl;
+      // outputFile << "  Transmitted message: ";
+      // CodecUtils::outputMat(msg, outputFile);
+      // outputFile << std::endl;
+      // outputFile << "  Received signal: ";
+      // CodecUtils::outputMat(output_DLD.received_signal, outputFile);
+      // outputFile << std::endl;
+      // outputFile << "  Decoded message: ";
+      // CodecUtils::outputMat(output_DLD.message, outputFile);
+      // outputFile << std::endl;
+      // outputFile << "  List sizes searched: ";
+      // CodecUtils::outputMat(output_DLD.list_ranks, outputFile);
+      // outputFile << std::endl;
 
-      MessageInformation ssv_output =
-          codec.softViterbiDecoding(received_signal, softDurations);
-      if (ssv_output.message == msg) {
-        outputFile << " SSV decoded successfully!!!" << std::endl;
-        received_to_correct_dist.push_back(ssv_output.path_metric);
-        received_to_decoded_dist.push_back(output_DLD.combined_metric);
-      } else {
-        outputFile << " SSV decoding insuccessful" << std::endl;
-        received_to_correct_dist.push_back(-1.0);
-        received_to_decoded_dist.push_back(output_DLD.combined_metric);
-      }
-      number_of_errors = max_errors + 1;
-      break;
+      // MessageInformation ssv_output =
+      //     codec.softViterbiDecoding(received_signal, softDurations);
+      // if (ssv_output.message == msg) {
+      //   outputFile << " SSV decoded successfully!!!" << std::endl;
+      //   received_to_correct_dist.push_back(ssv_output.path_metric);
+      //   received_to_decoded_dist.push_back(output_DLD.combined_metric);
+      // } else {
+      //   outputFile << " SSV decoding insuccessful" << std::endl;
+      //   received_to_correct_dist.push_back(-1.0);
+      //   received_to_decoded_dist.push_back(output_DLD.combined_metric);
+      // }
+      // number_of_errors = max_errors + 1;
+      // break;
     }
 
     // update list ranks
     for (int i = 0; i < expected_list_ranks.size(); ++i) {
       expected_list_ranks[i] += output_DLD.list_ranks[i];
     }
-
-    // update in the outputfile
-    if (number_of_trials % 2000 == 0) {
-      outputFile << "Trial: " << number_of_trials << std::endl;
-    }
   }
 
   ////////  DLD Decoding Statistics /////////
   // record the distances
-  assert(received_to_correct_dist.size() == 1);
-  outputFile << "Printing distances to the correct codeword " << std::endl;
-  dualdecoderutils::outputMat(received_to_correct_dist, outputFile);
-  outputFile << std::endl;
+  // assert(received_to_correct_dist.size() == 1);
+  // outputFile << "Printing distances to the correct codeword " << std::endl;
+  // dualdecoderutils::outputMat(received_to_correct_dist, outputFile);
+  // outputFile << std::endl;
   
-  assert(received_to_decoded_dist.size() == 1);
-  outputFile << "Printing distances to the decoded codeword " << std::endl;
-  dualdecoderutils::outputMat(received_to_decoded_dist, outputFile);
-  outputFile << std::endl;
+  // assert(received_to_decoded_dist.size() == 1);
+  // outputFile << "Printing distances to the decoded codeword " << std::endl;
+  // dualdecoderutils::outputMat(received_to_decoded_dist, outputFile);
+  // outputFile << std::endl;
 
   for (int j = 0; j < expected_list_ranks.size(); ++j) {
     expected_list_ranks[j] /= number_of_trials;
@@ -1270,13 +1325,13 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
             << expected_list_ranks[1] << " ]" << std::endl;
 
   // distance spectrum statistics
-  std::cout << "List ranks spectrum data: " << std::endl;
-  std::cout << "  List 0: ";
-  CodecUtils::printMat(DLD_list_0_size);
-  std::cout << std::endl;
-  std::cout << "  List 1: ";
-  CodecUtils::printMat(DLD_list_1_size);
-  std::cout << std::endl;
+  // std::cout << "List ranks spectrum data: " << std::endl;
+  // std::cout << "  List 0: ";
+  // CodecUtils::printMat(DLD_list_0_size);
+  // std::cout << std::endl;
+  // std::cout << "  List 1: ";
+  // CodecUtils::printMat(DLD_list_1_size);
+  // std::cout << std::endl;
 
   DLD_correct_vec.push_back((double)DLD_correct / number_of_trials);
   DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
@@ -1293,7 +1348,7 @@ void dualListExperiment(double snr_dB, int maximum_list_size,
   std::cout << "DLD Decoder WRONG decoding percentage: ";
   CodecUtils::print(DLD_error_vec);
   std::cout << std::endl;
-  outputFile.close();
+  // outputFile.close();
 }
 
 void FindDFree_ADFree() {
@@ -1876,12 +1931,12 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB, int maximum_list_size
       metric_1[i] = std::pow(-1.0 - received_signal[i], 2);
     }
 
-    // if (number_of_trials <= 15467) {
-    //   continue;
-    // }
-    // if (number_of_trials >= 15469) {
-    //   break;
-    // }
+    if (number_of_trials < 86249) {
+      continue;
+    }
+    if (number_of_trials > 86249) {
+      break;
+    }
     // DLD DECODING
     DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_rate_1_2(received_signal, stepTimeDurations, metric_0, metric_1);
 
@@ -1918,14 +1973,15 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB, int maximum_list_size
       // decoded message, and the received signal and record the list index.
       DLD_error++;
       number_of_errors++;
-      std::cout << "DLD makes an undectected error, now trying SSV" << std::endl;
+      
       MessageInformation output_SSV = codec.softViterbiDecoding(received_signal, stepTimeDurations[1]);
       if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
+        std::cout << "DLD makes an undectected error, now trying SSV" << std::endl;
         std::cout << "SSV decodes correctly" << std::endl;
         std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
         std::cout << number_of_trials << std::endl;
       } else {
-        std::cout << "SSV fails as well" << std::endl;
+        // std::cout << "SSV fails as well" << std::endl;
       }
       //std::cerr << "DLD decode find something, but it's incorrect" << std::endl;
     }
@@ -2006,7 +2062,7 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB, int maximum_list_size
   
   DLD_correct_vec.push_back((double)(DLD_correct+SSV_correct) / number_of_trials);
   DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
-  DLD_error_vec.push_back((double)DLD_error / number_of_trials);
+  DLD_error_vec.push_back((double)DLD_error+SSV_error / number_of_trials);
   
 
   ///////////  End of simulation ////////////

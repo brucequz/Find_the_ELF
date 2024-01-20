@@ -914,19 +914,29 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   // unleaver to unleave the bits from received_signal
   std::vector<double> received_codec_2;
   std::vector<double> received_codec_1;
+
+  std::vector<double> helper_trellis_2;
+  std::vector<double> helper_trellis_1;
   for (size_t i = 0; i < received_signal.size(); ++i) {
     if (i % 3 == 0) {
       received_codec_2.push_back(received_signal[i]);
       received_codec_2.push_back(received_signal[i+1]);
+      helper_trellis_2.push_back(0.0);
+      helper_trellis_2.push_back(received_signal[i+2]);
     } else if (i % 3 == 1) {
       received_codec_1.push_back(received_signal[i]);
       received_codec_1.push_back(received_signal[i+1]);
+      helper_trellis_1.push_back(received_signal[i-1]);
+      helper_trellis_1.push_back(0.0);
     } else {
       continue;
     }
   }
   assert(received_codec_2.size() == 148);
   assert(received_codec_1.size() == 148);
+  assert(helper_trellis_1.size() == 148);
+  assert(helper_trellis_2.size() == 148);
+
   // Set up variables
   bool best_combined_found = false;
   CodeInformation code_0 = code_info_[0];
@@ -939,9 +949,6 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   int l0, l1;
   // skip reconstruction if mp.size hasn't changed
   int mp_size = 0;
-
-  // Helper trellses
-  // compute min_add_zero by 
 
   // list decoder 0
   std::vector<std::vector<Cell>> trellis_0 =
@@ -971,6 +978,9 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   int num_path_searched_1 = 0;
   bool decoder_1_stop = false;
   bool decoder_1_LSE = false;
+
+  // with these trellises, decode the leftover bits and improve the min_add_zero and min_add_one
+  
 
   // time taken to do additional traceback and insertion
   Stopwatch sw_step2_3;
@@ -1073,14 +1083,19 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
     }
 
     if (decoder_0_LSE || decoder_1_LSE) {
-      // std::cout << "Both decoders declared LSE" << std::endl;
+      std::cout << "Both decoders declared LSE" << std::endl;
       if (mp.queue_size() != 0) {
-        // std::cout << "But DLD got something" << std::endl;
+        std::cout << "But DLD got something" << std::endl;
         
         DLDInfo attemp_message = mp.pop_queue();
         if (attemp_message.combined_metric == best_current_match) {
-          // std::cout << "Champion metric: " << attemp_message.combined_metric << std::endl;
-          // std::cout << "Champion list ranks: " << attemp_message.list_ranks[0] << ", " << attemp_message.list_ranks[1] << std::endl;
+          std::cout << "Champion metric: " << attemp_message.combined_metric << std::endl;
+          std::cout << "Champion list ranks: " << attemp_message.list_ranks[0] << ", " << attemp_message.list_ranks[1] << std::endl;
+          // free pointers
+          delete heap_list_0;
+          delete heap_list_1;
+          heap_list_0 = nullptr;
+          heap_list_1 = nullptr;
           return attemp_message;
         }
       }
@@ -1178,15 +1193,15 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
         // std::cout << std::endl;
 
         // Re-encode process
-        std::vector<int> reencode_message = agreed_message.message;
-        for (int i = 0; i < encoder_.v; ++i) {
-          reencode_message.push_back(0);
-        }
-        std::vector<int> reencode_encoded_msg = encoder_trellis_ptr_->encode(reencode_message);
-        // // BPSK modulate
-        std::vector<int> reencode_codeword = BPSK::modulate(reencode_encoded_msg);
-        // // compute d_hat
-        d_hat = dualdecoderutils::euclideanDistance(received_signal, reencode_codeword);
+        // std::vector<int> reencode_message = agreed_message.message;
+        // for (int i = 0; i < encoder_.v; ++i) {
+        //   reencode_message.push_back(0);
+        // }
+        // std::vector<int> reencode_encoded_msg = encoder_trellis_ptr_->encode(reencode_message);
+        // // // BPSK modulate
+        // std::vector<int> reencode_codeword = BPSK::modulate(reencode_encoded_msg);
+        // // // compute d_hat
+        // d_hat = dualdecoderutils::euclideanDistance(received_signal, reencode_codeword);
 
         //std::cout << std::endl;
         // std::cout << "Let's reencode and compute before sending back to main: ";
