@@ -25,6 +25,11 @@ class MinHeap {
   MinHeap();
   void insert(DetourNode node);
   DetourNode pop();
+  
+  // TODO: write another funciton that checks the top of the heap instead of popping it
+  // return metric of the top of the heap
+  double checkTop();
+
   int size() { return heap_.size(); }
 
  private:

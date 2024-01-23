@@ -246,7 +246,7 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
-DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations) {
   /**
   @brief This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -443,7 +443,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(std::vector<double> rece
 }
 
 
-DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations) {
   /**
    * @brief 
    * 
@@ -621,7 +621,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(std::vector<double> receive
   return empty_message;
 }
 
-DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
+DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations) {
   /**
   @brief This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -823,7 +823,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(std::vector<dou
 }
 
 DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
-      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations, std::vector<double> metric_0, std::vector<double> metric_1) {
+      std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations, std::vector<double> metric_0, std::vector<double> metric_1) {
   /**
   @brief This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -964,6 +964,23 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   bool decoder_0_stop = false;
   bool decoder_0_LSE = false;
 
+  // // decoder the leftover bits and improve min_add_zero
+  // std::vector<std::vector<Cell>> trellis_helper_0 = 
+  //     ConstructZTCCTrellis_WithList_EuclideanMetric(helper_trellis_2, code_0, trellis_ptrs_[0], timeDurations[0]);
+  // int num_total_stages_helper_0 = trellis_helper_0[0].size();
+  // std::vector<std::vector<int>> prev_paths_list_helper_0;
+  // MinHeap* heap_list_helper_0 = new MinHeap;
+  // DetourNode node_helper_0;
+  // node_helper_0.start_state = 0;
+  // node_helper_0.path_metric = trellis_helper_0[0][num_total_stages_helper_0 - 1].pathMetric;
+  // heap_list_helper_0->insert(node_helper_0);
+  // int num_path_searched_helper_0 = 0;
+
+  // MessageInformation mi_helper_0 = TraceBack_Single(heap_list_helper_0, code_0, trellis_ptrs_[0], trellis_0,
+  //                   prev_paths_list_0, num_path_searched_0, num_total_stages_0);
+  
+
+
   // list decoder 1
   std::vector<std::vector<Cell>> trellis_1 =
       ConstructZTCCTrellis_WithList_EuclideanMetric(received_codec_1, code_1, trellis_ptrs_[1], timeDurations[0]); // using 2nd and 3rd
@@ -1083,14 +1100,14 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
     }
 
     if (decoder_0_LSE || decoder_1_LSE) {
-      std::cout << "Both decoders declared LSE" << std::endl;
+      // std::cout << "Both decoders declared LSE" << std::endl;
       if (mp.queue_size() != 0) {
-        std::cout << "But DLD got something" << std::endl;
+        // std::cout << "But DLD got something" << std::endl;
         
         DLDInfo attemp_message = mp.pop_queue();
         if (attemp_message.combined_metric == best_current_match) {
-          std::cout << "Champion metric: " << attemp_message.combined_metric << std::endl;
-          std::cout << "Champion list ranks: " << attemp_message.list_ranks[0] << ", " << attemp_message.list_ranks[1] << std::endl;
+          // std::cout << "Champion metric: " << attemp_message.combined_metric << std::endl;
+          // std::cout << "Champion list ranks: " << attemp_message.list_ranks[0] << ", " << attemp_message.list_ranks[1] << std::endl;
           // free pointers
           delete heap_list_0;
           delete heap_list_1;
@@ -1271,6 +1288,7 @@ MessageInformation DualListDecoder::TraceBack_Single(
       return mi;
     }
     DetourNode detour = heap->pop();
+    // TODO: check here if diff + partial 
     std::vector<int> path(num_total_stages);
 
     int resume_stage = num_total_stages - 1;
@@ -1451,7 +1469,7 @@ std::vector<MessageInformation> DualListDecoder::TraceBack_Multiple(
 
 std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
     const std::vector<double>& received_signal, CodeInformation code,
-    FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
+    FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time) {
   /**
   @brief Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
     using a regular euclidean metric.
@@ -1474,7 +1492,7 @@ std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_Eu
                           when the currect state is i and currect input is j.
                           To convert it to BPSK modulation, use dualdecoderutils::get_point().
 
-  @param ssv_time: a chrono milliseconds object passed in by reference to increment an outer variable that keep
+  @param ssv_time: a chrono microseconds object passed in by reference to increment an outer variable that keep
        track of dual list decoder trellis construction time. It tracks the time of add-compare-select operation
        of all active nodes.
 
@@ -1597,7 +1615,7 @@ std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_Eu
 
 std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
       const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
+      FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time) {
   /**
   @brief Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
     using a special metric shown by Bill Ryan. Instead of calculating euclidean distance between received point and +/- 1,
@@ -1621,7 +1639,7 @@ std::vector<std::vector<Cell>> DualListDecoder::ConstructZTCCTrellis_WithList_Pr
                           when the currect state is i and currect input is j.
                           To convert it to BPSK modulation, use dualdecoderutils::get_point().
 
-  @param ssv_time: a chrono milliseconds object passed in by reference to increment an outer variable that keep
+  @param ssv_time: a chrono microseconds object passed in by reference to increment an outer variable that keep
        track of dual list decoder trellis construction time. It tracks the time of add-compare-select operation
        of all active nodes.
 
