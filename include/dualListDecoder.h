@@ -137,26 +137,26 @@ class DualListDecoder {
   ~DualListDecoder();
   
   // RATE 1/1 DLD DECODERS
-  DLDInfo adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations);
+  DLDInfo adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
   // Decoding function that alternates between two dual list decoders.
   // This function does not take crc degrees into consideration
   DLDInfo AdaptiveDecode_SimpleAlternate(
-      std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations);
+      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
   // Decoding function that alternates between two dual list decoders considering crc degrees.
   // For example, if crc degree for two decoders are 3 and 5 respectively. Then every 8 and 32 codewords
   // in both lists there exist one codeword that passes crc (?).
-  DLDInfo AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations);
+  DLDInfo AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
   // RATE 1/2 DLD DECODERS
 
   // Decoding dunction that contains two rate 1/2 decoders. It alternates between two dual list decoders.
   // This function does not take crc degrees into consideration
-  DLDInfo AdaptiveDecode_SimpleAlternate_rate_1_2(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations);
+  DLDInfo AdaptiveDecode_SimpleAlternate_rate_1_2(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
   DLDInfo LookAheadDecode_SimpleAlternate_rate_1_2(
-      std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations, std::vector<double> metric_0, std::vector<double> metric_1);
+      std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations, std::vector<double> metric_0, std::vector<double> metric_1);
   
   MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
@@ -186,14 +186,14 @@ class DualListDecoder {
   // Uses a regular euclidean metric.
   std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_EuclideanMetric(
       const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time);
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
 
   // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
   // Uses a special metric shown by Bill Ryan. Instead of calculating euclidean distance between received point and +/- 1,
   // we compute the product of these two values.
   std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_ProductMetric(
       const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time);
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
 
   //// TBCC
   // @todo
@@ -201,7 +201,7 @@ class DualListDecoder {
   // Uses a regular euclidean metric.
   std::vector<std::vector<Cell>> ConstructTBCCTrellis_WithList_EuclideanMetric(
       const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time);
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
 
   // @todo
   // Construct a TBCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
@@ -209,7 +209,7 @@ class DualListDecoder {
   // we compute the product of these two values.
   std::vector<std::vector<Cell>> ConstructTBCCTrellis_WithList_ProductMetric(
       const std::vector<double>& received_signal, CodeInformation code,
-      FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time);
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
   
   std::vector<int> convertPathtoMessage(
     const std::vector<int> path, FeedForwardTrellis* trellis_ptr);

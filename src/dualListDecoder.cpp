@@ -259,7 +259,7 @@ DualListDecoder::~DualListDecoder() {
   }
 }
 
-DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations) {
+DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
   /*
   This function adaptively expand the list size until the smallest future match
   (SFM) metric is larger than the best current match (BCM) metric.
@@ -464,7 +464,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
 
 DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(
     std::vector<double> received_signal,
-    std::vector<std::chrono::microseconds>& timeDurations) {
+    std::vector<std::chrono::milliseconds>& timeDurations) {
   /**
   @brief This function adaptively expand the list size until the smallest future
   match (SFM) metric is larger than the best current match (BCM) metric.
@@ -664,7 +664,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(
 
 DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(
     std::vector<double> received_signal,
-    std::vector<std::chrono::microseconds>& timeDurations) {
+    std::vector<std::chrono::milliseconds>& timeDurations) {
   /**
    * @brief
    *
@@ -846,7 +846,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(
 
 DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(
     std::vector<double> received_signal,
-    std::vector<std::chrono::microseconds>& timeDurations) {
+    std::vector<std::chrono::milliseconds>& timeDurations) {
   /**
   @brief This function adaptively expand the list size until the smallest future
   match (SFM) metric is larger than the best current match (BCM) metric.
@@ -1051,7 +1051,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(
 
 DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
     std::vector<double> received_signal,
-    std::vector<std::chrono::microseconds>& timeDurations,
+    std::vector<std::chrono::milliseconds>& timeDurations,
     std::vector<double> metric_0, std::vector<double> metric_1) {
   /**
   @brief This function adaptively expand the list size until the smallest future
@@ -1623,7 +1623,7 @@ std::vector<MessageInformation> DualListDecoder::TraceBack_Multiple(
 std::vector<std::vector<Cell>>
 DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
     const std::vector<double>& received_signal, CodeInformation code,
-    FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time) {
+    FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
   /**
   @brief Construct a ZTCC Trellis measuring the time taken by trellis
   construction (for both lists, iteratively) using a regular euclidean metric.
@@ -1651,7 +1651,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
   currect input is j. To convert it to BPSK modulation, use
   dualdecoderutils::get_point().
 
-  @param ssv_time: a chrono microseconds object passed in by reference to
+  @param ssv_time: a chrono milliseconds object passed in by reference to
   increment an outer variable that keep track of dual list decoder trellis
   construction time. It tracks the time of add-compare-select operation of all
   active nodes.
@@ -1782,7 +1782,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
 std::vector<std::vector<Cell>>
 DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
     const std::vector<double>& received_signal, CodeInformation code,
-    FeedForwardTrellis* trellis_ptr, std::chrono::microseconds& ssv_time) {
+    FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time) {
   /**
   @brief Construct a ZTCC Trellis measuring the time taken by trellis
   construction (for both lists, iteratively) using a special metric shown by
@@ -1812,7 +1812,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
   currect input is j. To convert it to BPSK modulation, use
   dualdecoderutils::get_point().
 
-  @param ssv_time: a chrono microseconds object passed in by reference to
+  @param ssv_time: a chrono milliseconds object passed in by reference to
   increment an outer variable that keep track of dual list decoder trellis
   construction time. It tracks the time of add-compare-select operation of all
   active nodes.

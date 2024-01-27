@@ -188,7 +188,7 @@ std::vector<int> ViterbiCodec::encodeZTCC(std::vector<int> message) {
 }
 
 MessageInformation ViterbiCodec::softViterbiDecoding(
-    std::vector<double> receivedMessage, std::chrono::microseconds& ssv_traceback_time) {
+    std::vector<double> receivedMessage, std::chrono::milliseconds& ssv_traceback_time) {
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (receivedMessage.size() / n_) + 1;
 

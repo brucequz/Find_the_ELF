@@ -6,11 +6,11 @@
 class Stopwatch {
 private:
     std::chrono::steady_clock::time_point then{};
-    std::chrono::microseconds accumulator{};
+    std::chrono::milliseconds accumulator{};
 
 public:
     void tic();
     void toc();
     void reset();
-    std::chrono::microseconds getElapsed() const;
+    std::chrono::milliseconds getElapsed() const;
 };

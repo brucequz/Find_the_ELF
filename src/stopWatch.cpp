@@ -20,7 +20,7 @@ void Stopwatch::toc() {
     auto now = std::chrono::steady_clock::now();
 
     if (then != std::chrono::steady_clock::time_point{}) {
-        auto delta = std::chrono::duration_cast<std::chrono::microseconds>(now - then);
+        auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - then);
         accumulator += delta;
     } else {
         std::cerr << "You have not started stopwatch" << std::endl;
@@ -30,9 +30,9 @@ void Stopwatch::toc() {
 
 void Stopwatch::reset() {
     then = std::chrono::steady_clock::time_point{};
-    accumulator = std::chrono::microseconds(0);
+    accumulator = std::chrono::milliseconds(0);
 }
 
-std::chrono::microseconds Stopwatch::getElapsed() const {
+std::chrono::milliseconds Stopwatch::getElapsed() const {
     return accumulator;
 }
