@@ -137,6 +137,7 @@ class DualListDecoder {
   ~DualListDecoder();
   
   // RATE 1/1 DLD DECODERS
+  DLDInfo adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::microseconds>& timeDurations);
 
   // Decoding function that alternates between two dual list decoders.
   // This function does not take crc degrees into consideration
