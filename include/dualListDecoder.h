@@ -182,6 +182,11 @@ class DualListDecoder {
   int crc_ratio_; // ratio between crc degree of both dld decoders. For example, crc1 = 3, crc2 = 5. Then crc_ratio = 2^5 / 2^3 = 4;
 
   //// ZTCC
+
+  // Test function
+  std::vector<std::vector<Cell>> constructZTListTrellis_precompute(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
   // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
   // Uses a regular euclidean metric.
   std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_EuclideanMetric(
