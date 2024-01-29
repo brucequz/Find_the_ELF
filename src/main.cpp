@@ -26,8 +26,8 @@
 
 #define K 64
 #define V 10
-#define MAX_LIST_SIZE 100
-#define TRIALS 1e4
+#define MAX_LIST_SIZE 5
+#define TRIALS 5e3
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
@@ -405,9 +405,9 @@ void TimeAndComplexitySimulation_rate_1_3(double SNR) {
   // int DLD_maximum_list_size = 500;
   // std::vector<int> max_list_size_vector = {2, 5, 10, 20, 50, 100, 200, 300,
   // 400, 500, 1000};
-  std::vector<int> max_list_size_vector =
-  {1100, 1200, 1300, 1400, 1500, 1800, 2000, 2200, 2300, 2500, 3000};
-  // std::vector<int> max_list_size_vector = {MAX_LIST_SIZE};
+  // std::vector<int> max_list_size_vector =
+  // {1100, 1200, 1300, 1400, 1500, 1800, 2000, 2200, 2300, 2500, 3000};
+  std::vector<int> max_list_size_vector = {MAX_LIST_SIZE};
   // std::vector<int> max_list_size_vector =
   // {1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,35,40,45,50,60,70,80,90,100,150,200,250,500,750,1000};
   // step time recorder
@@ -2111,7 +2111,9 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
             << ", g2 = " << code_2.generator_poly[0] << std::endl;
 
   std::vector<std::chrono::milliseconds> stepTimeDurations(
-      3, std::chrono::milliseconds(0));
+      4, std::chrono::milliseconds(0));
+  std::chrono::milliseconds overall_decoding_time_debug(0);
+
   std::vector<int> expected_list_ranks = {1, 1};
   // vector to keep track of list sizes for both decoders
   std::vector<int> DLD_list_0_size;
@@ -2144,6 +2146,9 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
   // std::chrono::milliseconds softDurations(0);
 
   // while (number_of_errors < max_errors) {
+  Stopwatch overall_decoding_time_debug_sw;
+  overall_decoding_time_debug_sw.tic();
+  
   while (number_of_trials < TRIALS) {
     number_of_trials++;
 
@@ -2181,14 +2186,20 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
       metric_1[i] = std::pow(-1.0 - received_signal[i], 2);
     }
 
+    // continue;
+    
+
     // DLD DECODING
     DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_rate_1_2(
         received_signal, stepTimeDurations, metric_0, metric_1);
 
+
+
     // if DLD declares List size exceeded
     // then resort to soft viterbi decoding
     if (output_DLD.message == std::vector<int>(64, -1)) {
-      // std::cout << "List size EXCEEDED! Running SSV Now!" << std::endl;
+
+      // std::cout << "List size EXCEEDED! Running SSV Nows" << " " << SSV_correct << std::endl;
       MessageInformation output_SSV =
           codec.softViterbiDecoding(received_signal, stepTimeDurations[1]);
       if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
@@ -2234,9 +2245,18 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
     for (int i = 0; i < expected_list_ranks.size(); ++i) {
       expected_list_ranks[i] += output_DLD.list_ranks[i];
     }
+
+
   }
 
+  overall_decoding_time_debug_sw.toc();
+  overall_decoding_time_debug += overall_decoding_time_debug_sw.getElapsed();
+  overall_decoding_time_debug_sw.reset();
+
   ////////  DLD Decoding Statistics /////////
+  // debug
+  std::cout << "overall decoding time debug: " << overall_decoding_time_debug.count() << " milliseconds" << std::endl;
+
   // record the time taken by each step
   for (size_t i = 0; i < stepTimeDurations.size(); ++i) {
     std::cout << "Step " << i + 1

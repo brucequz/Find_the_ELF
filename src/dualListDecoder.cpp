@@ -1126,7 +1126,9 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   //      both lists.
   //   Result: unless we reach the end of the lists, we cannot fail if SSV
   //   succeeds.
-
+  
+  Stopwatch debug_sw;
+  debug_sw.tic();
   // Hard Decode
   std::vector<double> hard_decoding_result = HardDecode(received_signal);
 
@@ -1239,8 +1241,9 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   bool decoder_1_stop = false;
   bool decoder_1_LSE = false;
 
-  // with these trellises, decode the leftover bits and improve the min_add_zero
-  // and min_add_one
+  debug_sw.toc();
+  timeDurations[3] += debug_sw.getElapsed();
+  debug_sw.reset();
 
   // time taken to do additional traceback and insertion
   Stopwatch sw_step2_3;
@@ -1378,6 +1381,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
   }
   sw_step2_3.toc();
   timeDurations[2] += sw_step2_3.getElapsed();
+  // std::cout << "Time Measured: " << timeDurations[2].count() << std::endl;
   sw_step2_3.reset();
 
   output.push_back(output_0);
@@ -1820,7 +1824,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
   Stopwatch sw;
   sw.tic();
   // repeat to measure time
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 1; i++) {
     trellisInfo = std::vector<std::vector<Cell>>(
         lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
 
