@@ -218,9 +218,9 @@ MessageInformation ViterbiCodec::softViterbiDecoding(
         // no correlation beyond indexing the forward path
 
         // we will only constrain to travelling on 0 path in the ending v stages
-        if (stage >= (lowrate_pathLength - v_ - 1)) {
-          if (forwardPathIndex == 1) continue;
-        }
+        // if (stage >= (lowrate_pathLength - v_ - 1)) {
+        //   if (forwardPathIndex == 1) continue;
+        // }
 
         int nextState =
             trellis_ptr_->nextStates_[currentState][forwardPathIndex];

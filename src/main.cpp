@@ -92,24 +92,24 @@
 // --------------------------- rate 1/3 ---------------------------
 
 // --------------------------- puncture 1/2 ---------------------------
-// #define PUNC_1 0
-// #define PUNC_3 5
-// #define AB 2267
-// #define AC 3631
-// #define DC 2353
-// #define A 51
-// #define B 57
-// #define C 61
-// #define D 73
+#define PUNC_1 0
+#define PUNC_3 5
+#define AB 2267
+#define AC 3631
+#define DC 2353
+#define A 51
+#define B 57
+#define C 61
+#define D 73
 
-// #define CRC_A 41
-// #define CRC_C 49
+#define CRC_A 41
+#define CRC_C 49
 
-// #define PUNCTURE 1
-// #define PUNC_RATE 2
+#define PUNCTURE 1
+#define PUNC_RATE 2
 
-// // below are null values
-// #define RDEN 3
+// below are null values
+#define RDEN 3
 // --------------------------- puncture 1/2 ---------------------------
 
 static std::random_device rd{};
@@ -239,82 +239,6 @@ std::chrono::milliseconds softViterbiExperiment_rate_1_3(double snr_dB,
                                                          int max_errors);
 void TimeAndComplexitySimulation_rate_1_3(double SNR);
 
-// int main(int argc, char* argv[]) {
-//   // variables setup
-//   // 1. snr
-//   std::vector<double> EbN0;
-//   std::istringstream iss(argv[1]);
-//   std::string token;
-
-//   while (std::getline(iss, token, ',')) {
-//     // Convert each substring to a double and add it to the vector
-//     EbN0.push_back(std::stod(token));
-//   }
-//   std::vector<double> SNR_dB;  // SNR is required for noise computations
-//   double offset;
-//   if (PUNCTURE) {
-//     offset = 10 * log10((double)2 * K /
-//                         (double)(PUNC_RATE *
-//                                  (K + V)));  // real rate of this code is 32/512
-//   } else {
-//     offset =
-//         10 *
-//         log10((double)2 * K /
-//               (double)(RDEN * (K + V)));  // real rate of this code is 32/512
-//   }
-//   std::cout << "offset : " << offset << std::endl;
-//   for (int i = 0; i < EbN0.size(); i++) {
-//     SNR_dB.push_back(EbN0[i] + offset);
-//   }
-
-//   ////////////////////// Dual List Decoding Experiment //////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   dualListExperiment(snr_dB, 1e5, 1000);
-//   // }
-
-//   ////////////////////// Time and Complexity Experiment //////////////////////
-//   for (double snr_dB : SNR_dB) {
-//     TimeAndComplexitySimulation(snr_dB);
-//   }
-
-//   ////////////////////// DSU/Soft Viterbi Experiment //////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   softViterbiExperiment(snr_dB, 5);
-//   // }
-
-//   ////////////////////// DSU/Mixed Decoder Experiment //////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   mixedDualListExperiment(snr_dB, 300, 200);
-//   // }
-
-//   ////////////////////// RATE 1/3 Dual List Decoding Experiment
-//   /////////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
-//   // }
-
-//   ////////////////////// RATE 1/3 DSU/Mixed Decoder Experiment
-//   /////////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   mixedDualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 50);
-//   // }
-
-//   ////////////////////// RATE 1/3 DSU/Soft Viterbi Experiment
-//   /////////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   softViterbiExperiment_rate_1_3(snr_dB, 5);
-//   // }
-
-//   ////////////////////// Time and Complexity Experiment //////////////////////
-//   // for (double snr_dB : SNR_dB) {
-//   //   TimeAndComplexitySimulation_rate_1_3(snr_dB);
-//   // }
-
-//   ////////////////////// Find D_free //////////////////////
-//   // FindDFree_ADFree();
-//   return 0;
-// }
-
 int main(int argc, char* argv[]) {
   // variables setup
   // 1. snr
@@ -327,85 +251,67 @@ int main(int argc, char* argv[]) {
     EbN0.push_back(std::stod(token));
   }
   std::vector<double> SNR_dB;  // SNR is required for noise computations
-  double offset =
+  double offset;
+  if (PUNCTURE) {
+    offset = 10 * log10((double)2 * K /
+                        (double)(PUNC_RATE *
+                                 (K + V)));  // real rate of this code is 32/512
+  } else {
+    offset =
         10 *
-        log10((double)2 * 64 /
-              (double)(2 * (64 + 10)));  // real rate of this code is 32/512
+        log10((double)2 * K /
+              (double)(RDEN * (K + V)));  // real rate of this code is 32/512
+  }
+  std::cout << "offset : " << offset << std::endl;
   for (int i = 0; i < EbN0.size(); i++) {
     SNR_dB.push_back(EbN0[i] + offset);
   }
-  std::cout << std::endl;
-  std::cout << "Simulation begin: Running for snr points " << SNR_dB.front() << " -- " << SNR_dB.back() << std::endl;
 
-  // 2. number of maximum errors to accumulate
-  int max_errors = 50;
-  int list_size = 1;
+  ////////////////////// Dual List Decoding Experiment //////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   dualListExperiment(snr_dB, 1e5, 1000);
+  // }
 
-  // 3. DLD decoding setup
-  // int DLD_maximum_list_size = 500;
-  // std::vector<int> max_list_size_vector = {2, 5, 10, 20, 50, 100, 200, 300, 400, 500, 1000};
-  // std::vector<int> max_list_size_vector = {1};
-  std::vector<int> max_list_size_vector = {1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,35,40,45,50,60,70,80,90,100,150,200,250,500,750,1000};
-  
-  // step time recorder
-  // mixed
-  std::vector<std::chrono::milliseconds> mixed_ssv_time;
-  std::vector<std::chrono::milliseconds> reconstruct_trellis_time;
-  std::vector<std::chrono::milliseconds> mixed_insertion_time;
-  std::vector<std::vector<int>> mixed_expected_list_ranks(2);
-  std::vector<double> DLD_decoded_portion;
-  // SSV
-  std::vector<std::chrono::milliseconds> standard_soft_viterbi_time;
-  for (double SNR : SNR_dB) {
-    for (int DLD_maximum_list_size: max_list_size_vector) {
-      std::cout << "Running experiments for max list size  = " << DLD_maximum_list_size << std::endl;
-      mixed_info result = mixedDualListExperiment(SNR, DLD_maximum_list_size, max_errors);
-      // record the results
-      mixed_ssv_time.push_back(result.stepDurations[0]);
-      reconstruct_trellis_time.push_back(result.stepDurations[1]);
-      mixed_insertion_time.push_back(result.stepDurations[2]);
-      mixed_expected_list_ranks[0].push_back(result.DLD_expected_list_sizes[0]);
-      mixed_expected_list_ranks[1].push_back(result.DLD_expected_list_sizes[1]);
-      DLD_decoded_portion.push_back(result.DLD_decoded_portion);
-      // 4. soft Viterbi Experiment Setup
-      
-      std::chrono::milliseconds softTime = softViterbiExperiment(SNR, max_errors);
-      standard_soft_viterbi_time.push_back(softTime);
-    }
+  ////////////////////// Time and Complexity Experiment //////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   TimeAndComplexitySimulation(snr_dB);
+  // }
+
+  ////////////////////// DSU/Soft Viterbi Experiment //////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   softViterbiExperiment(snr_dB, 5);
+  // }
+
+  ////////////////////// DSU/Mixed Decoder Experiment //////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   mixedDualListExperiment(snr_dB, 300, 200);
+  // }
+
+  ////////////////////// RATE 1/3 Dual List Decoding Experiment
+  /////////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
+  // }
+
+  ////////////////////// RATE 1/3 DSU/Mixed Decoder Experiment
+  /////////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   mixedDualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 50);
+  // }
+
+  ////////////////////// RATE 1/3 DSU/Soft Viterbi Experiment
+  /////////////////////////
+  // for (double snr_dB : SNR_dB) {
+  //   softViterbiExperiment_rate_1_3(snr_dB, 5);
+  // }
+
+  ////////////////////// Time and Complexity Experiment //////////////////////
+  for (double snr_dB : SNR_dB) {
+    TimeAndComplexitySimulation_rate_1_3(snr_dB);
   }
-  // time printing 
-  std::cout << "printing mixed ssv time: [";
-  for (std::chrono::milliseconds time : mixed_ssv_time) {
-    std::cout << time.count() << ", ";
-  }
-  std::cout << "]" << std::endl;
 
-  std::cout << "printing reconstruction trellis time: [";
-  for (std::chrono::milliseconds time : reconstruct_trellis_time) {
-    std::cout << time.count() << ", ";
-  }
-  std::cout << "]" << std::endl;
-
-  std::cout << "printing mixed insertion time: [";
-  for (std::chrono::milliseconds time : mixed_insertion_time) {
-    std::cout << time.count() << ", ";
-  }
-  std::cout << "]" << std::endl;
-
-  std::cout << "printing standard soft viterbi time: [";
-  for (std::chrono::milliseconds time : standard_soft_viterbi_time) {
-    std::cout << time.count() << ", ";
-  }
-  std::cout << "]" << std::endl;
-
-  std::cout << "printing DLD 0 expected list ranks:";
-  CodecUtils::print(mixed_expected_list_ranks[0]);
-
-  std::cout << "printing DLD 1 expected list ranks:";
-  CodecUtils::print(mixed_expected_list_ranks[1]);
-
-  std::cout << "printing DLD decoded portion:";
-  CodecUtils::print(DLD_decoded_portion);
+  ////////////////////// Find D_free //////////////////////
+  // FindDFree_ADFree();
   return 0;
 }
 
@@ -498,9 +404,10 @@ void TimeAndComplexitySimulation_rate_1_3(double SNR) {
   // 3. DLD decoding setup
   // int DLD_maximum_list_size = 500;
   // std::vector<int> max_list_size_vector = {2, 5, 10, 20, 50, 100, 200, 300,
-  // 400, 500, 1000}; std::vector<int> max_list_size_vector =
-  // {1,2,3,4,5,6,7,8,9,10,12,14,16,18};
-  std::vector<int> max_list_size_vector = {MAX_LIST_SIZE};
+  // 400, 500, 1000};
+  std::vector<int> max_list_size_vector =
+  {1100, 1200, 1300, 1400, 1500, 1800, 2000, 2200, 2300, 2500, 3000};
+  // std::vector<int> max_list_size_vector = {MAX_LIST_SIZE};
   // std::vector<int> max_list_size_vector =
   // {1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,35,40,45,50,60,70,80,90,100,150,200,250,500,750,1000};
   // step time recorder
@@ -847,7 +754,7 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
     // outputFile << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.adaptiveDecode(received_signal, stepTimeDurations);
+    DLDInfo output_DLD = DLD.AdaptiveDecode_SimpleAlternate(received_signal, stepTimeDurations);
 
     // if DLD declares List size exceeded
     // then resort to soft viterbi decoding
@@ -858,6 +765,7 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
         SSV_correct++;
       } else {
         SSV_error++;
+        number_of_errors++;
       }
       continue;
     }

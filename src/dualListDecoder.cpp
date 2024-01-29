@@ -1666,9 +1666,9 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis_precomput
            forwardPathIndex++) {
         
         // we will only constrain to travelling on 0 path in the ending v stages
-        if (stage >= (lowrate_pathLength - code.v - 1)) {
-          if (forwardPathIndex == 1) continue;
-        }
+        // if (stage >= (lowrate_pathLength - code.v - 1)) {
+        //   if (forwardPathIndex == 1) continue;
+        // }
 
         // since our transitions correspond to symbols, the forwardPathIndex has
         // no correlation beyond indexing the forward path
@@ -1816,74 +1816,77 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
   std::vector<std::vector<Cell>> trellisInfo;
   int lowrate_pathLength = (received_signal.size() / code.n) + 1;
   int lowrate_numStates = std::pow(2, code.v);
-
-  trellisInfo = std::vector<std::vector<Cell>>(
-      lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
-
-  // initializes just the zeroth valid starting states
-  trellisInfo[0][0].pathMetric = 0;
-  trellisInfo[0][0].init = true;
-
+  
   Stopwatch sw;
   sw.tic();
-  // building the trellis
-  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
-    for (int currentState = 0; currentState < lowrate_numStates;
-         currentState++) {
-      // if the state / stage is invalid, we move on
-      if (!trellisInfo[currentState][stage].init) continue;
+  // repeat to measure time
+  for (int i = 0; i < 5; i++) {
+    trellisInfo = std::vector<std::vector<Cell>>(
+        lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
 
-      // otherwise, we compute the relevent information
-      for (int forwardPathIndex = 0;
-           forwardPathIndex < trellis_ptr->nextStates_[0].size();
-           forwardPathIndex++) {
-        // we will only constrain to travelling on 0 path in the ending v stages
-        if (stage >= (lowrate_pathLength - code.v - 1)) {
-          if (forwardPathIndex == 1) continue;
-        }
+    // initializes just the zeroth valid starting states
+    trellisInfo[0][0].pathMetric = 0;
+    trellisInfo[0][0].init = true;
 
-        // since our transitions correspond to symbols, the forwardPathIndex has
-        // no correlation beyond indexing the forward path
+    // building the trellis
+    for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+      for (int currentState = 0; currentState < lowrate_numStates;
+          currentState++) {
+        // if the state / stage is invalid, we move on
+        if (!trellisInfo[currentState][stage].init) continue;
 
-        int nextState =
-            trellis_ptr->nextStates_[currentState][forwardPathIndex];
+        // otherwise, we compute the relevent information
+        for (int forwardPathIndex = 0;
+            forwardPathIndex < trellis_ptr->nextStates_[0].size();
+            forwardPathIndex++) {
+          // we will only constrain to travelling on 0 path in the ending v stages
+          // if (stage >= (lowrate_pathLength - code.v - 1)) {
+          //   if (forwardPathIndex == 1) continue;
+          // }
 
-        // if the nextState is invalid, we move on
-        if (nextState < 0) continue;
+          // since our transitions correspond to symbols, the forwardPathIndex has
+          // no correlation beyond indexing the forward path
 
-        double branchMetric = 0;
-        
-        std::vector<int> output_point = dualdecoderutils::get_point(
-            trellis_ptr->output_[currentState][forwardPathIndex], code.n);
+          int nextState =
+              trellis_ptr->nextStates_[currentState][forwardPathIndex];
 
-        for (int i = 0; i < code.n; i++) {
-          branchMetric += std::pow(
-              received_signal[code.n * stage + i] - (double)output_point[i], 2);
-          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
-          // stage + i] - (double)output_point[i]);
-        }
+          // if the nextState is invalid, we move on
+          if (nextState < 0) continue;
 
-        double totalPathMetric =
-            branchMetric + trellisInfo[currentState][stage].pathMetric;
+          double branchMetric = 0;
+          
+          std::vector<int> output_point = dualdecoderutils::get_point(
+              trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
-        // dealing with cases of uninitialized states, when the transition
-        // becomes the optimal father state, and suboptimal father state, in
-        // order
-        if (!trellisInfo[nextState][stage + 1].init) {
-          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-          trellisInfo[nextState][stage + 1].fatherState = currentState;
-          trellisInfo[nextState][stage + 1].init = true;
-        } else if (trellisInfo[nextState][stage + 1].pathMetric >
-                   totalPathMetric) {
-          trellisInfo[nextState][stage + 1].subPathMetric =
-              trellisInfo[nextState][stage + 1].pathMetric;
-          trellisInfo[nextState][stage + 1].subFatherState =
-              trellisInfo[nextState][stage + 1].fatherState;
-          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-          trellisInfo[nextState][stage + 1].fatherState = currentState;
-        } else {
-          trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
-          trellisInfo[nextState][stage + 1].subFatherState = currentState;
+          for (int i = 0; i < code.n; i++) {
+            branchMetric += std::pow(
+                received_signal[code.n * stage + i] - (double)output_point[i], 2);
+            // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+            // stage + i] - (double)output_point[i]);
+          }
+
+          double totalPathMetric =
+              branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+          // dealing with cases of uninitialized states, when the transition
+          // becomes the optimal father state, and suboptimal father state, in
+          // order
+          if (!trellisInfo[nextState][stage + 1].init) {
+            trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+            trellisInfo[nextState][stage + 1].fatherState = currentState;
+            trellisInfo[nextState][stage + 1].init = true;
+          } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                    totalPathMetric) {
+            trellisInfo[nextState][stage + 1].subPathMetric =
+                trellisInfo[nextState][stage + 1].pathMetric;
+            trellisInfo[nextState][stage + 1].subFatherState =
+                trellisInfo[nextState][stage + 1].fatherState;
+            trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+            trellisInfo[nextState][stage + 1].fatherState = currentState;
+          } else {
+            trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
+            trellisInfo[nextState][stage + 1].subFatherState = currentState;
+          }
         }
       }
     }
@@ -2018,9 +2021,9 @@ DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
            forwardPathIndex++) {
         
         // we will only constrain to travelling on 0 path in the ending v stages
-        if (stage >= (lowrate_pathLength - code.v - 1)) {
-          if (forwardPathIndex == 1) continue;
-        }
+        // if (stage >= (lowrate_pathLength - code.v - 1)) {
+        //   if (forwardPathIndex == 1) continue;
+        // }
 
         // since our transitions correspond to symbols, the forwardPathIndex has
         // no correlation beyond indexing the forward path
