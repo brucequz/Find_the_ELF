@@ -1835,7 +1835,7 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   std::vector<double> metric_1((K + code.v) * 3, 0.0);
 
   std::vector<std::chrono::milliseconds> timeDurations(
-      3, std::chrono::milliseconds(0));
+      4, std::chrono::milliseconds(0));
   std::chrono::milliseconds softDurations(0);
 
   // while (number_of_errors < max_errors) {
