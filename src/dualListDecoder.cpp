@@ -1187,6 +1187,8 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
 
   // Look Ahead variables
   double d_hat = INT_MAX;
+  DLDInfo unmatched_best;
+  unmatched_best.combined_metric = INT_MAX;
   // skip reconstruction if mp.size hasn't changed
   int mp_size = 0;
 
@@ -1283,8 +1285,14 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
                                                     reencode_codeword);
         mi_0.path_metric = d_hat;
         mp.insert(mi_0);
-        best_current_match =
-            (best_current_match > d_hat) ? d_hat : best_current_match;
+        if (d_hat < best_current_match) {
+          unmatched_best.combined_metric = d_hat;
+          unmatched_best.message = mi_0.message;
+          unmatched_best.list_ranks = {mi_0.list_rank, max_path_to_search_};
+          unmatched_best.received_signal = received_signal;
+          best_current_match = d_hat;
+        }
+        // best_current_match = (best_current_match > d_hat) ? d_hat : best_current_match;
         output_0.push_back(mi_0);
       }
     }
@@ -1319,8 +1327,14 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
                                                     reencode_codeword);
         mi_1.path_metric = d_hat;
         mp.insert(mi_1);
-        best_current_match =
-            (best_current_match > d_hat) ? d_hat : best_current_match;
+        if (d_hat < best_current_match) {
+          unmatched_best.combined_metric = d_hat;
+          unmatched_best.message = mi_1.message;
+          unmatched_best.list_ranks = {max_path_to_search_, mi_1.list_rank};
+          unmatched_best.received_signal = received_signal;
+          best_current_match = d_hat;
+        }
+        // best_current_match = (best_current_match > d_hat) ? d_hat : best_current_match;
         output_1.push_back(mi_1);
       }
     }
@@ -1340,6 +1354,18 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_rate_1_2(
           heap_list_0 = nullptr;
           heap_list_1 = nullptr;
           return attemp_message;
+        } 
+        else {
+          // return the code with the best metric so far
+          // but obviously it is un-matched
+          assert(unmatched_best.combined_metric != INT_MAX);
+
+          // clean-up
+          delete heap_list_0;
+          delete heap_list_1;
+          heap_list_0 = nullptr;
+          heap_list_1 = nullptr;
+          return unmatched_best;
         }
       }
       // if list size exceeded and found nothing
@@ -1824,77 +1850,76 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
   Stopwatch sw;
   sw.tic();
   // repeat to measure time
-  for (int i = 0; i < 1; i++) {
-    trellisInfo = std::vector<std::vector<Cell>>(
-        lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
+  trellisInfo = std::vector<std::vector<Cell>>(
+      lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
 
-    // initializes just the zeroth valid starting states
-    trellisInfo[0][0].pathMetric = 0;
-    trellisInfo[0][0].init = true;
+  // initializes just the zeroth valid starting states
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
 
-    // building the trellis
-    for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
-      for (int currentState = 0; currentState < lowrate_numStates;
-          currentState++) {
-        // if the state / stage is invalid, we move on
-        if (!trellisInfo[currentState][stage].init) continue;
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < lowrate_numStates;
+        currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
 
-        // otherwise, we compute the relevent information
-        for (int forwardPathIndex = 0;
-            forwardPathIndex < trellis_ptr->nextStates_[0].size();
-            forwardPathIndex++) {
-          // we will only constrain to travelling on 0 path in the ending v stages
-          // if (stage >= (lowrate_pathLength - code.v - 1)) {
-          //   if (forwardPathIndex == 1) continue;
-          // }
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+          forwardPathIndex < trellis_ptr->nextStates_[0].size();
+          forwardPathIndex++) {
+        // we will only constrain to travelling on 0 path in the ending v stages
+        // if (stage >= (lowrate_pathLength - code.v - 1)) {
+        //   if (forwardPathIndex == 1) continue;
+        // }
 
-          // since our transitions correspond to symbols, the forwardPathIndex has
-          // no correlation beyond indexing the forward path
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
 
-          int nextState =
-              trellis_ptr->nextStates_[currentState][forwardPathIndex];
+        int nextState =
+            trellis_ptr->nextStates_[currentState][forwardPathIndex];
 
-          // if the nextState is invalid, we move on
-          if (nextState < 0) continue;
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
 
-          double branchMetric = 0;
-          
-          std::vector<int> output_point = dualdecoderutils::get_point(
-              trellis_ptr->output_[currentState][forwardPathIndex], code.n);
+        double branchMetric = 0;
+        
+        std::vector<int> output_point = dualdecoderutils::get_point(
+            trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
-          for (int i = 0; i < code.n; i++) {
-            branchMetric += std::pow(
-                received_signal[code.n * stage + i] - (double)output_point[i], 2);
-            // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
-            // stage + i] - (double)output_point[i]);
-          }
+        for (int i = 0; i < code.n; i++) {
+          branchMetric += std::pow(
+              received_signal[code.n * stage + i] - (double)output_point[i], 2);
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+        }
 
-          double totalPathMetric =
-              branchMetric + trellisInfo[currentState][stage].pathMetric;
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
 
-          // dealing with cases of uninitialized states, when the transition
-          // becomes the optimal father state, and suboptimal father state, in
-          // order
-          if (!trellisInfo[nextState][stage + 1].init) {
-            trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-            trellisInfo[nextState][stage + 1].fatherState = currentState;
-            trellisInfo[nextState][stage + 1].init = true;
-          } else if (trellisInfo[nextState][stage + 1].pathMetric >
-                    totalPathMetric) {
-            trellisInfo[nextState][stage + 1].subPathMetric =
-                trellisInfo[nextState][stage + 1].pathMetric;
-            trellisInfo[nextState][stage + 1].subFatherState =
-                trellisInfo[nextState][stage + 1].fatherState;
-            trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
-            trellisInfo[nextState][stage + 1].fatherState = currentState;
-          } else {
-            trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
-            trellisInfo[nextState][stage + 1].subFatherState = currentState;
-          }
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                  totalPathMetric) {
+          trellisInfo[nextState][stage + 1].subPathMetric =
+              trellisInfo[nextState][stage + 1].pathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState =
+              trellisInfo[nextState][stage + 1].fatherState;
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        } else {
+          trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState = currentState;
         }
       }
     }
   }
+
 
   sw.toc();
   ssv_time += sw.getElapsed();

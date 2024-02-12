@@ -26,8 +26,8 @@
 
 #define K 64
 #define V 10
-#define MAX_LIST_SIZE 5
-#define TRIALS 5e3
+#define MAX_LIST_SIZE 30
+#define TRIALS 5e4
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
@@ -289,9 +289,9 @@ int main(int argc, char* argv[]) {
 
   ////////////////////// RATE 1/3 Dual List Decoding Experiment
   /////////////////////////
-  // for (double snr_dB : SNR_dB) {
-  //   dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
-  // }
+  for (double snr_dB : SNR_dB) {
+    dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
+  }
 
   ////////////////////// RATE 1/3 DSU/Mixed Decoder Experiment
   /////////////////////////
@@ -306,9 +306,9 @@ int main(int argc, char* argv[]) {
   // }
 
   ////////////////////// Time and Complexity Experiment //////////////////////
-  for (double snr_dB : SNR_dB) {
-    TimeAndComplexitySimulation_rate_1_3(snr_dB);
-  }
+  // for (double snr_dB : SNR_dB) {
+  //   TimeAndComplexitySimulation_rate_1_3(snr_dB);
+  // }
 
   ////////////////////// Find D_free //////////////////////
   // FindDFree_ADFree();
