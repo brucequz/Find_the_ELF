@@ -26,8 +26,8 @@
 
 #define K 64
 #define V 10
-#define MAX_LIST_SIZE 30
-#define TRIALS 5e4
+#define MAX_LIST_SIZE 800
+#define TRIALS 5e2
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
