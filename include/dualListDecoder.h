@@ -136,7 +136,7 @@ class DualListDecoder {
   DualListDecoder(CodeInformation encoder, std::vector<CodeInformation> code_info, int max_searched_path);
   ~DualListDecoder();
   
-  // RATE 1/1 DLD DECODERS
+  // ----------------------------------------------  RATE 1/1 DLD DECODERS  --------------------------------------------------------
   DLDInfo adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
   // Decoding function that alternates between two dual list decoders.
@@ -149,7 +149,7 @@ class DualListDecoder {
   // in both lists there exist one codeword that passes crc (?).
   DLDInfo AdaptiveDecode_CRCAlternate(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
-  // RATE 1/2 DLD DECODERS
+  // -----------------------------------------  RATE 1/2 DLD DECODERS - WITH PUNCTURING  ---------------------------------------------
 
   // Decoding dunction that contains two rate 1/2 decoders. It alternates between two dual list decoders.
   // This function does not take crc degrees into consideration
@@ -157,7 +157,15 @@ class DualListDecoder {
 
   DLDInfo LookAheadDecode_SimpleAlternate_rate_1_2(
       std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations, std::vector<double> metric_0, std::vector<double> metric_1);
+
+  // Look ahead decoding function that stop once match is found. If the match does not yield the best metric, then return the unmatched best
+  DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+
+  // Look ahead decoding function that stop once match is found. If the match does not yield the best metric, then return the unmatched best.
+  // This function will also return the best unmatched metric if the match is not found and list size is exceeded.
+  DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   
+  // ------------------------------------------------  TRACEBACK FUNCTIONS  ----------------------------------------------------------
   MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
                              int& num_path_searched, int num_total_stages);

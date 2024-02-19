@@ -26,8 +26,8 @@
 
 #define K 64
 #define V 10
-#define MAX_LIST_SIZE 800
-#define TRIALS 5e2
+#define MAX_LIST_SIZE 10000
+#define TRIALS 5e4
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
@@ -1929,8 +1929,8 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     // outputFile << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_rate_1_2(
-        received_signal, timeDurations, metric_0, metric_1);
+    DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(
+        received_signal, timeDurations);
 
     // we save the list ranks
     DLD_list_0_size.push_back(output_DLD.list_ranks[0]);
