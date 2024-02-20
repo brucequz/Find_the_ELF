@@ -27,7 +27,7 @@
 #define K 64
 #define V 10
 #define MAX_LIST_SIZE 10000
-#define TRIALS 1e4
+#define TRIALS 5e4
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
@@ -1862,13 +1862,6 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
 
     std::vector<double> received_signal =
         AWGN::addNoise(modulated_signal, snr_dB);
-
-    if (number_of_trials < 9425) {
-      continue;
-    }
-    if (number_of_trials > 9425) {
-      break;
-    }
 
     if (PUNCTURE) {
       for (int i = 0; i < received_signal.size(); i += 6) {

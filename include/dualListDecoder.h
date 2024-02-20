@@ -164,7 +164,9 @@ class DualListDecoder {
   // Look ahead decoding function that stop once match is found. If the match does not yield the best metric, then return the unmatched best.
   // This function will also return the best unmatched metric if the match is not found and list size is exceeded.
   DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+
   
+
   // ------------------------------------------------  TRACEBACK FUNCTIONS  ----------------------------------------------------------
   MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,

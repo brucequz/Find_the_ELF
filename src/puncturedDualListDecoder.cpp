@@ -1141,10 +1141,10 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
       if (mp.queue_size() != 0) {
         DLDInfo attemp_message = mp.pop_queue();
         if (attemp_message.combined_metric == best_current_match) {
-          std::cout << "Champion metric: " << attemp_message.combined_metric
-          << std::endl; std::cout << "Champion list ranks: " <<
-          attemp_message.list_ranks[0] << ", " <<
-          attemp_message.list_ranks[1] << std::endl;
+          // std::cout << "Champion metric: " << attemp_message.combined_metric
+          // << std::endl; std::cout << "Champion list ranks: " <<
+          // attemp_message.list_ranks[0] << ", " <<
+          // attemp_message.list_ranks[1] << std::endl;
           // free pointers
           delete heap_list_0;
           delete heap_list_1;
@@ -1156,8 +1156,8 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
           // return the code with the best metric so far
           // but obviously it is un-matched
           assert(unmatched_best.combined_metric != INT_MAX);
-          std::cout << "Return unmatched best" << std::endl;
-          std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
+          // std::cout << "Return unmatched best" << std::endl;
+          // std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
 
           // clean-up
           delete heap_list_0;
@@ -1173,9 +1173,9 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
     }
 
     if (mp.queue_size() != 0) {
-      std::cout << "Agreed message found: " << std::endl;
-      std::cout << "Simple alternate algorithm ended with path searched: ["
-      << num_path_searched_0 << ", " << num_path_searched_1 << std::endl;
+      // std::cout << "Agreed message found: " << std::endl;
+      // std::cout << "Simple alternate algorithm ended with path searched: ["
+      // << num_path_searched_0 << ", " << num_path_searched_1 << std::endl;
       
 
       if (mp_size != mp.queue_size()) {
@@ -1184,12 +1184,12 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
       }
       DLDInfo agreed_message = mp.pop_queue();
       best_current_match = agreed_message.combined_metric;
-      std::cout << "Best metric: " << best_current_match << std::endl;
+      // std::cout << "Best metric: " << best_current_match << std::endl;
       
       if (best_current_match > unmatched_best.combined_metric) {
-        std::cout << "Matched found, but it does not have the best metric" << std::endl;
-        std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
-        std::cout << "Agreed metric: " << best_current_match << std::endl;
+        // std::cout << "Matched found, but it does not have the best metric" << std::endl;
+        // std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
+        // std::cout << "Agreed metric: " << best_current_match << std::endl;
 
         // free pointers
         delete heap_list_0;
@@ -1217,9 +1217,9 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
   output.push_back(output_0);
   output.push_back(output_1);
   if (unmatched_best.combined_metric != INT_MAX) {
-    std::cout << "No agreed message found, but unmatched best found" << std::endl;
-    std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
-    std::cout << "unmatched best list ranks: " << unmatched_best.list_ranks[0] << ", " << unmatched_best.list_ranks[1] << std::endl;
+    // std::cout << "No agreed message found, but unmatched best found" << std::endl;
+    // std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
+    // std::cout << "unmatched best list ranks: " << unmatched_best.list_ranks[0] << ", " << unmatched_best.list_ranks[1] << std::endl;
     delete heap_list_0;
     delete heap_list_1;
     heap_list_0 = nullptr;
