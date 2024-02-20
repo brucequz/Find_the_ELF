@@ -27,7 +27,7 @@
 #define K 64
 #define V 10
 #define MAX_LIST_SIZE 10000
-#define TRIALS 5e4
+#define TRIALS 1e4
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
@@ -1863,6 +1863,13 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     std::vector<double> received_signal =
         AWGN::addNoise(modulated_signal, snr_dB);
 
+    if (number_of_trials < 9425) {
+      continue;
+    }
+    if (number_of_trials > 9425) {
+      break;
+    }
+
     if (PUNCTURE) {
       for (int i = 0; i < received_signal.size(); i += 6) {
         received_signal[i + PUNC_1] = 0;
@@ -1955,6 +1962,16 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
       // decoded message, and the received signal and record the list index.
       DLD_error++;
       number_of_errors++;
+      std::cout << "DLD decoding error!" << std::endl;
+      MessageInformation output_SSV =
+          codec.softViterbiDecoding(received_signal, timeDurations[1]);
+      if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
+        std::cout << "trial number" << number_of_trials << std::endl;
+        std::cout << "DLD makes an undectected error, now trying SSV"
+                  << std::endl;
+        std::cout << "SSV decodes correctly" << std::endl;
+        std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
+      }
     }
 
     // update list ranks
