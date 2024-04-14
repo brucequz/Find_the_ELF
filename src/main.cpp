@@ -278,9 +278,9 @@ int main(int argc, char* argv[]) {
   // }
 
   ////////////////////// DSU/Soft Viterbi Experiment //////////////////////
-  // for (double snr_dB : SNR_dB) {
-  //   softViterbiExperiment(snr_dB, 5);
-  // }
+  for (double snr_dB : SNR_dB) {
+    softViterbiExperiment(snr_dB, 5);
+  }
 
   ////////////////////// DSU/Mixed Decoder Experiment //////////////////////
   // for (double snr_dB : SNR_dB) {
@@ -289,9 +289,9 @@ int main(int argc, char* argv[]) {
 
   ////////////////////// RATE 1/3 Dual List Decoding Experiment
   /////////////////////////
-  for (double snr_dB : SNR_dB) {
-    dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
-  }
+  // for (double snr_dB : SNR_dB) {
+  //   dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
+  // }
 
   ////////////////////// RATE 1/3 DSU/Mixed Decoder Experiment
   /////////////////////////
@@ -487,11 +487,11 @@ std::chrono::milliseconds softViterbiExperiment(double snr_dB, int max_errors) {
   CodeInformation code;
   code.k = 1;
   code.n = 2;
-  code.v = 10;
+  code.v = 9;
   code.list_size = 1;
   code.crc_dec = -1;
   code.crc_length = -1;
-  code.generator_poly = {3345, 3613};  // octal
+  code.generator_poly = {1157, 1753};  // octal
   ViterbiCodec codec(code);
 
   srand(seed);
