@@ -10,6 +10,7 @@
 #include "../include/dualListMap.h"
 #include "../include/feedForwardTrellis.h"
 #include "../include/stopWatch.h"
+#include "../include/CONSTANTS.h"
 
 namespace{
 std::vector<double> ComputeSquaredDifferences(
@@ -932,7 +933,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound(std:
 }
 
 DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
-    // Hard Decode
+  // Hard Decode
   std::vector<double> hard_decoding_result = HardDecode(received_signal);
 
   // Compute the minimum possible squared difference
@@ -976,10 +977,10 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
       continue;
     }
   }
-  assert(received_codec_2.size() == 148);
-  assert(received_codec_1.size() == 148);
-  assert(helper_trellis_1.size() == 148);
-  assert(helper_trellis_2.size() == 148);
+  assert(received_codec_2.size() == BLOCK_SIZE);
+  assert(received_codec_1.size() == BLOCK_SIZE);
+  assert(helper_trellis_1.size() == BLOCK_SIZE);
+  assert(helper_trellis_2.size() == BLOCK_SIZE);
 
   // Set up variables
   bool best_combined_found = false;

@@ -22,95 +22,8 @@
 #include "../include/dualListDecoder.h"
 #include "../include/stopWatch.h"
 #include "../include/viterbiCodec.h"
+#include "../include/CONSTANTS.h"
 // #include "mat.h"
-
-#define K 64
-#define V 10
-#define MAX_LIST_SIZE 10000
-#define TRIALS 5e4
-
-// --------------------------- rate 1/2 into two rate 1/1
-// ---------------------------
-
-// 3345: 11011100101 x^10 + x^9 + x^7 + x^6 + x^5 + x^2 + 1
-// One can divide it into: (x^3 + x^2 + 1)*(x^7 + x^3 + 1)
-// x^7 + x^3 + 1 is (binary)10001001, (octal)211, (decimal)137
-// x^3 + x^2 + 1 is (binary)1101, (octal)15, (decimal)13
-
-// 3613: 11110001011 x^10 + x^9 + x^8 + x^7 + x^3 + x + 1
-// One can divide it into: (x^6 + x^5 + x^2 + x + 1)*(x^4 + x^2 + 1)
-// x^6 + x^5 + x^2 + x + 1 is (binary)1100111, (octal)147, (decimal)103
-// x^4 + x^2 + 1 is (binary)10101, (octal)25, (decimal)21
-#define RDEN 2
-#define A 3345
-#define B 3613
-
-#define V_1 7
-#define CC_1 211
-#define CRC_1 13
-#define CRC_LENGTH_1 4
-
-#define V_2 6
-#define CC_2 147
-#define CRC_2 21
-#define CRC_LENGTH_2 5
-#define PUNCTURE 0
-#define PUNC_RATE 2
-
-// below are the null values
-#define AB 3325
-#define AC 3237
-#define DC 2711
-
-#define C 63
-#define D 67
-
-#define CRC_A 37
-#define CRC_C 51
-
-#define PUNC_1 0
-#define PUNC_3 5
-
-// --------------------------- rate 1/2 into two rate 1/1
-// ---------------------------
-
-// --------------------------- rate 1/3 ---------------------------
-// #define RDEN 3
-// #define AB 3325
-// #define AC 3237
-// #define DC 2711
-// #define A 45
-// #define B 61
-// #define C 63
-// #define D 67
-
-// #define CRC_A 37
-// #define CRC_C 51
-
-// #define PUNCTURE 0
-
-// --------------------------- rate 1/3 ---------------------------
-
-// --------------------------- puncture 1/2 ---------------------------
-#define PUNC_1 0
-#define PUNC_3 5
-#define AB 2267
-#define AC 3631
-#define DC 2353
-#define A 51
-#define B 57
-#define C 61
-#define D 73
-
-#define CRC_A 41
-#define CRC_C 49
-
-#define PUNCTURE 1
-#define PUNC_RATE 2
-
-// below are null values
-#define RDEN 3
-// --------------------------- puncture 1/2 ---------------------------
 
 static std::random_device rd{};
 static std::mt19937 noise_gen(82);  // 82
@@ -278,9 +191,9 @@ int main(int argc, char* argv[]) {
   // }
 
   ////////////////////// DSU/Soft Viterbi Experiment //////////////////////
-  for (double snr_dB : SNR_dB) {
-    softViterbiExperiment(snr_dB, 5);
-  }
+  // for (double snr_dB : SNR_dB) {
+  //   softViterbiExperiment(snr_dB, 5);
+  // }
 
   ////////////////////// DSU/Mixed Decoder Experiment //////////////////////
   // for (double snr_dB : SNR_dB) {
@@ -289,9 +202,9 @@ int main(int argc, char* argv[]) {
 
   ////////////////////// RATE 1/3 Dual List Decoding Experiment
   /////////////////////////
-  // for (double snr_dB : SNR_dB) {
-  //   dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
-  // }
+  for (double snr_dB : SNR_dB) {
+    dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
+  }
 
   ////////////////////// RATE 1/3 DSU/Mixed Decoder Experiment
   /////////////////////////
@@ -1767,11 +1680,11 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   // CRC: (x^5 + x^2 + 1) 100101(binary), 45(octal), 37(decimal)
   code_1.k = 1;
   code_1.n = 2;
-  code_1.v = 5;
+  code_1.v = HALF_V;
   code_1.list_size = 5e4;  // This is only useful when using list decoding
                            // functions in ViterbiCodec
   code_1.crc_dec = CRC_A;  // 37
-  code_1.crc_length = 6;
+  code_1.crc_length = CONSTRAINT_LENGTH;
   code_1.generator_poly = {B, C};  // octal
 
   CodeInformation code_2;
@@ -1786,11 +1699,11 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   // CC: (x^5 + x^4 + x^2 + x + 1) 110111(binary), 67(octal), 55(decimal)
   code_2.k = 1;
   code_2.n = 2;
-  code_2.v = 5;
+  code_2.v = HALF_V;
   code_2.list_size = 5e4;  // This is only useful when using list decoding
                            // functions in ViterbiCodec
   code_2.crc_dec = CRC_C;
-  code_2.crc_length = 6;
+  code_2.crc_length = CONSTRAINT_LENGTH;
   code_2.generator_poly = {A, D};
 
   ViterbiCodec codec_1(code_1);
@@ -1821,6 +1734,8 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   int DLD_list_exceeded = 0;
   int DLD_error = 0;
 
+  int SSV_error = 0;
+
   // vector to keep track of list sizes for both decoders
   std::vector<int> DLD_list_0_size;
   std::vector<int> DLD_list_1_size;
@@ -1845,6 +1760,7 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     if (number_of_trials % 2000 == 0) {
       std::cout << "Trial number: " << number_of_trials << std::endl;
       std::cout << "Current number of errors: " << number_of_errors
+                << ", SSV errors: " << SSV_error
                 << std::endl;
     }
 
@@ -1963,7 +1879,10 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
         std::cout << "DLD makes an undectected error, now trying SSV"
                   << std::endl;
         std::cout << "SSV decodes correctly" << std::endl;
+        std::cout << "DLD metric: " << output_DLD.combined_metric << std::endl;
         std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
+      } else {
+        SSV_error++;
       }
     }
 
@@ -1997,6 +1916,10 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   std::cout << "DLD wrong decoding: " << DLD_error
             << " , Percentage: " << (double)DLD_error / number_of_trials
             << std::endl;
+
+  std::cout << "SSV wrong decoding: " << SSV_error
+          << " , Percentage: " << (double)SSV_error / number_of_trials
+          << std::endl;
 
   std::cout << "expected list ranks: [ " << expected_list_ranks[0] << ", "
             << expected_list_ranks[1] << " ]" << std::endl;
