@@ -11,3 +11,4 @@ Makefile
 /test/trellis_test
 .vscode
 *.pptx
+/include/CONSTANTS.h
