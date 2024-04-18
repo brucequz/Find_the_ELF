@@ -18,35 +18,35 @@
 // One can divide it into: (x^6 + x^5 + x^2 + x + 1)*(x^4 + x^2 + 1)
 // x^6 + x^5 + x^2 + x + 1 is (binary)1100111, (octal)147, (decimal)103
 // x^4 + x^2 + 1 is (binary)10101, (octal)25, (decimal)21
-#define RDEN 2
-#define A 3345
-#define B 3613
+// #define RDEN 2
+// #define A 3345
+// #define B 3613
 
-#define V_1 7
-#define CC_1 211
-#define CRC_1 13
-#define CRC_LENGTH_1 4
+// #define V_1 7
+// #define CC_1 211
+// #define CRC_1 13
+// #define CRC_LENGTH_1 4
 
-#define V_2 6
-#define CC_2 147
-#define CRC_2 21
-#define CRC_LENGTH_2 5
-#define PUNCTURE 0
-#define PUNC_RATE 2
+// #define V_2 6
+// #define CC_2 147
+// #define CRC_2 21
+// #define CRC_LENGTH_2 5
+// #define PUNCTURE 0
+// #define PUNC_RATE 2
 
-// below are the null values
-#define AB 3325
-#define AC 3237
-#define DC 2711
+// // below are the null values
+// #define AB 3325
+// #define AC 3237
+// #define DC 2711
 
-#define C 63
-#define D 67
+// #define C 63
+// #define D 67
 
-#define CRC_A 37
-#define CRC_C 51
+// #define CRC_A 37
+// #define CRC_C 51
 
-#define PUNC_1 0
-#define PUNC_3 5
+// #define PUNC_1 0
+// #define PUNC_3 5
 
 // --------------------------- rate 1/2 into two rate 1/1
 // ---------------------------
@@ -94,22 +94,50 @@
 // #define RDEN 3
 // --------------------------- puncture 1/2 ---------------------------
 
-#define V 16
-#define HALF_V 8
+// --------------------------- puncture 1/3, V=16 ---------------------------
+// #define V 16
+// #define HALF_V 8
+// #define CONSTRAINT_LENGTH (HALF_V+1)
+
+// #define PUNC_1 0
+// #define PUNC_3 5
+// #define AB 262221
+// #define AC 333523
+// #define DC 270507
+// #define A 513
+// #define B 447
+// #define C 711
+// #define D 777
+
+// #define CRC_A 331
+// #define CRC_C 457
+
+// #define PUNCTURE 1
+// #define PUNC_RATE 2
+// #define BLOCK_SIZE (PUNC_RATE * (K + V))
+
+// // below are null values
+// #define RDEN 3
+
+// --------------------------- puncture 1/3, V=16 ---------------------------
+
+// --------------------------- puncture 1/3, V=14 ---------------------------
+#define V 14
+#define HALF_V 7
 #define CONSTRAINT_LENGTH (HALF_V+1)
 
 #define PUNC_1 0
 #define PUNC_3 5
-#define AB 262221
-#define AC 333523
-#define DC 270507
-#define A 513
-#define B 447
-#define C 711
-#define D 777
+#define AB 51233
+#define AC 44157
+#define DC 76315
+#define A 267
+#define B 225
+#define C 251
+#define D 305
 
-#define CRC_A 331
-#define CRC_C 457
+#define CRC_A 183
+#define CRC_C 169
 
 #define PUNCTURE 1
 #define PUNC_RATE 2
@@ -117,5 +145,7 @@
 
 // below are null values
 #define RDEN 3
+
+// --------------------------- puncture 1/3, V=14 ---------------------------
 
 #endif

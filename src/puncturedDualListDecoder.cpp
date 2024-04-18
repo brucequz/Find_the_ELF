@@ -121,8 +121,8 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(
       continue;
     }
   }
-  assert(received_codec_2.size() == 148);
-  assert(received_codec_1.size() == 148);
+  assert(received_codec_2.size() == BLOCK_SIZE);
+  assert(received_codec_1.size() == BLOCK_SIZE);
   // Set up variables
   bool best_combined_found = false;
   CodeInformation code_0 = code_info_[0];
@@ -224,14 +224,13 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(
       delete heap_list_1;
       heap_list_0 = nullptr;
       heap_list_1 = nullptr;
-      // std::cout << "found agreed message" << std::endl;
-      // std::cout << "Debug: agreed message list size: ";
-      // dualdecoderutils::print(agreed_message.list_ranks);
-      // std::cout << std::endl;
+      std::cout << "found agreed message" << std::endl;
+      std::cout << "Debug: agreed message list size: ";
+      dualdecoderutils::print(agreed_message.list_ranks);
+      std::cout << std::endl;
 
       return agreed_message;
     }
-    // std::cout << "hello" << std::endl;
   }
   sw_step2_3.toc();
   timeDurations[2] += sw_step2_3.getElapsed();
@@ -246,7 +245,8 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate_rate_1_2(
   // and the received_signal
   empty_message.message = std::vector<int>(64, -1);
   empty_message.received_signal = received_signal;
-  // std::cout << "List size exceeded!" << std::endl;
+  std::cout << "List size exceeded!" << std::endl;
+  std::cout << "Max list size searched: " << max_path_to_search_ << std::endl;
 
   // free pointers
   delete heap_list_0;
@@ -1221,6 +1221,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
     // std::cout << "No agreed message found, but unmatched best found" << std::endl;
     // std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
     // std::cout << "unmatched best list ranks: " << unmatched_best.list_ranks[0] << ", " << unmatched_best.list_ranks[1] << std::endl;
+    // std::cout << "Min add zero: " << min_add_zero << ", Min add one: " << min_add_one << std::endl;
     delete heap_list_0;
     delete heap_list_1;
     heap_list_0 = nullptr;
