@@ -22,7 +22,7 @@ void DualListMap::insert(const MessageInformation& mi) {
     // key exists
     // if there is a match
     DLDInfo agreed_message;
-    agreed_message.combined_metric = mi.path_metric;  //+it->second.path_metric;
+    agreed_message.combined_metric = mi.path_metric;// + it->second.path_metric;
     // agreed_message.combined_metric = 0;
     // std::cout << "For the matched message: ";
     //  be cautious since the existing message could come from any list decoder

@@ -1302,10 +1302,10 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     std::vector<double> received_signal =
         AWGN::addNoise(modulated_signal, snr_dB);
 
-    // if (number_of_trials < 1462) {
+    // if (number_of_trials < 5) {
     //   continue;
     // }
-    // if (number_of_trials > 1462) {
+    // if (number_of_trials > 5) {
     //   break;
     // }
 
@@ -1375,7 +1375,7 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     // outputFile << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(
+    DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(
         received_signal, timeDurations);
 
     // we save the list ranks
@@ -1388,9 +1388,16 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
       received_to_correct_dist.push_back(output_DLD.combined_metric);
       received_to_decoded_dist.push_back(output_DLD.combined_metric);
       DLD_correct++;
-      // std::cout << "Correct Decoding! List ranks: ";
-      // CodecUtils::print(output_DLD.list_ranks);
-      // std::cout << std::endl;
+      // MessageInformation output_SSV =
+      //     codec.softViterbiDecoding(received_signal, timeDurations[1]);
+      // if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
+      //   // std::cout << "trial number: " << number_of_trials << std::endl;
+      //   // std::cout << "DLD makes an undectected error, now trying SSV"
+      //   //           << std::endl;
+      //   std::cout << "SSV decodes correctly" << std::endl;
+      //   std::cout << "DLD metric: " << output_DLD.combined_metric << std::endl;
+      //   std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
+      // }
     } else if (output_DLD.message == std::vector<int>(64, -1)) {
       // CASE 2
       // list size exceeded
@@ -1413,14 +1420,15 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
         std::cout << "SSV decodes correctly" << std::endl;
         std::cout << "DLD metric: " << output_DLD.combined_metric << std::endl;
         std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
-        // DLDInfo output_DLD_brute = DLD.AdaptiveDecode_SimpleAlternate_rate_1_2(
+
+        // DualListDecoder DLD_Extra_LS(code, dld_codes, 10*max_list_size);
+        // DLDInfo output_DLD_LS = DLD_Extra_LS.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(
         //     received_signal, timeDurations);
-        // if (CodecUtils::areVectorsEqual(output_DLD_brute.message, msg)) {
-        //   std::cout << "DLD Brute force decoding success!" << std::endl;
-        //   std::cout << "DLD brute force metric: "
-        //             << output_DLD_brute.combined_metric << std::endl;
+        // if (CodecUtils::areVectorsEqual(output_DLD_LS.message, msg)) {
+        //   std::cout << "DLD Extra LS metric: "
+        //             << output_DLD_LS.combined_metric << ", DLD Extra LS decoding success!" << std::endl;
         // } else {
-        //   std::cout << "DLD Brute force decoding error!" << std::endl;
+        //   std::cout << "DLD Extra LS decoding error!" << std::endl;
         // }
       } else {
         SSV_error++;

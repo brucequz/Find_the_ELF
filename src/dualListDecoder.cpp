@@ -1298,6 +1298,170 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
     }
   }
 
+  sw.toc();
+  ssv_time += sw.getElapsed();
+  sw.reset();
+  return trellisInfo;
+}
+
+std::vector<std::vector<Cell>>
+DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric_HalfSharedMetric(
+    const std::vector<double>& received_signal, CodeInformation code,
+    FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time, const int& shared_index) {
+  /**
+  @brief Construct a ZTCC Trellis measuring the time taken by trellis
+  construction (for both lists, iteratively) using a regular euclidean metric.
+
+  @param received_signal: a vector of double that records the received values
+  (deviates from +/-1).
+
+  @param code: a dictionary encompasses all information related to a
+  convolutional code.
+        - 'n': convolutional code output number of bits. Example: n=2 for a rate
+  1/2 code.
+        - 'k': convolutional code input number of bits. Example: k=1 for a rate
+  1/2 code.
+        - 'v': number of memory elements in convolutional code. Example: v=6 for
+  a CC with generator polynomial: x^6+x^5+x^4+x+1.
+
+  @param trellis_ptr: a pointer that points to a FeedForwardTrellis object with
+  following member variables
+        - 'nextStates_': a 2d vector of size [2^(code.v), 2] for a binary
+  convolutional code with v memory elements. At position (i, j), it determines
+  the next state in integer when the currect state is i and currect input is j.
+        - 'output_': a 2d vector of size [2^(code.v), 2] for a binary
+  convolutional code with v memery elements. At position (i, j), it determines
+  the output as integer (0 or 1 for binary code) when the currect state is i and
+  currect input is j. To convert it to BPSK modulation, use
+  dualdecoderutils::get_point().
+
+  @param ssv_time: a chrono milliseconds object passed in by reference to
+  increment an outer variable that keep track of dual list decoder trellis
+  construction time. It tracks the time of add-compare-select operation of all
+  active nodes.
+
+  @note Theoretical complexity: 2^(v+1)-2 + 1.5*(2^(v+1)-2)
+  + 1.5*(k+m-v)*2^(v+1) Define 1 unit of complexity as the complexity required
+  to perform one addition.
+         - 2^(v+1)-2: addition complexity on the first v section of a ZTCC
+  trellis. Use sum of geometric series.
+         - 1.5*(2^(v+1)-2): add-compare-select complexity on the last v section
+  of a ZTCC trellis. Use sum of geometric series.
+         - 1.5*(k+m-v)*2^(v+1): add-compare-select complexity on the middle
+  (k+m-v) section of a ZTCC trellis.
+
+  @return trellisInfo: std::vector<std::vector<Cell>>
+          Each 'Cell' object constains the following information:
+          -   struct Cell {
+                            bool init = false;
+                            double pathMetric = 3000;
+                            int fatherState = -1;
+                            double subPathMetric = 3000;
+                            int subFatherState = -1;
+                          };
+
+          - 'init': a boolean variable indicating whether the Cell should be
+  considered during forward propagation and traceback. Example: For a ZTCC, the
+  lower left triangle of the first v stages and the lower right triangle of the
+  last v stages do not need to be initialized.
+
+          - 'pathMetric': a double variable that stores the optimal path metric
+  up to that Cell.
+
+          - 'fatherState': a integer variable that stores the optimal father
+  state in integer of that Cell.
+
+          - 'subPathMetric': a double variabel that stores the suboptimal path
+  metric up to that Cell.
+
+          - 'subFatherState': a integer variable that stores the suboptimal path
+  metric up to that Cell.
+
+          Note: The 'subPathMetric' and 'subFatherState' enable list decoding,
+  i.e. additional traceback.
+
+  */
+  std::vector<std::vector<Cell>> trellisInfo;
+  int lowrate_pathLength = (received_signal.size() / code.n) + 1;
+  int lowrate_numStates = std::pow(2, code.v);
+  
+  Stopwatch sw;
+  sw.tic();
+  // repeat to measure time
+  trellisInfo = std::vector<std::vector<Cell>>(
+      lowrate_numStates, std::vector<Cell>(lowrate_pathLength));
+
+  // initializes just the zeroth valid starting states
+  trellisInfo[0][0].pathMetric = 0;
+  trellisInfo[0][0].init = true;
+
+  // building the trellis
+  for (int stage = 0; stage < lowrate_pathLength - 1; stage++) {
+    for (int currentState = 0; currentState < lowrate_numStates;
+        currentState++) {
+      // if the state / stage is invalid, we move on
+      if (!trellisInfo[currentState][stage].init) continue;
+
+      // otherwise, we compute the relevent information
+      for (int forwardPathIndex = 0;
+          forwardPathIndex < trellis_ptr->nextStates_[0].size();
+          forwardPathIndex++) {
+        // we will only constrain to travelling on 0 path in the ending v stages
+        // if (stage >= (lowrate_pathLength - code.v - 1)) {
+        //   if (forwardPathIndex == 1) continue;
+        // }
+
+        // since our transitions correspond to symbols, the forwardPathIndex has
+        // no correlation beyond indexing the forward path
+
+        int nextState =
+            trellis_ptr->nextStates_[currentState][forwardPathIndex];
+
+        // if the nextState is invalid, we move on
+        if (nextState < 0) continue;
+
+        double branchMetric = 0;
+        
+        std::vector<int> output_point = dualdecoderutils::get_point(
+            trellis_ptr->output_[currentState][forwardPathIndex], code.n);
+
+        for (int i = 0; i < code.n; i++) {
+          if (i % code.n == shared_index) {
+            branchMetric += 0.5 * std::pow(
+                received_signal[code.n * stage + i] - (double)output_point[i], 2);
+          } else {
+            branchMetric += std::pow(
+                received_signal[code.n * stage + i] - (double)output_point[i], 2);
+          }
+          // branchMetric += std::abs(receivedMessage[lowrate_symbolLength *
+          // stage + i] - (double)output_point[i]);
+        }
+
+        double totalPathMetric =
+            branchMetric + trellisInfo[currentState][stage].pathMetric;
+
+        // dealing with cases of uninitialized states, when the transition
+        // becomes the optimal father state, and suboptimal father state, in
+        // order
+        if (!trellisInfo[nextState][stage + 1].init) {
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+          trellisInfo[nextState][stage + 1].init = true;
+        } else if (trellisInfo[nextState][stage + 1].pathMetric >
+                  totalPathMetric) {
+          trellisInfo[nextState][stage + 1].subPathMetric =
+              trellisInfo[nextState][stage + 1].pathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState =
+              trellisInfo[nextState][stage + 1].fatherState;
+          trellisInfo[nextState][stage + 1].pathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].fatherState = currentState;
+        } else {
+          trellisInfo[nextState][stage + 1].subPathMetric = totalPathMetric;
+          trellisInfo[nextState][stage + 1].subFatherState = currentState;
+        }
+      }
+    }
+  }
 
   sw.toc();
   ssv_time += sw.getElapsed();

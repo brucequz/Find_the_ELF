@@ -167,7 +167,10 @@ class DualListDecoder {
   // This function will also return the best unmatched metric if the match is not found and list size is exceeded.
   DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
-  
+  // Look ahead decoding function that stop once match is found. If the match does not yield the best metric, then return the unmatched best.
+  // This function will also return the best unmatched metric if the match is not found and list size is exceeded.
+  // This function will also only add half of the shared metric to the path metric.
+  DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
   // ------------------------------------------------  TRACEBACK FUNCTIONS  ----------------------------------------------------------
   MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
@@ -211,6 +214,12 @@ class DualListDecoder {
   std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_ProductMetric(
       const std::vector<double>& received_signal, CodeInformation code,
       FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time);
+
+  // Construct a ZTCC Trellis measuring the time taken by trellis construction (for both lists, iteratively)
+  // Uses a regular euclidean metric. This function only adds half of the shared metric to the path metric.
+  std::vector<std::vector<Cell>> ConstructZTCCTrellis_WithList_EuclideanMetric_HalfSharedMetric(
+      const std::vector<double>& received_signal, CodeInformation code,
+      FeedForwardTrellis* trellis_ptr, std::chrono::milliseconds& ssv_time, const int& shared_index);
 
   //// TBCC
   // @todo
