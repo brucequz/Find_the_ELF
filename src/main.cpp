@@ -24,38 +24,16 @@
 #include "../include/dualListDecoder.h"
 #include "../include/stopWatch.h"
 #include "../include/viterbiCodec.h"
+#include "../include/timeComplexityFunctionSimulation.h"
 // #include "mat.h"
 
 static std::random_device rd{};
-static std::mt19937 noise_gen(82);  // 82
 int seed = 33;                      // 47
 static std::mt19937 msg_gen(seed);
 
-namespace AWGN {
 
-std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
-  std::vector<double> noisyMsg;
-
-  /*
-  // the below lines break the noise generator for some compilers
-  std::random_device rd;
-  std::default_random_engine generator;
-  generator.seed( rd() ); //Now this is seeded differently each time.
-  */
-  double variance = pow(10.0, -SNR / 10.0);
-  double sigma = sqrt(variance);
-  std::normal_distribution<double> distribution(0.0, sigma);
-
-  for (int i = 0; i < modulated_signal.size(); i++) {
-    noisyMsg.push_back(modulated_signal[i] + distribution(noise_gen));
-  }
-  return noisyMsg;
-}
-
-}  // namespace AWGN
 
 namespace {
-
 struct mixed_info {
   std::vector<std::chrono::milliseconds> stepDurations;
   double DLD_decoded_portion;
@@ -120,6 +98,30 @@ double SumGroupIndexElements(const std::vector<double>& inputVector,
 }
 }  // namespace
 
+
+namespace AWGN {
+
+std::vector<double> addNoise(std::vector<int> modulated_signal, double SNR) {
+  std::vector<double> noisyMsg;
+
+  /*
+  // the below lines break the noise generator for some compilers
+  std::random_device rd;
+  std::default_random_engine generator;
+  generator.seed( rd() ); //Now this is seeded differently each time.
+  */
+  double variance = pow(10.0, -SNR / 10.0);
+  double sigma = sqrt(variance);
+  std::normal_distribution<double> distribution(0.0, sigma);
+
+  for (int i = 0; i < modulated_signal.size(); i++) {
+    noisyMsg.push_back(modulated_signal[i] + distribution(noise_gen));
+  }
+  return noisyMsg;
+}
+
+}  // namespace AWGN
+
 /*
 Functions that end with Experiment is a stand-alone experiment designed to run
 by itself Functions taht end with Decoding is a decoding function that takes in
@@ -139,6 +141,9 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
 std::chrono::milliseconds softViterbiExperiment_rate_1_3(double snr_dB,
                                                          int max_errors);
 void TimeAndComplexitySimulation_rate_1_3(double SNR);
+void TimeAndComplexitySimulation_SSV_DLD(double SNR);
+std::vector<std::chrono::milliseconds> dualListDecodeTime(double snr_dB, int max_list_size,
+                                 int max_errors);
 
 int main(int argc, char* argv[]) {
   // variables setup
@@ -190,9 +195,9 @@ int main(int argc, char* argv[]) {
 
   ////////////////////// RATE 1/3 Dual List Decoding Experiment
   /////////////////////////
-  for (double snr_dB : SNR_dB) {
-    dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
-  }
+  // for (double snr_dB : SNR_dB) {
+  //   dualListExperiment_rate_1_3(snr_dB, MAX_LIST_SIZE, 20);
+  // }
 
   ////////////////////// RATE 1/3 DSU/Mixed Decoder Experiment
   /////////////////////////
@@ -210,6 +215,10 @@ int main(int argc, char* argv[]) {
   // for (double snr_dB : SNR_dB) {
   //   TimeAndComplexitySimulation_rate_1_3(snr_dB);
   // }
+
+  for (double snr_dB : SNR_dB) {
+    TimeAndComplexitySimulation_SSV_DLD(snr_dB);
+  }
 
   ////////////////////// Find D_free //////////////////////
   // FindDFree_ADFree();
@@ -318,7 +327,7 @@ void TimeAndComplexitySimulation_rate_1_3(double SNR) {
   std::vector<std::chrono::milliseconds> mixed_insertion_time;
   std::vector<std::vector<int>> mixed_expected_list_ranks(2);
   std::vector<double> DLD_decoded_portion;
-  // SSV
+
   std::vector<std::chrono::milliseconds> standard_soft_viterbi_time;
   for (int DLD_maximum_list_size : max_list_size_vector) {
     std::cout << "Running experiments for max list size  = "
@@ -372,6 +381,79 @@ void TimeAndComplexitySimulation_rate_1_3(double SNR) {
 
   std::cout << "printing DLD decoded portion:";
   CodecUtils::print(DLD_decoded_portion);
+}
+
+void TimeAndComplexitySimulation_SSV_DLD(double SNR) {
+  std::cout << std::endl;
+  std::cout << "Simulation begin: Running for snr points " << SNR << std::endl;
+
+  // 2. number of maximum errors to accumulate
+  int max_errors = 50;
+  int list_size = 1;
+
+  // 3. DLD decoding setup
+  // int DLD_maximum_list_size = 500;
+  // std::vector<int> max_list_size_vector = {2, 5, 10, 20, 50, 100, 200, 300,
+  // 400, 500, 1000};
+  // std::vector<int> max_list_size_vector =
+  // {1100, 1200, 1300, 1400, 1500, 1800, 2000, 2200, 2300, 2500, 3000};
+  std::vector<int> max_list_size_vector = {MAX_LIST_SIZE};
+  // std::vector<int> max_list_size_vector =
+  // {1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,35,40,45,50,60,70,80,90,100,150,200,250,500,750,1000};
+  // step time recorder
+  // mixed
+  std::vector<std::chrono::milliseconds> mixed_ssv_time;
+  std::vector<std::chrono::milliseconds> reconstruct_trellis_time;
+  std::vector<std::chrono::milliseconds> mixed_insertion_time;
+  std::vector<std::chrono::milliseconds> DLD_overall_time;
+
+  std::vector<std::chrono::milliseconds> standard_soft_viterbi_time;
+  for (int DLD_maximum_list_size : max_list_size_vector) {
+    std::cout << "Running experiments for max list size  = "
+              << DLD_maximum_list_size << std::endl;
+    std::vector<std::chrono::milliseconds> result = dualListDecodeTime(
+        SNR, DLD_maximum_list_size, max_errors);
+    // record the results
+    mixed_ssv_time.push_back(result[0]);
+    reconstruct_trellis_time.push_back(result[1]);
+    mixed_insertion_time.push_back(result[2]);
+    DLD_overall_time.push_back(result[3]);
+
+    std::chrono::milliseconds softTime =
+        softViterbiExperiment_rate_1_3(SNR, max_errors);
+    standard_soft_viterbi_time.push_back(softTime);
+  }
+
+  // time printing
+  std::cout << "printing mixed ssv time: [";
+  for (std::chrono::milliseconds time : mixed_ssv_time) {
+    std::cout << time.count() << ", ";
+  }
+  std::cout << "]" << std::endl;
+
+  std::cout << "printing reconstruction trellis time: [";
+  for (std::chrono::milliseconds time : reconstruct_trellis_time) {
+    std::cout << time.count() << ", ";
+  }
+  std::cout << "]" << std::endl;
+
+  std::cout << "printing mixed insertion time: [";
+  for (std::chrono::milliseconds time : mixed_insertion_time) {
+    std::cout << time.count() << ", ";
+  }
+  std::cout << "]" << std::endl;
+
+  std::cout << "printing DLD overall time: [";
+  for (std::chrono::milliseconds time : DLD_overall_time) {
+    std::cout << time.count() << ", ";
+  }
+  std::cout << "]" << std::endl;
+
+  std::cout << "printing standard soft viterbi time: [";
+  for (std::chrono::milliseconds time : standard_soft_viterbi_time) {
+    std::cout << time.count() << ", ";
+  }
+  std::cout << "]" << std::endl;
 }
 
 std::chrono::milliseconds softViterbiExperiment(double snr_dB, int max_errors) {
@@ -1224,16 +1306,10 @@ bool dualListDecode(std::vector<double> received_signal,
 
 void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
                                  int max_errors) {
-  /*
-  function description here
-  TODO:
 
-  */
-  // output path
   std::string outputFilePath = "../output/single_symbol_metric/";
   std::ostringstream oss;
   oss << std::scientific << max_list_size;
-
   std::string scientificString = oss.str();
   std::ofstream outputFile(outputFilePath + "DLD_" + scientificString + "_" +
                            std::to_string(double(snr_dB)) + ".txt");
@@ -1241,7 +1317,6 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     std::cerr << "Failed to open the file for writing." << std::endl;
   }
 
-  /// Building Codec
   CodeInformation code;
   code.k = 1;
   code.n = 3;
@@ -1253,39 +1328,19 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   ViterbiCodec codec(code);
 
   CodeInformation code_1;
-  // 3325
-  // x^10 + x^9 + x^7 + x^6 + x^4 + x^2 + 1
-  // CC:(x^5 + x^4 + 1) 110001(binary), 61(octal), 49(decimal)
-  // CRC: (x^5 + x^2 + 1) 100101(binary), 45(octal), 37(decimal)
-
-  // 3237
-  // x^10 + x^9 + x^7 + x^4 + x^3 + x^2 + x + 1
-  // CC:(x^5 + x^4 + x + 1) 110011(binary), 63(octal), 51(decimal)
-  // CRC: (x^5 + x^2 + 1) 100101(binary), 45(octal), 37(decimal)
   code_1.k = 1;
   code_1.n = 2;
   code_1.v = HALF_V;
-  code_1.list_size = 5e4;  // This is only useful when using list decoding
-                           // functions in ViterbiCodec
-  code_1.crc_dec = CRC_A;  // 37
+  code_1.list_size = 5e4;
+  code_1.crc_dec = CRC_A;
   code_1.crc_length = CONSTRAINT_LENGTH;
-  code_1.generator_poly = {B, C};  // octal
+  code_1.generator_poly = {B, C};
 
   CodeInformation code_2;
-  // 3237
-  // x^10 + x^9 + x^7 + x^4 + x^3 + x^2 + x + 1
-  // CRC:(x^5 + x^4 + x + 1) 110011(binary), 63(octal), 51(decimal)
-  // CC: (x^5 + x^2 + 1) 100101(binary), 45(octal), 37(decimal)
-
-  // 2711
-  // x^10 + x^8 + x^7 + x^6 + x^3 + 1
-  // CRC:(x^5 + x^4 + x + 1) 110011(binary), 63(octal), 51(decimal)
-  // CC: (x^5 + x^4 + x^2 + x + 1) 110111(binary), 67(octal), 55(decimal)
   code_2.k = 1;
   code_2.n = 2;
   code_2.v = HALF_V;
-  code_2.list_size = 5e4;  // This is only useful when using list decoding
-                           // functions in ViterbiCodec
+  code_2.list_size = 5e4;
   code_2.crc_dec = CRC_C;
   code_2.crc_length = CONSTRAINT_LENGTH;
   code_2.generator_poly = {A, D};
@@ -1349,13 +1404,6 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     std::vector<double> received_signal =
         AWGN::addNoise(modulated_signal, snr_dB);
 
-    // if (number_of_trials < 1233) {
-    //   continue;
-    // }
-    // if (number_of_trials > 1233) {
-    //   break;
-    // }
-
     if (PUNCTURE) {
       for (int i = 0; i < received_signal.size(); i += 6) {
         received_signal[i + PUNC_1] = 0;
@@ -1376,21 +1424,21 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     // outputFile << std::endl;
 
     // // unleaver to unleave the bits from received_signal
-    std::vector<double> received_codec_2;
-    std::vector<double> received_codec_1;
-    for (size_t i = 0; i < received_signal.size(); ++i) {
-      if (i % 3 == 0) {
-        received_codec_2.push_back(received_signal[i]);
-        received_codec_2.push_back(received_signal[i + 1]);
-      } else if (i % 3 == 1) {
-        received_codec_1.push_back(received_signal[i]);
-        received_codec_1.push_back(received_signal[i + 1]);
-      } else {
-        continue;
-      }
-    }
-    assert(received_codec_2.size() == BLOCK_SIZE);
-    assert(received_codec_1.size() == BLOCK_SIZE);
+    // std::vector<double> received_codec_2;
+    // std::vector<double> received_codec_1;
+    // for (size_t i = 0; i < received_signal.size(); ++i) {
+    //   if (i % 3 == 0) {
+    //     received_codec_2.push_back(received_signal[i]);
+    //     received_codec_2.push_back(received_signal[i + 1]);
+    //   } else if (i % 3 == 1) {
+    //     received_codec_1.push_back(received_signal[i]);
+    //     received_codec_1.push_back(received_signal[i + 1]);
+    //   } else {
+    //     continue;
+    //   }
+    // }
+    // assert(received_codec_2.size() == BLOCK_SIZE);
+    // assert(received_codec_1.size() == BLOCK_SIZE);
 
     // std::vector<MessageInformation> output_1 =
     // codec_1.ZTCCListDecoding_fullInformation_WithConstraint(received_codec_2);
@@ -1885,7 +1933,6 @@ std::chrono::milliseconds softViterbiExperiment_rate_1_3(double snr_dB,
             << " test, with generator poly: " << code.generator_poly[0] << ", "
             << code.generator_poly[1] << " SNR = " << snr_dB << std::endl;
 
-  // TODO: This is only for a single SNR_inplementation
   std::chrono::milliseconds softDurations(0);
 
   std::cout << "Now working on snr: " << snr_dB << "-------------------"
@@ -1954,11 +2001,6 @@ std::chrono::milliseconds softViterbiExperiment_rate_1_3(double snr_dB,
       ML_decoding_error++;
       number_of_errors++;
     }
-
-    // update in the outputfile
-    // if (number_of_trials % 2000 == 0) {
-    //   outputFile << "Trial: " << number_of_trials << std::endl;
-    // }
   }
 
   std::cout << "For snr = " << snr_dB << ", " << number_of_trials
@@ -1984,4 +2026,154 @@ std::chrono::milliseconds softViterbiExperiment_rate_1_3(double snr_dB,
   std::cout << std::endl;
   // outputFile.close();
   return softDurations;
+}
+
+
+std::vector<std::chrono::milliseconds> dualListDecodeTime(double snr_dB, int max_list_size,
+                                 int max_errors) {
+
+  CodeInformation code;
+  code.k = 1;
+  code.n = 3;
+  code.v = V;
+  code.list_size = 5;
+  code.crc_dec = -1;
+  code.crc_length = -1;
+  code.generator_poly = {AB, AC, DC};  // octal
+  ViterbiCodec codec(code);
+
+  CodeInformation code_1;
+  code_1.k = 1;
+  code_1.n = 2;
+  code_1.v = HALF_V;
+  code_1.list_size = 5e4;
+  code_1.crc_dec = CRC_A;
+  code_1.crc_length = CONSTRAINT_LENGTH;
+  code_1.generator_poly = {B, C};
+
+  CodeInformation code_2;
+  code_2.k = 1;
+  code_2.n = 2;
+  code_2.v = HALF_V;
+  code_2.list_size = 5e4;
+  code_2.crc_dec = CRC_C;
+  code_2.crc_length = CONSTRAINT_LENGTH;
+  code_2.generator_poly = {A, D};
+  ViterbiCodec codec_1(code_1);
+  ViterbiCodec codec_2(code_2);
+  std::vector<CodeInformation> dld_codes = {code_1, code_2};
+  DualListDecoder DLD(code, dld_codes, max_list_size);
+
+  // Simulation begin
+  srand(seed);
+  noise_gen.seed(82);
+  int num_bits = 64;
+
+  std::vector<double> DLD_correct_vec;
+  std::vector<double> DLD_list_exceed_vec;
+  std::vector<double> DLD_error_vec;
+  std::cout << "Running DLD tests for v = " << code.v
+            << " test, with generator poly: " << code.generator_poly[0] << ", "
+            << code.generator_poly[1] << " SNR = " << snr_dB << std::endl;
+  std::cout << "Now working on snr: " << snr_dB << "-------------------"
+            << std::endl;
+
+  std::vector<int> expected_list_ranks = {0, 0};
+
+  int DLD_correct = 0;
+  int DLD_list_exceeded = 0;
+  int DLD_error = 0;
+  int SSV_error = 0;
+  int number_of_trials = 0;
+  int number_of_errors = 0;
+
+  std::vector<std::chrono::milliseconds> timeDurations(
+      4, std::chrono::milliseconds(0));
+
+  // while (number_of_errors < max_errors) {
+  while (number_of_trials < TRIALS) {
+    number_of_trials++;
+
+    if (number_of_trials % 2000 == 0) {
+      std::cout << "Trial number: " << number_of_trials << std::endl;
+      std::cout << "Current number of errors: " << number_of_errors
+                << ", SSV errors: " << SSV_error << std::endl;
+    }
+
+    std::vector<int> msg;
+    for (int i = 0; i < num_bits; ++i) {
+      int random_bit = rand() % 2;
+      msg.push_back(random_bit);
+    }
+
+    std::vector<int> encoded_msg = codec.encodeZTCC(msg);
+
+    assert(encoded_msg.size() == (msg.size() + code.v) * 3);
+
+    std::vector<int> modulated_signal = BPSK::modulate(encoded_msg);
+
+    std::vector<double> received_signal =
+        AWGN::addNoise(modulated_signal, snr_dB);
+
+    if (PUNCTURE) {
+      for (int i = 0; i < received_signal.size(); i += 6) {
+        received_signal[i + PUNC_1] = 0;
+        received_signal[i + PUNC_3] = 0;
+      }
+    }
+
+    // DLD DECODING
+    Stopwatch DLD_swatch;
+    DLD_swatch.tic();
+    DLDInfo output_DLD =
+        DLD.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(
+            received_signal, timeDurations);
+    DLD_swatch.toc();
+    timeDurations[3] += DLD_swatch.getElapsed();
+    DLD_swatch.reset();
+
+
+    if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
+      // CASE 1
+      // correct decoding
+      DLD_correct++;
+    } else if (output_DLD.message == std::vector<int>(64, -1)) {
+      // CASE 2
+      // list size exceeded
+      DLD_list_exceeded++;
+      number_of_errors++;
+    } else {
+      // CASE 3
+      // if there is an error, we save the correct message, the incorrectly
+      // decoded message, and the received signal and record the list index.
+      DLD_error++;
+      number_of_errors++;
+    }
+  }
+
+  std::cout << "DLD correct decoding: " << DLD_correct
+            << " , Percentage: " << (double)DLD_correct / number_of_trials
+            << std::endl;
+  std::cout << "DLD Exceeded list:" << DLD_list_exceeded
+            << ", Percentage: " << (double)DLD_list_exceeded / number_of_trials
+            << std::endl;
+  std::cout << "DLD wrong decoding: " << DLD_error
+            << " , Percentage: " << (double)DLD_error / number_of_trials
+            << std::endl;
+  std::cout << "SSV wrong decoding: " << SSV_error
+            << " , Percentage: " << (double)SSV_error / number_of_trials
+            << std::endl;
+
+  ///////////  End of simulation ////////////
+  std::cout << "DLD Decoder CORRECT decoding percentage: ";
+  CodecUtils::print(DLD_correct_vec);
+  std::cout << std::endl;
+  std::cout << "DLD Decoder LIST EXCEEDED decoding percentage: ";
+  CodecUtils::print(DLD_list_exceed_vec);
+  std::cout << std::endl;
+  std::cout << "DLD Decoder WRONG decoding percentage: ";
+  CodecUtils::print(DLD_error_vec);
+  std::cout << std::endl;
+
+  return timeDurations;
 }

@@ -5,9 +5,12 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <random>
 
 #include "dualListDecoder.h"
 #include "stopWatch.h"
+
+
 
 class FeedForwardTrellis;
 

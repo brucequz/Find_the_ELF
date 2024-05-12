@@ -4,10 +4,12 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <random>
 
 #include "../include/feedForwardTrellis.h"
 #include "../include/minHeap.h"
 #include "../include/stopWatch.h"
+#include "../include/CONSTANTS.h"
 
 namespace {
 
@@ -39,6 +41,7 @@ void print_best_metrics(const std::vector<std::vector<T>>& matrix) {
   }
 }
 }  // namespace
+
 namespace CodecUtils {
 
 std::vector<int> convertIntToBits(int integer, const int& length) {
