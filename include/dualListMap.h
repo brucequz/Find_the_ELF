@@ -4,6 +4,7 @@
 #include <map>
 #include <queue>
 #include <vector>
+#include <tuple>
 #include <iostream>
 
 struct MessageInformation;
@@ -13,6 +14,7 @@ struct DLDInfo {
   std::vector<int> message;
   std::vector<int> list_ranks;
   std::vector<double> received_signal;
+  std::tuple<double, double, double> symbol_metrics;
 };
 
 // Define a custom comparison function for the priority queue
@@ -29,7 +31,6 @@ class DualListMap{
     ~DualListMap() {};
 
     void insert(const MessageInformation& mi);  // insert to priority queue when agreed message is found
-    void insert(const MessageInformation& mi, double true_metric); 
     int queue_size() {return agreed_messages_.size();};
     DLDInfo pop_queue();
     DLDInfo get_top();

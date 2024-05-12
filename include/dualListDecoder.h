@@ -8,6 +8,7 @@
 #include <fstream>
 #include <climits>
 #include <chrono>
+#include <tuple>
 
 #include "minHeap.h"
 #include "dualListMap.h"
@@ -35,6 +36,7 @@ struct MessageInformation {
   int list_rank;
   int crc_passing_rank;
   bool list_size_exceeded = false;  // added, used in DLD
+  std::tuple<double, double, double> symbol_metrics;
 };
 
 struct CodeInformation {

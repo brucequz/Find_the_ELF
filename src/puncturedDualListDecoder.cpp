@@ -5,6 +5,8 @@
 #include <chrono>
 #include <cmath>
 #include <map>
+#include <numeric>
+#include <tuple>
 #include <vector>
 
 #include "../include/dualListMap.h"
@@ -33,11 +35,35 @@ std::vector<double> ComputeSquaredDifferences(
   return squaredDifferences;
 }
 
+std::vector<double> ComputeSquaredDifferences(
+    const std::vector<int>& vector1, const std::vector<double>& vector2) {
+  // Check if the vectors have the same size
+  if (vector1.size() != vector2.size()) {
+    // You can handle this error in your preferred way, e.g., throw an exception
+    throw std::invalid_argument("Vectors must have the same size");
+  }
+
+  // Calculate squared differences
+  std::vector<double> squaredDifferences;
+  squaredDifferences.reserve(vector1.size());  // Reserve space for efficiency
+
+  for (std::size_t i = 0; i < vector1.size(); ++i) {
+    double diff = vector1[i] - vector2[i];
+    squaredDifferences.push_back(diff * diff);
+  }
+
+  return squaredDifferences;
+}
+
+double sumVector(const std::vector<double>& vec) {
+  return std::accumulate(vec.begin(), vec.end(), 0.0);
+}
+
 double SumGroupIndexElements(const std::vector<double>& inputVector,
                              std::size_t groupLength, std::size_t groupIndex) {
   // Check if the length of the vector is a multiple of group length
+  
   if (inputVector.size() % groupLength != 0) {
-    // You can handle this error in your preferred way, e.g., throw an exception
     throw std::invalid_argument(
         "Vector size must be a multiple of group length");
   }
@@ -1080,14 +1106,23 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
         // BPSK modulate
         std::vector<int> reencode_codeword =
             BPSK::modulate(reencode_encoded_msg);
+        std::vector<double> reencode_squared_differences =
+          ComputeSquaredDifferences(reencode_codeword, received_signal);
+
+        double symbol1_metric = SumGroupIndexElements(reencode_squared_differences, 3, 0);
+        double symbol2_metric = SumGroupIndexElements(reencode_squared_differences, 3, 1);
+        double symbol3_metric = SumGroupIndexElements(reencode_squared_differences, 3, 2);
+        auto symbol_metrics = std::make_tuple(symbol1_metric, symbol2_metric, symbol3_metric);
+        mi_0.symbol_metrics = symbol_metrics;
+
         // compute d_hat
-        d_hat = dualdecoderutils::euclideanDistance(received_signal,
-                                                    reencode_codeword);
+        d_hat = symbol1_metric + symbol2_metric + symbol3_metric;
         mi_0.path_metric = d_hat;
         mp.insert(mi_0);
         if (d_hat < best_current_match) {
           unmatched_best.combined_metric = d_hat;
           unmatched_best.message = mi_0.message;
+          unmatched_best.symbol_metrics = symbol_metrics;
           unmatched_best.list_ranks = {mi_0.list_rank, max_path_to_search_};
           unmatched_best.received_signal = received_signal;
           best_current_match = d_hat;
@@ -1122,14 +1157,23 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
         // BPSK modulate
         std::vector<int> reencode_codeword =
             BPSK::modulate(reencode_encoded_msg);
-        // compute d_hatx
-        d_hat = dualdecoderutils::euclideanDistance(received_signal,
-                                                    reencode_codeword);
+        std::vector<double> reencode_squared_differences =
+          ComputeSquaredDifferences(reencode_codeword, received_signal);
+
+        double symbol1_metric = SumGroupIndexElements(reencode_squared_differences, 3, 0);
+        double symbol2_metric = SumGroupIndexElements(reencode_squared_differences, 3, 1);
+        double symbol3_metric = SumGroupIndexElements(reencode_squared_differences, 3, 2);
+        auto symbol_metrics = std::make_tuple(symbol1_metric, symbol2_metric, symbol3_metric);
+        mi_1.symbol_metrics = symbol_metrics;
+
+        // compute d_hat
+        d_hat = symbol1_metric + symbol2_metric + symbol3_metric;
         mi_1.path_metric = d_hat;
         mp.insert(mi_1);
         if (d_hat < best_current_match) {
           unmatched_best.combined_metric = d_hat;
           unmatched_best.message = mi_1.message;
+          unmatched_best.symbol_metrics = symbol_metrics;
           unmatched_best.list_ranks = {max_path_to_search_, mi_1.list_rank};
           unmatched_best.received_signal = received_signal;
           best_current_match = d_hat;
@@ -1221,9 +1265,9 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
   output.push_back(output_0);
   output.push_back(output_1);
   if (unmatched_best.combined_metric != INT_MAX) {
-    std::cout << "No agreed message found, but unmatched best found" << std::endl;
-    std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
-    std::cout << "unmatched best list ranks: " << unmatched_best.list_ranks[0] << ", " << unmatched_best.list_ranks[1] << std::endl;
+    // std::cout << "No agreed message found, but unmatched best found" << std::endl;
+    // std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
+    // std::cout << "unmatched best list ranks: " << unmatched_best.list_ranks[0] << ", " << unmatched_best.list_ranks[1] << std::endl;
     delete heap_list_0;
     delete heap_list_1;
     heap_list_0 = nullptr;
@@ -1391,14 +1435,22 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
         std::vector<int> reencode_encoded_msg =
             encoder_trellis_ptr_->encode(reencode_message);
 
-        // TODO: add the 
-
         // BPSK modulate
         std::vector<int> reencode_codeword =
             BPSK::modulate(reencode_encoded_msg);
+
+        std::vector<double> reencode_squared_differences =
+          ComputeSquaredDifferences(reencode_codeword, received_signal);
+
+        double symbol1_metric = SumGroupIndexElements(reencode_squared_differences, 3, 0);
+        double symbol2_metric = SumGroupIndexElements(reencode_squared_differences, 3, 1);
+        double symbol3_metric = SumGroupIndexElements(reencode_squared_differences, 3, 2);
+        auto symbol_metrics = std::make_tuple(symbol1_metric, symbol2_metric, symbol3_metric);
+        mi_0.symbol_metrics = symbol_metrics;
+
         // compute d_hat
-        d_hat = dualdecoderutils::euclideanDistance(received_signal,
-                                                    reencode_codeword);
+        d_hat = symbol1_metric + symbol2_metric + symbol3_metric;
+        
         mi_0.path_metric = d_hat;
         mp.insert(mi_0);
         if (d_hat < best_current_match) {
@@ -1406,6 +1458,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
           unmatched_best.message = mi_0.message;
           unmatched_best.list_ranks = {mi_0.list_rank, max_path_to_search_};
           unmatched_best.received_signal = received_signal;
+          unmatched_best.symbol_metrics = symbol_metrics;
           best_current_match = d_hat;
         }
         // best_current_match = (best_current_match > d_hat) ? d_hat : best_current_match;
@@ -1421,6 +1474,8 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
       MessageInformation mi_1 = TraceBack_Single(
           heap_list_1, code_1, trellis_ptrs_[1], trellis_1, prev_paths_list_1,
           num_path_searched_1, num_total_stages_1);
+
+      // std::cout << "mi_1 metric: " << mi_1.path_metric << std::endl;
 
       mi_1.decoder_index = 1;
       if (!mi_1.list_size_exceeded) {
@@ -1438,9 +1493,19 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
         // BPSK modulate
         std::vector<int> reencode_codeword =
             BPSK::modulate(reencode_encoded_msg);
-        // compute d_hatx
-        d_hat = dualdecoderutils::euclideanDistance(received_signal,
-                                                    reencode_codeword);
+
+        std::vector<double> reencode_squared_differences =
+          ComputeSquaredDifferences(reencode_codeword, received_signal);
+
+        double symbol1_metric = SumGroupIndexElements(reencode_squared_differences, 3, 0);
+        double symbol2_metric = SumGroupIndexElements(reencode_squared_differences, 3, 1);
+        double symbol3_metric = SumGroupIndexElements(reencode_squared_differences, 3, 2);
+        auto symbol_metrics = std::make_tuple(symbol1_metric, symbol2_metric, symbol3_metric);
+        mi_1.symbol_metrics = symbol_metrics;
+
+        // compute d_hat
+        d_hat = symbol1_metric + symbol2_metric + symbol3_metric;
+
         mi_1.path_metric = d_hat;
         mp.insert(mi_1);
         if (d_hat < best_current_match) {
@@ -1448,6 +1513,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
           unmatched_best.message = mi_1.message;
           unmatched_best.list_ranks = {max_path_to_search_, mi_1.list_rank};
           unmatched_best.received_signal = received_signal;
+          unmatched_best.symbol_metrics = symbol_metrics;
           best_current_match = d_hat;
         }
         // best_current_match = (best_current_match > d_hat) ? d_hat : best_current_match;
@@ -1471,8 +1537,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
           heap_list_0 = nullptr;
           heap_list_1 = nullptr;
           return attemp_message;
-        } 
-        else {
+        } else {
           // return the code with the best metric so far
           // but obviously it is un-matched
           assert(unmatched_best.combined_metric != INT_MAX);
@@ -1540,6 +1605,7 @@ DLDInfo DualListDecoder::LookAheadDecode_SimpleAlternate_StopOnceMatchFound_With
     // std::cout << "No agreed message found, but unmatched best found" << std::endl;
     // std::cout << "Best metric: " << unmatched_best.combined_metric << std::endl;
     // std::cout << "unmatched best list ranks: " << unmatched_best.list_ranks[0] << ", " << unmatched_best.list_ranks[1] << std::endl;
+    // std::cout << "unmatched best symbol metrics: " << std::get<0>(unmatched_best.symbol_metrics) << ", " << std::get<1>(unmatched_best.symbol_metrics) << ", " << std::get<2>(unmatched_best.symbol_metrics) << std::endl;
     delete heap_list_0;
     delete heap_list_1;
     heap_list_0 = nullptr;

@@ -18,11 +18,12 @@
 #include <queue>
 #include <random>
 #include <sstream>
+#include <tuple>
 
+#include "../include/CONSTANTS.h"
 #include "../include/dualListDecoder.h"
 #include "../include/stopWatch.h"
 #include "../include/viterbiCodec.h"
-#include "../include/CONSTANTS.h"
 // #include "mat.h"
 
 static std::random_device rd{};
@@ -78,6 +79,44 @@ void print(const std::vector<std::vector<T>>& matrix) {
     }
     std::cout << ";" << std::endl;
   }
+}
+
+std::vector<double> ComputeSquaredDifferences(
+    const std::vector<int>& vector1, const std::vector<double>& vector2) {
+  // Check if the vectors have the same size
+  if (vector1.size() != vector2.size()) {
+    // You can handle this error in your preferred way, e.g., throw an exception
+    throw std::invalid_argument("Vectors must have the same size");
+  }
+
+  // Calculate squared differences
+  std::vector<double> squaredDifferences;
+  squaredDifferences.reserve(vector1.size());  // Reserve space for efficiency
+
+  for (std::size_t i = 0; i < vector1.size(); ++i) {
+    double diff = vector1[i] - vector2[i];
+    squaredDifferences.push_back(diff * diff);
+  }
+
+  return squaredDifferences;
+}
+
+double SumGroupIndexElements(const std::vector<double>& inputVector,
+                             std::size_t groupLength, std::size_t groupIndex) {
+  // Check if the length of the vector is a multiple of group length
+
+  if (inputVector.size() % groupLength != 0) {
+    throw std::invalid_argument(
+        "Vector size must be a multiple of group length");
+  }
+
+  // Sum together every element of the specified group index in every group
+  double sum = 0.0;
+  for (std::size_t i = groupIndex; i < inputVector.size(); i += groupLength) {
+    sum += inputVector[i];
+  }
+
+  return sum;
 }
 }  // namespace
 
@@ -461,7 +500,8 @@ std::chrono::milliseconds softViterbiExperiment(double snr_dB, int max_errors) {
   return softDurations;
 }
 
-mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max_errors) {
+mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size,
+                                   int max_errors) {
   /*
   function description here
   TODO:
@@ -473,13 +513,14 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   // oss << std::scientific << maximum_list_size;
 
   // std::string scientificString = oss.str();
-  // std::ofstream outputFile(outputFilePath + "Mixed_" + scientificString + "_" +
+  // std::ofstream outputFile(outputFilePath + "Mixed_" + scientificString + "_"
+  // +
   //                          std::to_string(int(SNR_dB.front())) + "-" +
   //                          std::to_string(int(SNR_dB.back())) + ".txt");
   // if (!outputFile.is_open()) {
   //   std::cerr << "Failed to open the file for writing." << std::endl;
   // }
-  
+
   // return
   mixed_info result;
 
@@ -549,7 +590,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
             << " test, with generator poly: " << code.generator_poly[0] << ", "
             << code.generator_poly[1] << " SNR = " << snr_dB << std::endl;
 
-  std::vector<std::chrono::milliseconds> stepTimeDurations(3, std::chrono::milliseconds(0));
+  std::vector<std::chrono::milliseconds> stepTimeDurations(
+      3, std::chrono::milliseconds(0));
   std::vector<int> expected_list_ranks = {1, 1};
   // vector to keep track of list sizes for both decoders
   std::vector<int> DLD_list_0_size;
@@ -560,7 +602,7 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 
   std::cout << "Now working on snr: " << snr_dB << "-------------------"
             << std::endl;
-  
+
   int SSV_correct = 0;
   int SSV_error = 0;
   int DLD_correct = 0;
@@ -569,15 +611,16 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 
   std::vector<double> received_to_decoded_dist;
   std::vector<double> received_to_correct_dist;
-  
+
   // measure the time of each operation
-  // step1: SSV_list_1: time taken to add-compare-select and perform the initial trace-back
-  // step2: C_trace_1: time taken for additional traaceback opearations required by SLVD
-  // step3: C_insert_1: time taken of inserting new elements to maintain an ordered list of path metric differences
+  // step1: SSV_list_1: time taken to add-compare-select and perform the initial
+  // trace-back step2: C_trace_1: time taken for additional traaceback
+  // opearations required by SLVD step3: C_insert_1: time taken of inserting new
+  // elements to maintain an ordered list of path metric differences
 
-  //std::chrono::milliseconds softDurations(0);
+  // std::chrono::milliseconds softDurations(0);
 
-  //while (number_of_errors < max_errors) {
+  // while (number_of_errors < max_errors) {
   while (number_of_trials < 10000) {
     number_of_trials++;
 
@@ -616,13 +659,15 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
     // outputFile << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.AdaptiveDecode_SimpleAlternate(received_signal, stepTimeDurations);
+    DLDInfo output_DLD =
+        DLD.AdaptiveDecode_SimpleAlternate(received_signal, stepTimeDurations);
 
     // if DLD declares List size exceeded
     // then resort to soft viterbi decoding
-    if (output_DLD.message == std::vector<int>(64,-1)) {
-      //std::cout << "List size EXCEEDED! Running SSV Now!" << std::endl;
-      MessageInformation output_SSV = codec.softViterbiDecoding(received_signal, stepTimeDurations[1]);
+    if (output_DLD.message == std::vector<int>(64, -1)) {
+      // std::cout << "List size EXCEEDED! Running SSV Now!" << std::endl;
+      MessageInformation output_SSV =
+          codec.softViterbiDecoding(received_signal, stepTimeDurations[1]);
       if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
         SSV_correct++;
       } else {
@@ -664,27 +709,30 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
     // }
   }
 
-
-
   ////////  DLD Decoding Statistics /////////
   // record the time taken by each step
   for (size_t i = 0; i < stepTimeDurations.size(); ++i) {
-    std::cout << "Step " << i + 1 << " Runtime: " << stepTimeDurations[i].count() << " milliseconds" << std::endl;
+    std::cout << "Step " << i + 1
+              << " Runtime: " << stepTimeDurations[i].count() << " milliseconds"
+              << std::endl;
   }
-  
-  std::cout << "Out of " << number_of_trials << " experiments, " 
-            << DLD_list_0_size.size() << " experiments were recorded to have DLD list sizes." << std::endl;
-  
+
+  std::cout << "Out of " << number_of_trials << " experiments, "
+            << DLD_list_0_size.size()
+            << " experiments were recorded to have DLD list sizes."
+            << std::endl;
 
   // convert double to number with 2 digits precision
   std::ostringstream stream;
   stream << std::fixed << std::setprecision(2) << snr_dB;
   std::string snr_string = stream.str();
-  
-  std::string DLDList0_location = "../output/smaller_example/" + std::to_string(int(maximum_list_size)) + "_" + snr_string + "_list0.txt";
+
+  std::string DLDList0_location = "../output/smaller_example/" +
+                                  std::to_string(int(maximum_list_size)) + "_" +
+                                  snr_string + "_list0.txt";
   std::ofstream outputDLDList0(DLDList0_location);
   if (outputDLDList0.is_open()) {
-    for (const auto& element: DLD_list_0_size) {
+    for (const auto& element : DLD_list_0_size) {
       outputDLDList0 << element << "\n";
     }
     outputDLDList0.close();
@@ -693,10 +741,12 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
     std::cerr << "Error opening the file!" << std::endl;
   }
 
-  std::string DLDList1_location = "../output/smaller_example/" +std::to_string(int(maximum_list_size)) + "_" + snr_string + "_list1.txt";
+  std::string DLDList1_location = "../output/smaller_example/" +
+                                  std::to_string(int(maximum_list_size)) + "_" +
+                                  snr_string + "_list1.txt";
   std::ofstream outputDLDList1(DLDList1_location);
   if (outputDLDList1.is_open()) {
-    for (const auto& element: DLD_list_1_size) {
+    for (const auto& element : DLD_list_1_size) {
       outputDLDList1 << element << "\n";
     }
     outputDLDList1.close();
@@ -704,16 +754,18 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   } else {
     std::cerr << "Error opening the file!" << std::endl;
   }
-  
-  std::cout << "Debug: DLD list 0 size: " << DLD_list_0_size.size() << std::endl; 
+
+  std::cout << "Debug: DLD list 0 size: " << DLD_list_0_size.size()
+            << std::endl;
   for (int j = 0; j < expected_list_ranks.size(); ++j) {
     expected_list_ranks[j] /= DLD_list_0_size.size();
   }
   std::cout << "DLD correct decoding: " << DLD_correct
             << " , Percentage: " << (double)DLD_correct / number_of_trials
             << std::endl;
-  std::cout << "DLD Exceeded list:" << DLD_list_exceeded << ", Percentage: "
-            << (double)DLD_list_exceeded / number_of_trials << std::endl;
+  std::cout << "DLD Exceeded list:" << DLD_list_exceeded
+            << ", Percentage: " << (double)DLD_list_exceeded / number_of_trials
+            << std::endl;
   std::cout << "DLD wrong decoding: " << DLD_error
             << " , Percentage: " << (double)DLD_error / number_of_trials
             << std::endl;
@@ -723,14 +775,14 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   std::cout << "SSV wrong decoding: " << SSV_error
             << " , Percentage: " << (double)SSV_error / number_of_trials
             << std::endl;
-  
+
   std::cout << "Expected list ranks: [ " << expected_list_ranks[0] << ", "
             << expected_list_ranks[1] << " ]" << std::endl;
-  
-  DLD_correct_vec.push_back((double)(DLD_correct+SSV_correct) / number_of_trials);
+
+  DLD_correct_vec.push_back((double)(DLD_correct + SSV_correct) /
+                            number_of_trials);
   DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
   DLD_error_vec.push_back((double)DLD_error / number_of_trials);
-  
 
   ///////////  End of simulation ////////////
   std::cout << "Mixed Decoder CORRECT decoding percentage: ";
@@ -743,15 +795,14 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
   CodecUtils::print(DLD_error_vec);
   std::cout << std::endl;
   // outputFile.close();
-  
 
   // package result
   result.stepDurations = stepTimeDurations;
-  result.DLD_decoded_portion = (double)DLD_list_0_size.size()/number_of_trials;
+  result.DLD_decoded_portion =
+      (double)DLD_list_0_size.size() / number_of_trials;
   result.DLD_expected_list_sizes = expected_list_ranks;
   return result;
 }
-
 
 // Mixed New
 // mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size,
@@ -767,7 +818,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   // oss << std::scientific << maximum_list_size;
 
 //   // std::string scientificString = oss.str();
-//   // std::ofstream outputFile(outputFilePath + "Mixed_" + scientificString + "_"
+//   // std::ofstream outputFile(outputFilePath + "Mixed_" + scientificString +
+//   "_"
 //   // +
 //   //                          std::to_string(int(SNR_dB.front())) + "-" +
 //   //                          std::to_string(int(SNR_dB.back())) + ".txt");
@@ -787,7 +839,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   code.crc_dec = -1;
 //   code.crc_length = -1;
 //   code.generator_poly = {3345,
-//                          3613};  // octal // might want to try {3345 and 3613}
+//                          3613};  // octal // might want to try {3345 and
+//                          3613}
 //   ViterbiCodec codec(code);
 
 //   CodeInformation code_1;
@@ -850,7 +903,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   std::vector<double> DLD_error_vec;
 
 //   std::cout << "Running DLD tests for v = " << code.v
-//             << " test, with generator poly: " << code.generator_poly[0] << ", "
+//             << " test, with generator poly: " << code.generator_poly[0] << ",
+//             "
 //             << code.generator_poly[1] << " SNR = " << snr_dB << std::endl;
 
 //   std::cout << "DLD order: g1 = " << code_1.generator_poly[0]
@@ -879,9 +933,11 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   std::vector<double> received_to_correct_dist;
 
 //   // measure the time of each operation
-//   // step1: SSV_list_1: time taken to add-compare-select and perform the initial
+//   // step1: SSV_list_1: time taken to add-compare-select and perform the
+//   initial
 //   // trace-back step2: C_trace_1: time taken for additional traaceback
-//   // opearations required by SLVD step3: C_insert_1: time taken of inserting new
+//   // opearations required by SLVD step3: C_insert_1: time taken of inserting
+//   new
 //   // elements to maintain an ordered list of path metric differences
 
 //   // std::chrono::milliseconds softDurations(0);
@@ -957,15 +1013,17 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //     } else if (output_DLD.message == std::vector<int>(64, -1)) {
 //       // CASE 2
 //       // list size exceeded
-//       // we save the message, received_signal and record the maximum list size
-//       std::cerr << "THIS IS INCORRECT, UNANTICIPATED BEHAVIOR!!!" << std::endl;
+//       // we save the message, received_signal and record the maximum list
+//       size std::cerr << "THIS IS INCORRECT, UNANTICIPATED BEHAVIOR!!!" <<
+//       std::endl;
 //     } else {
 //       // CASE 3
 //       // if there is an error, we save the correct message, the incorrectly
 //       // decoded message, and the received signal and record the list index.
 //       DLD_error++;
 //       number_of_errors++;
-//       std::cerr << "DLD decode find something, but it's incorrect" << std::endl;
+//       std::cerr << "DLD decode find something, but it's incorrect" <<
+//       std::endl;
 //     }
 
 //     // update list ranks
@@ -983,7 +1041,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   // record the time taken by each step
 //   for (size_t i = 0; i < stepTimeDurations.size(); ++i) {
 //     std::cout << "Step " << i + 1
-//               << " Runtime: " << stepTimeDurations[i].count() << " milliseconds"
+//               << " Runtime: " << stepTimeDurations[i].count() << "
+//               milliseconds"
 //               << std::endl;
 //   }
 
@@ -998,8 +1057,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   std::string snr_string = stream.str();
 
 //   std::string DLDList0_location = "../output/smaller_example/" +
-//                                   std::to_string(int(maximum_list_size)) + "_" +
-//                                   snr_string + "_list0.txt";
+//                                   std::to_string(int(maximum_list_size)) +
+//                                   "_" + snr_string + "_list0.txt";
 //   std::ofstream outputDLDList0(DLDList0_location);
 //   if (outputDLDList0.is_open()) {
 //     for (const auto& element : DLD_list_0_size) {
@@ -1012,8 +1071,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //   }
 
 //   std::string DLDList1_location = "../output/smaller_example/" +
-//                                   std::to_string(int(maximum_list_size)) + "_" +
-//                                   snr_string + "_list1.txt";
+//                                   std::to_string(int(maximum_list_size)) +
+//                                   "_" + snr_string + "_list1.txt";
 //   std::ofstream outputDLDList1(DLDList1_location);
 //   if (outputDLDList1.is_open()) {
 //     for (const auto& element : DLD_list_1_size) {
@@ -1034,7 +1093,8 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 //             << " , Percentage: " << (double)DLD_correct / number_of_trials
 //             << std::endl;
 //   std::cout << "DLD Exceeded list:" << DLD_list_exceeded
-//             << ", Percentage: " << (double)DLD_list_exceeded / number_of_trials
+//             << ", Percentage: " << (double)DLD_list_exceeded /
+//             number_of_trials
 //             << std::endl;
 //   std::cout << "DLD wrong decoding: " << DLD_error
 //             << " , Percentage: " << (double)DLD_error / number_of_trials
@@ -1051,8 +1111,9 @@ mixed_info mixedDualListExperiment(double snr_dB, int maximum_list_size, int max
 
 //   DLD_correct_vec.push_back((double)(DLD_correct + SSV_correct) /
 //                             number_of_trials);
-//   DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
-//   DLD_error_vec.push_back((double)DLD_error + SSV_error / number_of_trials);
+//   DLD_list_exceed_vec.push_back((double)DLD_list_exceeded /
+//   number_of_trials); DLD_error_vec.push_back((double)DLD_error + SSV_error /
+//   number_of_trials);
 
 //   ///////////  End of simulation ////////////
 //   std::cout << "Mixed Decoder CORRECT decoding percentage: ";
@@ -1169,16 +1230,16 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
 
   */
   // output path
-  // std::string outputFilePath = "../output/list_size_exceeded/";
-  // std::ostringstream oss;
-  // oss << std::scientific << max_list_size;
+  std::string outputFilePath = "../output/single_symbol_metric/";
+  std::ostringstream oss;
+  oss << std::scientific << max_list_size;
 
-  // std::string scientificString = oss.str();
-  // std::ofstream outputFile(outputFilePath + "DLD_" + scientificString + "_" +
-  //                          std::to_string(double(snr_dB))+ ".txt");
-  // if (!outputFile.is_open()) {
-  //   std::cerr << "Failed to open the file for writing." << std::endl;
-  // }
+  std::string scientificString = oss.str();
+  std::ofstream outputFile(outputFilePath + "DLD_" + scientificString + "_" +
+                           std::to_string(double(snr_dB)) + ".txt");
+  if (!outputFile.is_open()) {
+    std::cerr << "Failed to open the file for writing." << std::endl;
+  }
 
   /// Building Codec
   CodeInformation code;
@@ -1228,10 +1289,8 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   code_2.crc_dec = CRC_C;
   code_2.crc_length = CONSTRAINT_LENGTH;
   code_2.generator_poly = {A, D};
-
   ViterbiCodec codec_1(code_1);
   ViterbiCodec codec_2(code_2);
-
   std::vector<CodeInformation> dld_codes = {code_1, code_2};
   DualListDecoder DLD(code, dld_codes, max_list_size);
 
@@ -1243,11 +1302,9 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   std::vector<double> DLD_correct_vec;
   std::vector<double> DLD_list_exceed_vec;
   std::vector<double> DLD_error_vec;
-
   std::cout << "Running DLD tests for v = " << code.v
             << " test, with generator poly: " << code.generator_poly[0] << ", "
             << code.generator_poly[1] << " SNR = " << snr_dB << std::endl;
-
   std::cout << "Now working on snr: " << snr_dB << "-------------------"
             << std::endl;
 
@@ -1256,21 +1313,12 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   int DLD_correct = 0;
   int DLD_list_exceeded = 0;
   int DLD_error = 0;
-
   int SSV_error = 0;
-
-  // vector to keep track of list sizes for both decoders
-  std::vector<int> DLD_list_0_size;
-  std::vector<int> DLD_list_1_size;
-
   int number_of_trials = 0;
   int number_of_errors = 0;
 
-  std::vector<double> received_to_decoded_dist;
-  std::vector<double> received_to_correct_dist;
-
-  std::vector<double> metric_0((K + code.v) * 3, 0.0);
-  std::vector<double> metric_1((K + code.v) * 3, 0.0);
+  std::vector<std::tuple<double, double, double>> DLD_faiiled_symbol_metrics;
+  std::vector<std::tuple<double, double, double>> DLD_succeeded_symbol_metrics; 
 
   std::vector<std::chrono::milliseconds> timeDurations(
       4, std::chrono::milliseconds(0));
@@ -1283,8 +1331,7 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     if (number_of_trials % 2000 == 0) {
       std::cout << "Trial number: " << number_of_trials << std::endl;
       std::cout << "Current number of errors: " << number_of_errors
-                << ", SSV errors: " << SSV_error
-                << std::endl;
+                << ", SSV errors: " << SSV_error << std::endl;
     }
 
     std::vector<int> msg;
@@ -1302,10 +1349,10 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     std::vector<double> received_signal =
         AWGN::addNoise(modulated_signal, snr_dB);
 
-    // if (number_of_trials < 5) {
+    // if (number_of_trials < 1233) {
     //   continue;
     // }
-    // if (number_of_trials > 5) {
+    // if (number_of_trials > 1233) {
     //   break;
     // }
 
@@ -1314,11 +1361,6 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
         received_signal[i + PUNC_1] = 0;
         received_signal[i + PUNC_3] = 0;
       }
-    }
-
-    for (int i = 0; i < received_signal.size(); i++) {
-      metric_0[i] = std::pow(1.0 - received_signal[i], 2);
-      metric_1[i] = std::pow(-1.0 - received_signal[i], 2);
     }
 
     // // Using ZTCC list decoding to verify my result
@@ -1334,21 +1376,21 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     // outputFile << std::endl;
 
     // // unleaver to unleave the bits from received_signal
-    // std::vector<double> received_codec_2;
-    // std::vector<double> received_codec_1;
-    // for (size_t i = 0; i < received_signal.size(); ++i) {
-    //   if (i % 3 == 0) {
-    //     received_codec_2.push_back(received_signal[i]);
-    //     received_codec_2.push_back(received_signal[i+1]);
-    //   } else if (i % 3 == 1) {
-    //     received_codec_1.push_back(received_signal[i]);
-    //     received_codec_1.push_back(received_signal[i+1]);
-    //   } else {
-    //     continue;
-    //   }
-    // }
-    // assert(received_codec_2.size() == 148);
-    // assert(received_codec_1.size() == 148);
+    std::vector<double> received_codec_2;
+    std::vector<double> received_codec_1;
+    for (size_t i = 0; i < received_signal.size(); ++i) {
+      if (i % 3 == 0) {
+        received_codec_2.push_back(received_signal[i]);
+        received_codec_2.push_back(received_signal[i + 1]);
+      } else if (i % 3 == 1) {
+        received_codec_1.push_back(received_signal[i]);
+        received_codec_1.push_back(received_signal[i + 1]);
+      } else {
+        continue;
+      }
+    }
+    assert(received_codec_2.size() == BLOCK_SIZE);
+    assert(received_codec_1.size() == BLOCK_SIZE);
 
     // std::vector<MessageInformation> output_1 =
     // codec_1.ZTCCListDecoding_fullInformation_WithConstraint(received_codec_2);
@@ -1375,58 +1417,89 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
     // outputFile << std::endl;
 
     // DLD DECODING
-    DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(
-        received_signal, timeDurations);
-
-    // we save the list ranks
-    DLD_list_0_size.push_back(output_DLD.list_ranks[0]);
-    DLD_list_1_size.push_back(output_DLD.list_ranks[1]);
+    DLDInfo output_DLD =
+        DLD.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(
+            received_signal, timeDurations);
 
     if (CodecUtils::areVectorsEqual(output_DLD.message, msg)) {
       // CASE 1
       // correct decoding
-      received_to_correct_dist.push_back(output_DLD.combined_metric);
-      received_to_decoded_dist.push_back(output_DLD.combined_metric);
       DLD_correct++;
-      // MessageInformation output_SSV =
-      //     codec.softViterbiDecoding(received_signal, timeDurations[1]);
-      // if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
-      //   // std::cout << "trial number: " << number_of_trials << std::endl;
-      //   // std::cout << "DLD makes an undectected error, now trying SSV"
-      //   //           << std::endl;
-      //   std::cout << "SSV decodes correctly" << std::endl;
-      //   std::cout << "DLD metric: " << output_DLD.combined_metric << std::endl;
-      //   std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
-      // }
+
+      DLD_succeeded_symbol_metrics.push_back(output_DLD.symbol_metrics);
     } else if (output_DLD.message == std::vector<int>(64, -1)) {
       // CASE 2
       // list size exceeded
       DLD_list_exceeded++;
       number_of_errors++;
-
     } else {
       // CASE 3
       // if there is an error, we save the correct message, the incorrectly
       // decoded message, and the received signal and record the list index.
       DLD_error++;
       number_of_errors++;
-      // std::cout << "DLD decoding error!" << std::endl;
+      // std::cout << "1x List size symbol metric: "
+      //           << std::get<0>(output_DLD.symbol_metrics) << ", "
+      //           << std::get<1>(output_DLD.symbol_metrics) << ", "
+      //           << std::get<2>(output_DLD.symbol_metrics) << std::endl;
+      // std::cout << "DLD list 1 metric: "
+      //           << std::get<0>(output_DLD.symbol_metrics) +
+      //                  std::get<1>(output_DLD.symbol_metrics)
+      //           << ", DLD List 2 metric:"
+      //           << std::get<1>(output_DLD.symbol_metrics) +
+      //                  std::get<2>(output_DLD.symbol_metrics)
+      //           << std::endl;
+
       MessageInformation output_SSV =
           codec.softViterbiDecoding(received_signal, timeDurations[1]);
       if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
-        // std::cout << "trial number: " << number_of_trials << std::endl;
-        // std::cout << "DLD makes an undectected error, now trying SSV"
-        //           << std::endl;
+      //   // std::cout << "trial number: " << number_of_trials << std::endl;
+      //   // std::cout << "DLD makes an undectected error, now trying SSV"
+      //   //           << std::endl;
         std::cout << "SSV decodes correctly" << std::endl;
-        std::cout << "DLD metric: " << output_DLD.combined_metric << std::endl;
-        std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
+      //   // std::cout << "DLD metric: " << output_DLD.combined_metric << std::endl;
+      //   // std::cout << "SSV metrics: " << output_SSV.path_metric << std::endl;
 
+      //   std::vector<int> reencoded_msg = codec.encodeZTCC(output_SSV.message);
+      //   assert(reencoded_msg.size() == received_signal.size());
+
+      //   std::vector<int> reencoded_signal = BPSK::modulate(reencoded_msg);
+
+      //   std::vector<double> reencode_squared_differences =
+      //       ComputeSquaredDifferences(reencoded_signal, received_signal);
+
+        // double symbol1_metric =
+        //     SumGroupIndexElements(reencode_squared_differences, 3, 0);
+        // double symbol2_metric =
+        //     SumGroupIndexElements(reencode_squared_differences, 3, 1);
+        // double symbol3_metric =
+        //     SumGroupIndexElements(reencode_squared_differences, 3, 2);
+        // auto symbol_metrics =
+        //     std::make_tuple(symbol1_metric, symbol2_metric, symbol3_metric);
+        // // std::cout << "SSV symbol metric: " << symbol1_metric << ", "
+        // //           << symbol2_metric << ", " << symbol3_metric << std::endl;
+
+        // DLD_faiiled_symbol_metrics.push_back(symbol_metrics);
         // DualListDecoder DLD_Extra_LS(code, dld_codes, 10*max_list_size);
-        // DLDInfo output_DLD_LS = DLD_Extra_LS.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(
+        // DLDInfo output_DLD_LS =
+        // DLD_Extra_LS.LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(
         //     received_signal, timeDurations);
         // if (CodecUtils::areVectorsEqual(output_DLD_LS.message, msg)) {
         //   std::cout << "DLD Extra LS metric: "
-        //             << output_DLD_LS.combined_metric << ", DLD Extra LS decoding success!" << std::endl;
+        //             << output_DLD_LS.combined_metric << ", DLD Extra LS
+        //             decoding success!" << std::endl;
+        //   std::cout << "10x symbol metric: " <<
+        //   std::get<0>(output_DLD_LS.symbol_metrics) << ", " <<
+        //   std::get<1>(output_DLD_LS.symbol_metrics)
+        //             << ", " << std::get<2>(output_DLD_LS.symbol_metrics) <<
+        //             std::endl;
+        //   std::cout << "DLD list 1 metric: " <<
+        //   std::get<0>(output_DLD_LS.symbol_metrics) +
+        //   0.5*std::get<1>(output_DLD_LS.symbol_metrics) << ", DLD List 2
+        //   metric:"
+        //             << std::get<1>(output_DLD_LS.symbol_metrics) +
+        //             0.5*std::get<2>(output_DLD_LS.symbol_metrics) <<
+        //             std::endl;
         // } else {
         //   std::cout << "DLD Extra LS decoding error!" << std::endl;
         // }
@@ -1434,17 +1507,8 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
         SSV_error++;
       }
     }
-
-    // update list ranks
-    for (int i = 0; i < expected_list_ranks.size(); ++i) {
-      expected_list_ranks[i] += output_DLD.list_ranks[i];
-    }
   }
 
-
-  for (int j = 0; j < expected_list_ranks.size(); ++j) {
-    expected_list_ranks[j] /= number_of_trials;
-  }
   std::cout << "DLD correct decoding: " << DLD_correct
             << " , Percentage: " << (double)DLD_correct / number_of_trials
             << std::endl;
@@ -1456,24 +1520,28 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
             << std::endl;
 
   std::cout << "SSV wrong decoding: " << SSV_error
-          << " , Percentage: " << (double)SSV_error / number_of_trials
-          << std::endl;
+            << " , Percentage: " << (double)SSV_error / number_of_trials
+            << std::endl;
 
-  std::cout << "expected list ranks: [ " << expected_list_ranks[0] << ", "
-            << expected_list_ranks[1] << " ]" << std::endl;
+  // DLD_correct_vec.push_back((double)DLD_correct / number_of_trials);
+  // DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
+  // DLD_error_vec.push_back((double)DLD_error / number_of_trials);
 
-  // distance spectrum statistics
-  // std::cout << "List ranks spectrum data: " << std::endl;
-  // std::cout << "  List 0: ";
-  // CodecUtils::printMat(DLD_list_0_size);
-  // std::cout << std::endl;
-  // std::cout << "  List 1: ";
-  // CodecUtils::printMat(DLD_list_1_size);
-  // std::cout << std::endl;
+  // if (outputFile.is_open()) {
+  //   outputFile << "DLD Failed, the correct SSV Symbol Metrics:" << std::endl;
+  //   for (const auto& metrics : DLD_faiiled_symbol_metrics) {
+  //     outputFile << std::get<0>(metrics) << ", " << std::get<1>(metrics) << ", " << std::get<2>(metrics) << std::endl;
+  //   }
+  //   outputFile << std::endl;
 
-  DLD_correct_vec.push_back((double)DLD_correct / number_of_trials);
-  DLD_list_exceed_vec.push_back((double)DLD_list_exceeded / number_of_trials);
-  DLD_error_vec.push_back((double)DLD_error / number_of_trials);
+  //   outputFile << "DLD Succeeded Symbol Metrics:" << std::endl;
+  //   for (const auto& metrics : DLD_succeeded_symbol_metrics) {
+  //     outputFile << std::get<0>(metrics) << ", " << std::get<1>(metrics) << ", " << std::get<2>(metrics) << std::endl;
+  //   }
+  //   outputFile << std::endl;
+  // } else {
+  //   std::cout << "Failed to open output file." << std::endl;
+  // }
 
   ///////////  End of simulation ////////////
   std::cout << "DLD Decoder CORRECT decoding percentage: ";
@@ -1485,7 +1553,7 @@ void dualListExperiment_rate_1_3(double snr_dB, int max_list_size,
   std::cout << "DLD Decoder WRONG decoding percentage: ";
   CodecUtils::print(DLD_error_vec);
   std::cout << std::endl;
-  // outputFile.close();
+  outputFile.close();
 }
 
 mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
@@ -1619,7 +1687,7 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
   // while (number_of_errors < max_errors) {
   Stopwatch overall_decoding_time_debug_sw;
   overall_decoding_time_debug_sw.tic();
-  
+
   while (number_of_trials < TRIALS) {
     number_of_trials++;
 
@@ -1658,19 +1726,16 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
     }
 
     // continue;
-    
 
     // DLD DECODING
     DLDInfo output_DLD = DLD.LookAheadDecode_SimpleAlternate_rate_1_2(
         received_signal, stepTimeDurations, metric_0, metric_1);
 
-
-
     // if DLD declares List size exceeded
     // then resort to soft viterbi decoding
     if (output_DLD.message == std::vector<int>(64, -1)) {
-
-      // std::cout << "List size EXCEEDED! Running SSV Nows" << " " << SSV_correct << std::endl;
+      // std::cout << "List size EXCEEDED! Running SSV Nows" << " " <<
+      // SSV_correct << std::endl;
       MessageInformation output_SSV =
           codec.softViterbiDecoding(received_signal, stepTimeDurations[1]);
       if (CodecUtils::areVectorsEqual(output_SSV.message, msg)) {
@@ -1716,8 +1781,6 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
     for (int i = 0; i < expected_list_ranks.size(); ++i) {
       expected_list_ranks[i] += output_DLD.list_ranks[i];
     }
-
-
   }
 
   overall_decoding_time_debug_sw.toc();
@@ -1726,7 +1789,9 @@ mixed_info mixedDualListExperiment_rate_1_3(double snr_dB,
 
   ////////  DLD Decoding Statistics /////////
   // debug
-  std::cout << "overall decoding time debug: " << overall_decoding_time_debug.count() << " milliseconds" << std::endl;
+  std::cout << "overall decoding time debug: "
+            << overall_decoding_time_debug.count() << " milliseconds"
+            << std::endl;
 
   // record the time taken by each step
   for (size_t i = 0; i < stepTimeDurations.size(); ++i) {
