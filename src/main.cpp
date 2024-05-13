@@ -24,7 +24,6 @@
 #include "../include/dualListDecoder.h"
 #include "../include/stopWatch.h"
 #include "../include/viterbiCodec.h"
-#include "../include/timeComplexityFunctionSimulation.h"
 // #include "mat.h"
 
 static std::random_device rd{};
