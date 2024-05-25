@@ -11,45 +11,36 @@
 #include <tuple>
 
 #include "minHeap.h"
-#include "dualListMap.h"
 #include "stopWatch.h"
+#include "viterbiDecoder.h"
 
 
 
 class FeedForwardTrellis;
 
-struct Cell {
-  bool init = false;
-  double pathMetric = 3000;
-  int fatherState = -1;
-  double subPathMetric = 3000;
-  int subFatherState = -1;
-};
-
-struct MessageInformation {
-  MessageInformation(){};
-  int decoder_index = -1;
+struct DLDInfo {
+  double combined_metric;
   std::vector<int> message;
-  std::vector<int> path;
-  std::pair<int, int> begin_end_states;
-  double path_metric;
-  int list_rank;
-  int crc_passing_rank;
-  bool list_size_exceeded = false;  // added, used in DLD
+  std::vector<int> list_ranks;
+  std::vector<double> received_signal;
   std::tuple<double, double, double> symbol_metrics;
 };
 
-struct CodeInformation {
-  int k;              // input length
-  int n;              // output length
-  int v;              // memory elements
-  int list_size = 1;  // list decoder list size
-  int crc_dec;
-  int crc_length;
-  std::vector<int> generator_poly;
+class DualListMap{
+  public:
+    DualListMap() {};
+    ~DualListMap() {};
+
+    void insert(const MessageInformation& mi);
+    int queue_size() {return agreed_messages_.size();};
+    DLDInfo pop_queue();
+    DLDInfo get_top();
+    
+    std::map<std::vector<int>, MessageInformation> dual_list_map_; // dictionary
+    std::priority_queue<DLDInfo, std::vector<DLDInfo>, CompareCombinedMetric<DLDInfo>> agreed_messages_; // priority queue
 };
 
-namespace dualdecoderutils {
+namespace dual_list_decoder_utils {
 
 std::vector<int> convertIntToBits(int integer, const int& length);
 int hammingDistance(const std::vector<int> x, const std::vector<int>& y);
@@ -134,9 +125,9 @@ combine_maps(const std::vector<MessageInformation>& vec1,
 }
 
 
-class DualListDecoder {
+class DualListDecoder : private ViterbiDecoder{
  public:
-  DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path);
+  // DualListDecoder(std::vector<CodeInformation> code_info, int max_searched_path);
   DualListDecoder(CodeInformation encoder, std::vector<CodeInformation> code_info, int max_searched_path);
   ~DualListDecoder();
   
@@ -167,13 +158,15 @@ class DualListDecoder {
 
   // Look ahead decoding function that stop once match is found. If the match does not yield the best metric, then return the unmatched best.
   // This function will also return the best unmatched metric if the match is not found and list size is exceeded.
-  DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+  DLDInfo DLD_BAM(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
 
   // Look ahead decoding function that stop once match is found. If the match does not yield the best metric, then return the unmatched best.
   // This function will also return the best unmatched metric if the match is not found and list size is exceeded.
   // This function will also only add half of the shared metric to the path metric.
-  DLDInfo LookAheadDecode_SimpleAlternate_StopOnceMatchFound_WithListSizeExceeded_HalfMetricOnSharedSymbols(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
-
+  DLDInfo DLD_BAM_Half_Metric_on_Shared(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
+  
+  
+  DLDInfo DLD_BAM_double_match(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations);
   // ------------------------------------------------  TRACEBACK FUNCTIONS  ----------------------------------------------------------
   MessageInformation TraceBack_Single(MinHeap* heap, const CodeInformation& code, FeedForwardTrellis* trellis_ptr,
                              const std::vector<std::vector<Cell>>& trellis_states, std::vector<std::vector<int>>& prev_paths,
@@ -191,12 +184,8 @@ class DualListDecoder {
   std::vector<double> HardDecode(const std::vector<double>& received_signal);
 
  private:
-  CodeInformation encoder_;
-  FeedForwardTrellis* encoder_trellis_ptr_;
-  std::vector<CodeInformation> code_info_;
-  std::vector<FeedForwardTrellis*> trellis_ptrs_;
-  int max_path_to_search_;
-  int crc_ratio_; // ratio between crc degree of both dld decoders. For example, crc1 = 3, crc2 = 5. Then crc_ratio = 2^5 / 2^3 = 4;
+  
+  int crc_ratio_;
 
   //// ZTCC
 

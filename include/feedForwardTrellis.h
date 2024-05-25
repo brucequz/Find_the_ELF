@@ -5,6 +5,7 @@
 #include <vector>
 #include "viterbiCodec.h"
 #include "dualListDecoder.h"
+#include "trialListDecoder.h"
 
 
 struct FeedForwardTrellis{
@@ -28,7 +29,9 @@ struct FeedForwardTrellis{
     void computeNextStates();
     void computeOutput();
     friend class ViterbiCodec;
+    friend class Decoder;
     friend class DualListDecoder;
+    friend class TrialListDecoder;
 };
 
 #endif

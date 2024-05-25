@@ -17,14 +17,9 @@
 #include <map>
 #include <vector>
 
-#include "../include/dualListMap.h"
 #include "../include/feedForwardTrellis.h"
 #include "../include/stopWatch.h"
 
-/**
- * @namespace private namespace
- *
- */
 namespace {
 
 template <typename T>
@@ -47,10 +42,10 @@ void print(const std::vector<std::vector<T>>& matrix) {
 }  // namespace
 
 /**
- * @namespace dualdecoderutils namespace
+ * @namespace dual_list_decoder_utils namespace
  *
  */
-namespace dualdecoderutils {
+namespace dual_list_decoder_utils {
 std::vector<int> convertIntToBits(int integer, const int& length) {
   if (integer < 0) {
     std::cerr << "CANNOT CONVERT: negative integer" << std::endl;
@@ -156,40 +151,91 @@ std::vector<int> get_point(int output, int n) {
 }
 
 int bin_sum(int i, int j) { return (i + j) % 2; }
-}  // namespace dualdecoderutils
+}  // namespace dual_list_decoder_utils
 
-DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
-                                 int max_searched_path)
-    : code_info_(code_info), max_path_to_search_(max_searched_path) {
-  CodeInformation code_list_0 = code_info[0];
-  CodeInformation code_list_1 = code_info[1];
+// DualListDecoder::DualListDecoder(std::vector<CodeInformation> code_info,
+//                                  int max_searched_path)
+//     : ViterbiDecoder(code_info, max_searched_path) {
+//   CodeInformation code_list_0 = code_info[0];
+//   CodeInformation code_list_1 = code_info[1];
 
-  FeedForwardTrellis* trellis_ptr_0 = new FeedForwardTrellis(code_list_0);
-  FeedForwardTrellis* trellis_ptr_1 = new FeedForwardTrellis(code_list_1);
-  trellis_ptrs_.push_back(trellis_ptr_0);
-  trellis_ptrs_.push_back(trellis_ptr_1);
+//   FeedForwardTrellis* trellis_ptr_0 = new FeedForwardTrellis(code_list_0);
+//   FeedForwardTrellis* trellis_ptr_1 = new FeedForwardTrellis(code_list_1);
+//   trellis_ptrs_.push_back(trellis_ptr_0);
+//   trellis_ptrs_.push_back(trellis_ptr_1);
 
-  if (code_list_0.v == 0 || code_list_1.v == 0) {
-    std::cerr << "Cannot calculate the ratio when one of the numbers is zero."
-              << std::endl;
+//   if (code_list_0.v == 0 || code_list_1.v == 0) {
+//     std::cerr << "Cannot calculate the ratio when one of the numbers is zero."
+//               << std::endl;
+//   }
+//   int largerCRCDegree =
+//       (code_list_0.v >= code_list_1.v) ? code_list_0.v : code_list_1.v;
+//   int smallerCRCDegree =
+//       (code_list_0.v <= code_list_1.v) ? code_list_0.v : code_list_1.v;
+
+//   // Calculate the ratio
+//   crc_ratio_ =
+//       int(std::pow(2, largerCRCDegree) / std::pow(2, smallerCRCDegree));
+//   // std::cout << "crc_ratio_" << crc_ratio_ << std::endl;
+// }
+
+void DualListMap::insert(const MessageInformation& mi) {
+  /*
+  Insert a MessageInformation into an unordered map
+  Insertion logic:
+
+  extract the message from input argument
+  search if there exists a key-value pair with
+  if there is a match
+    add the maximum likelihood MI to the priority queue
+    erase that message from the unordered map
+    if dual list decoder gets the maximum likelihood MI,
+    set BCM and thresholds for list decoder 0 and 1.
+  end if
+
+  */
+  auto it = dual_list_map_.find(mi.message); // finding the match in the dictionary
+  if (it != dual_list_map_.end()) {
+    DLDInfo agreed_message;
+    agreed_message.combined_metric = mi.path_metric;// + it->second.path_metric;
+    if (it->second.decoder_index == 0) {
+      agreed_message.list_ranks = {it->second.list_rank, mi.list_rank};
+    } else if (it->second.decoder_index == 1) {
+      agreed_message.list_ranks = {mi.list_rank, it->second.list_rank};
+    } else {
+      std::cerr << "Invalid decoder order" << std::endl;
+    }
+    agreed_message.message = mi.message;
+    agreed_message.symbol_metrics = mi.symbol_metrics;
+    agreed_messages_.push(agreed_message);
+    dual_list_map_.erase(mi.message);
+  } else {
+    // key does not exist
+    dual_list_map_[mi.message] = mi;
   }
-  int largerCRCDegree =
-      (code_list_0.v >= code_list_1.v) ? code_list_0.v : code_list_1.v;
-  int smallerCRCDegree =
-      (code_list_0.v <= code_list_1.v) ? code_list_0.v : code_list_1.v;
+}
 
-  // Calculate the ratio
-  crc_ratio_ =
-      int(std::pow(2, largerCRCDegree) / std::pow(2, smallerCRCDegree));
-  // std::cout << "crc_ratio_" << crc_ratio_ << std::endl;
+DLDInfo DualListMap::pop_queue() {
+  if (queue_size() == 0) {
+    std::cerr << "Invalid access to empty queue" << std::endl;
+  }
+  DLDInfo output = agreed_messages_.top();
+  agreed_messages_.pop();
+  return output;
+}
+
+DLDInfo DualListMap::get_top() {
+  if (queue_size() == 0) {
+    std::cerr << "Invalid access to empty queue" << std::endl;
+  }
+  DLDInfo output = agreed_messages_.top();
+  return output;
 }
 
 DualListDecoder::DualListDecoder(CodeInformation encoder,
                                  std::vector<CodeInformation> code_info,
                                  int max_searched_path)
-    : encoder_(encoder),
-      code_info_(code_info),
-      max_path_to_search_(max_searched_path) {
+    : ViterbiDecoder(encoder, code_info, max_searched_path) {
   CodeInformation code_list_0 = code_info[0];
   CodeInformation code_list_1 = code_info[1];
 
@@ -215,10 +261,10 @@ DualListDecoder::DualListDecoder(CodeInformation encoder,
 }
 
 DualListDecoder::~DualListDecoder() {
-  for (FeedForwardTrellis*& trellis_ptr : trellis_ptrs_) {
-    delete trellis_ptr;
-    trellis_ptr = nullptr;
+  for (auto& trellis : trellis_ptrs_) {
+    delete trellis;
   }
+  delete encoder_trellis_ptr_;
 }
 
 DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std::vector<std::chrono::milliseconds>& timeDurations) {
@@ -394,7 +440,7 @@ DLDInfo DualListDecoder::adaptiveDecode(std::vector<double> received_signal, std
       heap_list_1 = nullptr;
       // std::cout << "found agreed message" << std::endl;
       // std::cout << "Debug: agreed message list size: ";
-      // dualdecoderutils::print(agreed_message.list_ranks);
+      // dual_list_decoder_utils::print(agreed_message.list_ranks);
       // std::cout << std::endl;
 
       return agreed_message;
@@ -594,7 +640,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_SimpleAlternate(
       heap_list_1 = nullptr;
       // std::cout << "found agreed message" << std::endl;
       // std::cout << "Debug: agreed message list size: ";
-      // dualdecoderutils::print(agreed_message.list_ranks);
+      // dual_list_decoder_utils::print(agreed_message.list_ranks);
       // std::cout << std::endl;
 
       return agreed_message;
@@ -777,7 +823,7 @@ DLDInfo DualListDecoder::AdaptiveDecode_CRCAlternate(
       heap_list_1 = nullptr;
       // std::cout << "found agreed message" << std::endl;
       // std::cout << "Debug: agreed message list size: ";
-      // dualdecoderutils::print(agreed_message.list_ranks);
+      // dual_list_decoder_utils::print(agreed_message.list_ranks);
       // std::cout << std::endl;
 
       return agreed_message;
@@ -1096,7 +1142,7 @@ std::vector<std::vector<Cell>> DualListDecoder::constructZTListTrellis_precomput
 
         double branchMetric = 0;
         // std::cout << "code.n: " << code.n << std::endl;
-        std::vector<int> output_point = dualdecoderutils::get_point(
+        std::vector<int> output_point = dual_list_decoder_utils::get_point(
             trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
         for (int i = 0; i < code.n; i++) {
@@ -1173,7 +1219,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
   convolutional code with v memery elements. At position (i, j), it determines
   the output as integer (0 or 1 for binary code) when the currect state is i and
   currect input is j. To convert it to BPSK modulation, use
-  dualdecoderutils::get_point().
+  dual_list_decoder_utils::get_point().
 
   @param ssv_time: a chrono milliseconds object passed in by reference to
   increment an outer variable that keep track of dual list decoder trellis
@@ -1262,7 +1308,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric(
 
         double branchMetric = 0;
         
-        std::vector<int> output_point = dualdecoderutils::get_point(
+        std::vector<int> output_point = dual_list_decoder_utils::get_point(
             trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
         for (int i = 0; i < code.n; i++) {
@@ -1333,7 +1379,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric_HalfSharedMetric(
   convolutional code with v memery elements. At position (i, j), it determines
   the output as integer (0 or 1 for binary code) when the currect state is i and
   currect input is j. To convert it to BPSK modulation, use
-  dualdecoderutils::get_point().
+  dual_list_decoder_utils::get_point().
 
   @param ssv_time: a chrono milliseconds object passed in by reference to
   increment an outer variable that keep track of dual list decoder trellis
@@ -1422,7 +1468,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_EuclideanMetric_HalfSharedMetric(
 
         double branchMetric = 0;
         
-        std::vector<int> output_point = dualdecoderutils::get_point(
+        std::vector<int> output_point = dual_list_decoder_utils::get_point(
             trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
         for (int i = 0; i < code.n; i++) {
@@ -1500,7 +1546,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
   convolutional code with v memery elements. At position (i, j), it determines
   the output as integer (0 or 1 for binary code) when the currect state is i and
   currect input is j. To convert it to BPSK modulation, use
-  dualdecoderutils::get_point().
+  dual_list_decoder_utils::get_point().
 
   @param ssv_time: a chrono milliseconds object passed in by reference to
   increment an outer variable that keep track of dual list decoder trellis
@@ -1614,7 +1660,7 @@ DualListDecoder::ConstructZTCCTrellis_WithList_ProductMetric(
 
         double branchMetric = 0;
         // std::cout << "code.n: " << code.n << std::endl;
-        std::vector<int> output_point = dualdecoderutils::get_point(
+        std::vector<int> output_point = dual_list_decoder_utils::get_point(
             trellis_ptr->output_[currentState][forwardPathIndex], code.n);
 
         for (int i = 0; i < code.n; i++) {
@@ -1727,14 +1773,14 @@ std::vector<int> DualListDecoder::deconvolveCRC(const std::vector<int>& output,
 bool DualListDecoder::CRC_Check(std::vector<int> input_data, int crc_bits_num,
                                 int crc_dec) {
   std::vector<int> CRC;
-  dualdecoderutils::dec_to_binary(crc_dec, CRC, crc_bits_num);
+  dual_list_decoder_utils::dec_to_binary(crc_dec, CRC, crc_bits_num);
 
   for (int ii = 0; ii <= (int)input_data.size() - crc_bits_num; ii++) {
     if (input_data[ii] == 1) {
       // Note: transform doesn't include .end
       std::transform(input_data.begin() + ii,
                      input_data.begin() + (ii + crc_bits_num), CRC.begin(),
-                     input_data.begin() + ii, dualdecoderutils::bin_sum);
+                     input_data.begin() + ii, dual_list_decoder_utils::bin_sum);
     }
   }
   bool zeros = std::all_of(input_data.begin(), input_data.end(),

@@ -1,16 +1,45 @@
 #ifndef VITERBICODEC_H
 #define VITERBICODEC_H
 
+#include <cassert>
 #include <climits>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <random>
 
-#include "dualListDecoder.h"
 #include "stopWatch.h"
 
+struct CodeInformation {
+  int k;              // input length
+  int n;              // output length
+  int v;              // memory elements
+  int list_size = 1;  // list decoder list size
+  int crc_dec;
+  int crc_length;
+  std::vector<int> generator_poly;
+};
 
+struct MessageInformation {
+  MessageInformation(){};
+  int decoder_index = -1;
+  std::vector<int> message;
+  std::vector<int> path;
+  std::pair<int, int> begin_end_states;
+  double path_metric;
+  int list_rank;
+  int crc_passing_rank;
+  bool list_size_exceeded = false;  // added, used in DLD
+  std::tuple<double, double, double> symbol_metrics;
+};
+
+struct Cell {
+  bool init = false;
+  double pathMetric = 3000;
+  int fatherState = -1;
+  double subPathMetric = 3000;
+  int subFatherState = -1;
+};
 
 class FeedForwardTrellis;
 
